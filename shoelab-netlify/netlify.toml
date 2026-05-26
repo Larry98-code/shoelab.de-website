@@ -1,20 +1,4 @@
-# ShoeLab Netlify Configuration
-
 [build]
-  publish = "."
-  functions = "netlify/functions"
-
-[build.environment]
-  NODE_VERSION = "18"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "SAMEORIGIN"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-
-[[redirects]]
-  from = "/api/wesley"
-  to = "/.netlify/functions/wesley"
-  status = 200
+  base = "shoelab-netlify"
+  publish = "shoelab-netlify"
+  functions = "shoelab-netlify/netlify/functions"
