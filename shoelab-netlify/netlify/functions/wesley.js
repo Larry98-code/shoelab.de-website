@@ -1,13 +1,7 @@
-// ShoeLab — Wesley AI Proxy Function
-// Netlify Serverless Function — keeps API key secure on server side
+// ShoeLab — Wesley AI Proxy
+// Netlify Serverless Function v2
 
-exports.handler = async function(event, context) {
-  // Only allow POST
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' };
-  }
-
-  // CORS headers — allow your domain
+const handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -15,20 +9,38 @@ exports.handler = async function(event, context) {
     'Content-Type': 'application/json',
   };
 
-  // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
   }
 
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  // Check API key exists
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('ANTHROPIC_API_KEY not set');
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'API key not configured' }),
+    };
+  }
+
+  let body;
   try {
-    const { messages, system } = JSON.parse(event.body);
+    body = JSON.parse(event.body);
+  } catch (e) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
+  }
 
-    // Validate
-    if (!messages || !Array.isArray(messages)) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid request' }) };
-    }
+  const { messages, system } = body;
 
-    // Call Anthropic — API key stored safely as Netlify env variable
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Messages required' }) };
+  }
+
+  try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -37,9 +49,9 @@ exports.handler = async function(event, context) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5',
         max_tokens: 800,
-        system: system,
+        system: system || 'You are Wesley, the helpful AI assistant for ShoeLab.de shoe cleaning studio in Bremen, Germany.',
         messages: messages,
       }),
     });
@@ -47,26 +59,28 @@ exports.handler = async function(event, context) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Anthropic error:', data);
+      console.error('Anthropic API error:', JSON.stringify(data));
       return {
-        statusCode: response.status,
+        statusCode: 200,
         headers,
-        body: JSON.stringify({ error: data.error?.message || 'API error' }),
+        body: JSON.stringify({
+          content: [{ type: 'text', text: 'Sorry, I\'m having a brief issue. Please try again in a moment!' }]
+        }),
       };
     }
 
+    return { statusCode: 200, headers, body: JSON.stringify(data) };
+
+  } catch (err) {
+    console.error('Fetch error:', err.message);
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(data),
-    };
-
-  } catch (err) {
-    console.error('Wesley function error:', err);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Internal server error' }),
+      body: JSON.stringify({
+        content: [{ type: 'text', text: 'I\'m reconnecting — please send your message again!' }]
+      }),
     };
   }
 };
+
+exports.handler = handler;
