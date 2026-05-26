@@ -1,4 +1,4 @@
 [build]
-  base      = "shoelab-netlify"
-  publish   = "shoelab-netlify"
-  functions = "shoelab-netlify/netlify/functions"
+  base = "shoelab-netlify"
+  publish = "."
+  functions = "netlify/functions"
