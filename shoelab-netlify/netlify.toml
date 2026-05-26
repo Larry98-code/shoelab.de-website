@@ -1,4 +1,12 @@
 [build]
-  base = "shoelab-netlify"
+  base    = "shoelab-netlify"
   publish = "shoelab-netlify"
   functions = "shoelab-netlify/netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
