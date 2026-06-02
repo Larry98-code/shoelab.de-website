@@ -1642,6 +1642,66 @@ img { max-width: 100%; height: auto; display: block; }
   .gallery-grid { grid-template-columns: 1fr; }
   .g-item { min-height: 200px; }
 }
+/* ══════════════════════════════════════════
+   3D · INTERACTIVE ENHANCEMENTS
+══════════════════════════════════════════ */
+
+/* — WebGL hero scene canvas — */
+#hero-canvas{
+  position:absolute; inset:0; z-index:1;
+  pointer-events:none;
+  opacity:0; transition:opacity 1.4s ease;
+}
+#hero-canvas.ready{ opacity:1; }
+#hero .hero-bg-lines{ z-index:1; }
+#hero .hero-red-glow{ z-index:2; }
+#hero .hero-inner{ z-index:3; }
+
+/* — depth layering so the 3D logo reads above the scene — */
+.hero-logo-wrap{ transform-style:preserve-3d; }
+
+/* — interactive 3D tilt cards — */
+.svc-card,.prod-card,.rv-card{
+  transform-style:preserve-3d;
+  will-change:transform;
+}
+.tilt-active{
+  transition:transform 0.08s linear, box-shadow 0.3s ease !important;
+}
+
+/* — magnetic 3D primary buttons — */
+.btn-red,.bk-submit,.nav-cta{ will-change:transform; }
+
+/* — scroll-reveal 3D flip for fade-up elements — */
+.fade-up{ transform-origin:center bottom; }
+@media (prefers-reduced-motion: reduce){
+  #hero-canvas{ display:none; }
+}
+
+/* — floating 3D scroll cue — */
+.scroll-cue{
+  position:absolute; bottom:1.6rem; left:50%;
+  transform:translateX(-50%);
+  z-index:4; display:flex; flex-direction:column; align-items:center; gap:0.6rem;
+  pointer-events:none;
+}
+.scroll-cue-txt{
+  font-size:0.52rem; letter-spacing:0.4em; text-transform:uppercase;
+  color:rgba(255,255,255,0.45);
+}
+.scroll-cue-line{
+  width:1px; height:46px;
+  background:linear-gradient(to bottom, var(--red), transparent);
+  position:relative; overflow:hidden;
+}
+.scroll-cue-line::after{
+  content:''; position:absolute; top:-50%; left:0; width:100%; height:50%;
+  background:var(--white);
+  animation:scrollCue 2.2s cubic-bezier(0.7,0,0.3,1) infinite;
+}
+@keyframes scrollCue{ 0%{top:-50%} 60%,100%{top:100%} }
+@media (max-width:760px){ .scroll-cue{ display:none; } }
+
 </style>
 <script src="https://js.stripe.com/v3/"></script>
 </head>
@@ -1703,6 +1763,10 @@ img { max-width: 100%; height: auto; display: block; }
         <div class="hero-badge">Bremen · Germany</div>
       </div>
     </div>
+  </div>
+  <div class="scroll-cue">
+    <span class="scroll-cue-txt">Scroll</span>
+    <span class="scroll-cue-line"></span>
   </div>
 </section>
 
@@ -4496,6 +4560,252 @@ const _origHandleUserMessage = handleUserMessage;
 } catch(e) {
   console.error('ShoeLab JS error:', e);
 }
+</script>
+
+<!-- ══════════════════════════════════════════
+     3D · INTERACTIVE LAYER  (self-contained)
+══════════════════════════════════════════ -->
+<script>
+(function(){
+  "use strict";
+
+  var prefersReduced = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isTouch = window.matchMedia &&
+    window.matchMedia('(hover: none)').matches;
+
+  /* ─────────────────────────────────────────
+     1 · WEBGL HERO SCENE  (Three.js via CDN)
+     Floating particle field + wireframe
+     polyhedra with mouse-parallax camera.
+     Degrades gracefully if the CDN is blocked.
+  ───────────────────────────────────────── */
+  function initHeroScene(){
+    var hero = document.getElementById('hero');
+    if(!hero || prefersReduced || !window.THREE) return;
+
+    var THREE = window.THREE;
+    var canvas = document.createElement('canvas');
+    canvas.id = 'hero-canvas';
+    hero.insertBefore(canvas, hero.firstChild);
+
+    var W = hero.clientWidth, H = hero.clientHeight;
+    var scene  = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 120);
+    camera.position.z = 18;
+
+    var renderer;
+    try{
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    }catch(err){ return; }            /* no WebGL → keep static hero */
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(W, H);
+
+    /* — particle field — */
+    var COUNT = window.innerWidth < 700 ? 240 : 520;
+    var geo = new THREE.BufferGeometry();
+    var pos = new Float32Array(COUNT * 3);
+    var col = new Float32Array(COUNT * 3);
+    for(var i = 0; i < COUNT; i++){
+      pos[i*3]   = (Math.random() - 0.5) * 46;
+      pos[i*3+1] = (Math.random() - 0.5) * 28;
+      pos[i*3+2] = (Math.random() - 0.5) * 24;
+      var red = Math.random() > 0.5;
+      col[i*3]   = red ? 0.83 : 0.92;
+      col[i*3+1] = red ? 0.07 : 0.92;
+      col[i*3+2] = red ? 0.07 : 0.92;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+    var pMat = new THREE.PointsMaterial({
+      size: 0.10, vertexColors: true,
+      transparent: true, opacity: 0.85, depthWrite: false
+    });
+    var points = new THREE.Points(geo, pMat);
+    scene.add(points);
+
+    /* — slow-spinning wireframe polyhedra — */
+    var shapes = [];
+    function addShape(g, x, y, z, color, op){
+      var m = new THREE.MeshBasicMaterial({
+        color: color, wireframe: true, transparent: true, opacity: op
+      });
+      var mesh = new THREE.Mesh(g, m);
+      mesh.position.set(x, y, z);
+      scene.add(mesh);
+      shapes.push(mesh);
+    }
+    addShape(new THREE.IcosahedronGeometry(2.6, 0), -10,  3.5, -2, 0xCC1111, 0.30);
+    addShape(new THREE.TorusGeometry(2.0, 0.55, 14, 30), 10, -3.5, -1, 0xffffff, 0.16);
+    addShape(new THREE.OctahedronGeometry(1.8, 0),  9,  5,  -5, 0xCC1111, 0.26);
+    addShape(new THREE.DodecahedronGeometry(1.6, 0), -9, -4.5, -4, 0xffffff, 0.14);
+
+    /* — mouse-parallax camera — */
+    var mx = 0, my = 0, tmx = 0, tmy = 0;
+    window.addEventListener('mousemove', function(e){
+      tmx = (e.clientX / window.innerWidth)  - 0.5;
+      tmy = (e.clientY / window.innerHeight) - 0.5;
+    }, { passive: true });
+
+    function resize(){
+      W = hero.clientWidth; H = hero.clientHeight;
+      camera.aspect = W / H;
+      camera.updateProjectionMatrix();
+      renderer.setSize(W, H);
+    }
+    window.addEventListener('resize', resize, { passive: true });
+
+    var running = true, t = 0;
+    function frame(){
+      requestAnimationFrame(frame);
+      if(!running) return;
+      t += 0.0022;
+      mx += (tmx - mx) * 0.05;
+      my += (tmy - my) * 0.05;
+
+      points.rotation.y = t * 0.6;
+      points.rotation.x = Math.sin(t * 0.5) * 0.14;
+
+      for(var s = 0; s < shapes.length; s++){
+        shapes[s].rotation.x += 0.0020 + s * 0.0006;
+        shapes[s].rotation.y += 0.0030 + s * 0.0004;
+      }
+
+      camera.position.x += (mx * 5  - camera.position.x) * 0.05;
+      camera.position.y += (-my * 4 - camera.position.y) * 0.05;
+      camera.lookAt(0, 0, 0);
+      renderer.render(scene, camera);
+    }
+    frame();
+    canvas.classList.add('ready');
+
+    /* — pause when off-screen / tab hidden — */
+    document.addEventListener('visibilitychange', function(){
+      running = !document.hidden;
+    });
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(entries){
+        entries.forEach(function(en){ running = en.isIntersecting && !document.hidden; });
+      }, { threshold: 0 }).observe(hero);
+    }
+  }
+
+  function loadThree(){
+    if(prefersReduced) return;
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.async = true;
+    s.onload  = initHeroScene;
+    s.onerror = function(){ /* CDN blocked → static hero stays intact */ };
+    document.head.appendChild(s);
+  }
+
+  /* ─────────────────────────────────────────
+     2 · 3D TILT CARDS
+     Pointer-reactive perspective tilt + red
+     depth-glow on service / product / review
+     cards. Disabled on touch devices.
+  ───────────────────────────────────────── */
+  function initTilt(){
+    if(isTouch || prefersReduced) return;
+    var MAX = 7;
+    var cards = document.querySelectorAll('.svc-card, .prod-card, .rv-card');
+
+    cards.forEach(function(card){
+      var raf = null, rx = 0, ry = 0, lift = 0;
+
+      function render(){
+        raf = null;
+        card.style.transform =
+          'perspective(900px) rotateX(' + rx + 'deg) rotateY(' + ry +
+          'deg) translateY(' + lift + 'px)';
+      }
+
+      card.addEventListener('mouseenter', function(){
+        card.classList.add('tilt-active');
+        lift = -6;
+        card.style.boxShadow = '0 24px 60px rgba(204,17,17,0.18)';
+        card.style.zIndex = '5';
+      });
+
+      card.addEventListener('mousemove', function(e){
+        var r = card.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width;
+        var py = (e.clientY - r.top)  / r.height;
+        rx = (0.5 - py) * MAX * 2;
+        ry = (px - 0.5) * MAX * 2;
+        if(!raf) raf = requestAnimationFrame(render);
+      });
+
+      card.addEventListener('mouseleave', function(){
+        if(raf){ cancelAnimationFrame(raf); raf = null; }
+        card.classList.remove('tilt-active');
+        card.style.transform = '';
+        card.style.boxShadow = '';
+        card.style.zIndex = '';
+      });
+    });
+  }
+
+  /* ─────────────────────────────────────────
+     3 · MAGNETIC BUTTONS
+     Primary CTAs drift subtly toward the
+     cursor for a tactile, premium feel.
+  ───────────────────────────────────────── */
+  function initMagnetic(){
+    if(isTouch || prefersReduced) return;
+    var btns = document.querySelectorAll('.btn-red, .nav-cta, .bk-submit');
+    btns.forEach(function(btn){
+      btn.addEventListener('mousemove', function(e){
+        var r = btn.getBoundingClientRect();
+        var x = (e.clientX - r.left - r.width  / 2) * 0.25;
+        var y = (e.clientY - r.top  - r.height / 2) * 0.35;
+        btn.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+      });
+      btn.addEventListener('mouseleave', function(){
+        btn.style.transform = '';
+      });
+    });
+  }
+
+  /* ─────────────────────────────────────────
+     4 · HERO LOGO PARALLAX
+     The orb tilts in 3D toward the pointer,
+     layered above the floating animation.
+  ───────────────────────────────────────── */
+  function initLogoParallax(){
+    if(isTouch || prefersReduced) return;
+    var right = document.querySelector('.hero-right');
+    var img = document.querySelector('.hero-logo-img');
+    if(!right || !img) return;
+    right.style.perspective = '800px';
+    right.addEventListener('mousemove', function(e){
+      var r = right.getBoundingClientRect();
+      var px = (e.clientX - r.left) / r.width  - 0.5;
+      var py = (e.clientY - r.top)  / r.height - 0.5;
+      img.style.transform =
+        'rotateY(' + (px * 16) + 'deg) rotateX(' + (-py * 16) + 'deg)';
+      img.style.transition = 'transform 0.1s linear';
+    });
+    right.addEventListener('mouseleave', function(){
+      img.style.transform = '';
+      img.style.transition = 'transform 0.5s ease';
+    });
+  }
+
+  /* ── boot ── */
+  function boot(){
+    try{ loadThree(); }       catch(e){}
+    try{ initTilt(); }        catch(e){}
+    try{ initMagnetic(); }    catch(e){}
+    try{ initLogoParallax(); }catch(e){}
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
 </script>
 </body>
 </html>

@@ -1,5 +1,21 @@
 # ShoeLab.de — Website + Wesley AI
 
+## 3D · Interactive Layer
+The site ships with a self-contained, dependency-light 3D experience layered
+on top of the existing design (no build step, no markup rewrites):
+
+- **WebGL hero scene** — a Three.js (CDN) particle field with slow-spinning
+  wireframe polyhedra and a mouse-parallax camera, rendered behind the hero.
+- **3D tilt cards** — service, product and review cards tilt in perspective
+  toward the pointer with a red depth-glow.
+- **Magnetic CTAs** — primary buttons drift subtly toward the cursor.
+- **Hero logo parallax** — the brand orb tilts in 3D with pointer movement.
+
+Everything degrades gracefully: it is disabled for `prefers-reduced-motion`,
+skips pointer effects on touch devices, pauses when off-screen / tab-hidden,
+and falls back to the original static hero if the CDN or WebGL is unavailable.
+
+
 ## Project Structure
 ```
 shoelab-netlify/
