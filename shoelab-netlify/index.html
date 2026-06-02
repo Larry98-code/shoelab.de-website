@@ -1702,11 +1702,123 @@ img { max-width: 100%; height: auto; display: block; }
 @keyframes scrollCue{ 0%{top:-50%} 60%,100%{top:100%} }
 @media (max-width:760px){ .scroll-cue{ display:none; } }
 
+/* ============================================================
+   MIND-BLOWING FX LAYER  (additive · degradation-safe)
+   ============================================================ */
+
+/* — cinematic preloader — */
+.fx-preloader{
+  position:fixed; inset:0; z-index:100000; background:var(--black);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1.6rem; transition:opacity .8s ease, visibility .8s ease;
+  animation:fxPreFail 0s linear 6s forwards;       /* fail-safe auto-hide */
+}
+.fx-preloader.done{ opacity:0; visibility:hidden; }
+@keyframes fxPreFail{ to{ opacity:0; visibility:hidden; pointer-events:none; } }
+.fx-pre-logo{
+  font-family:'Bebas Neue','Arial Black',sans-serif;
+  font-size:clamp(3rem,11vw,7rem); letter-spacing:0.08em; color:#fff; line-height:1;
+  text-shadow:0 0 40px rgba(204,17,17,0.5); animation:fxPrePulse 1.6s ease-in-out infinite;
+}
+.fx-pre-logo .red{ color:var(--red); }
+@keyframes fxPrePulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+.fx-pre-bar{ width:min(280px,62vw); height:2px; background:rgba(255,255,255,0.12); overflow:hidden; }
+.fx-pre-bar span{ display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--red),var(--red-bright)); box-shadow:0 0 14px var(--red-bright); transition:width .25s ease; }
+.fx-pre-pct{ font-size:.6rem; letter-spacing:.5em; color:rgba(255,255,255,.4); }
+
+/* — scroll progress bar — */
+.fx-progress{
+  position:fixed; top:0; left:0; height:3px; width:0%;
+  background:linear-gradient(90deg,var(--red),var(--red-bright));
+  z-index:9999; box-shadow:0 0 14px var(--red-bright); will-change:width;
+}
+
+/* — custom glowing cursor (fine-pointer only) — */
+@media (hover:hover) and (pointer:fine){
+  body.fx-cursor, body.fx-cursor *{ cursor:none !important; }
+}
+.fx-cursor-dot,.fx-cursor-ring{
+  position:fixed; top:0; left:0; border-radius:50%; pointer-events:none;
+  z-index:99999; mix-blend-mode:difference; transform:translate(-50%,-50%);
+}
+.fx-cursor-dot{ width:6px; height:6px; background:#fff; }
+.fx-cursor-ring{
+  width:34px; height:34px; border:1.5px solid rgba(255,255,255,.7);
+  transition:width .22s ease, height .22s ease, border-color .22s ease, background .22s ease;
+}
+.fx-cursor-ring.hot{ width:56px; height:56px; border-color:var(--red-bright); background:rgba(204,17,17,.14); }
+.fx-cursor-ring.down{ width:22px; height:22px; }
+
+/* — click ripple — */
+.fx-ripple{
+  position:fixed; width:0; height:0; border:2px solid var(--red-bright);
+  border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%);
+  animation:fxRipple .7s cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes fxRipple{ to{ width:220px; height:220px; opacity:0; } }
+
+/* — kinetic marquee band — */
+.fx-marquee{
+  overflow:hidden; white-space:nowrap; background:#0b0b0b;
+  border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(255,255,255,.08);
+  padding:1.2rem 0;
+}
+.fx-marquee-track{ display:inline-block; white-space:nowrap; will-change:transform; animation:fxMarquee 28s linear infinite; }
+.fx-marquee:hover .fx-marquee-track{ animation-play-state:paused; }
+.fx-marquee span{
+  font-family:'Bebas Neue','Arial Black',sans-serif; font-size:2.3rem; letter-spacing:.05em;
+  padding:0 1.4rem; color:transparent; -webkit-text-stroke:1px rgba(255,255,255,.32);
+}
+.fx-marquee span.red,.fx-marquee span.dot{ color:var(--red); -webkit-text-stroke:0; }
+@keyframes fxMarquee{ to{ transform:translateX(-50%); } }
+
+/* — card glare sweep — */
+.fx-glare{
+  position:absolute; inset:0; pointer-events:none; opacity:0; z-index:6;
+  transition:opacity .3s ease;
+  background:radial-gradient(circle at var(--gx,50%) var(--gy,50%), rgba(255,255,255,.16), transparent 42%);
+}
+.svc-card,.prod-card,.rv-card{ position:relative; overflow:hidden; }
+
+/* — dramatized scroll reveal (upgrades existing .fade-up) — */
+.fade-up{
+  transform:translateY(42px) scale(.97); filter:blur(8px);
+  transition:opacity .85s cubic-bezier(.16,1,.3,1), transform .85s cubic-bezier(.16,1,.3,1), filter .85s ease;
+}
+.fade-up.visible{ transform:translateY(0) scale(1); filter:blur(0); }
+
+/* — animated shimmer on the headline accent — */
+.hero-title .red{
+  color:var(--red);
+  background:linear-gradient(100deg,var(--red) 0%,#ff6363 45%,var(--red) 70%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  background-size:220% auto; animation:fxShimmer 4.5s linear infinite;
+}
+@keyframes fxShimmer{ to{ background-position:220% center; } }
+
+/* — graceful degradation — */
+@media (prefers-reduced-motion: reduce){
+  .fx-preloader{ display:none; }
+  .fx-cursor-dot,.fx-cursor-ring,.fx-ripple{ display:none; }
+  .fx-marquee-track{ animation:none; }
+  .fade-up{ filter:none; transform:none; }
+  .hero-title .red{ animation:none; }
+}
+@media (max-width:760px){
+  .fx-marquee span{ font-size:1.7rem; }
+}
+
 </style>
 <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
 
+<!-- CINEMATIC PRELOADER -->
+<div class="fx-preloader" id="fxPreloader">
+  <div class="fx-pre-logo">SHOE<span class="red">LAB</span></div>
+  <div class="fx-pre-bar"><span></span></div>
+  <div class="fx-pre-pct">0%</div>
+</div>
 
 <!-- NAV -->
 <nav id="navbar">
@@ -1776,6 +1888,14 @@ img { max-width: 100%; height: auto; display: block; }
   <div class="stat-item fade-up delay-1"><div class="stat-num">★ 4.9</div><div class="stat-label">Customer Rating</div></div>
   <div class="stat-item fade-up delay-2"><div class="stat-num">3</div><div class="stat-label">Expert Services</div></div>
   <div class="stat-item fade-up delay-3"><div class="stat-num">100%</div><div class="stat-label">Pro-Grade Products</div></div>
+</div>
+
+<!-- KINETIC MARQUEE -->
+<div class="fx-marquee" aria-hidden="true">
+  <div class="fx-marquee-track">
+    <span>Sneaker Care</span><span class="dot">·</span><span class="red">Restoration</span><span class="dot">·</span><span>Deep Cleaning</span><span class="dot">·</span><span>Detailing</span><span class="dot">·</span><span class="red">Bremen</span><span class="dot">·</span><span>Pro-Grade</span><span class="dot">·</span>
+    <span>Sneaker Care</span><span class="dot">·</span><span class="red">Restoration</span><span class="dot">·</span><span>Deep Cleaning</span><span class="dot">·</span><span>Detailing</span><span class="dot">·</span><span class="red">Bremen</span><span class="dot">·</span><span>Pro-Grade</span><span class="dot">·</span>
+  </div>
 </div>
 
 <!-- SERVICES -->
@@ -4794,11 +4914,307 @@ const _origHandleUserMessage = handleUserMessage;
   }
 
   /* ── boot ── */
+  /* ============================================================
+     ENHANCED FX  ·  spans the whole page, not just the hero
+     (all degradation-safe; old helpers above are superseded)
+     ============================================================ */
+  var fxFine = !window.matchMedia || window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  function fxEl(c,t){ var e=document.createElement(t||'div'); if(c) e.className=c; return e; }
+
+  /* upgraded WebGL hero: neon particle fields + glowing torus-knot
+     centrepiece, reactive to mouse AND scroll */
+  function fxHeroScene(){
+    var hero=document.getElementById('hero');
+    if(!hero || prefersReduced || !window.THREE) return;
+    if(document.getElementById('hero-canvas')) return;
+    var THREE=window.THREE;
+    var canvas=document.createElement('canvas'); canvas.id='hero-canvas';
+    hero.insertBefore(canvas, hero.firstChild);
+    var W=hero.clientWidth, H=hero.clientHeight;
+    var scene=new THREE.Scene();
+    var camera=new THREE.PerspectiveCamera(60, W/H, 0.1, 200);
+    camera.position.z=24;
+    var renderer;
+    try{ renderer=new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:true}); }
+    catch(err){ return; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    renderer.setSize(W, H);
+
+    function makeSprite(){
+      var c=document.createElement('canvas'); c.width=c.height=64;
+      var x=c.getContext('2d');
+      var g=x.createRadialGradient(32,32,0,32,32,32);
+      g.addColorStop(0,'rgba(255,255,255,1)');
+      g.addColorStop(0.25,'rgba(255,255,255,0.75)');
+      g.addColorStop(1,'rgba(255,255,255,0)');
+      x.fillStyle=g; x.beginPath(); x.arc(32,32,32,0,Math.PI*2); x.fill();
+      var t=new THREE.Texture(c); t.needsUpdate=true; return t;
+    }
+    var sprite=makeSprite();
+    var small=window.innerWidth<700;
+
+    function makeField(count, spread, depth, size, opacity){
+      var geo=new THREE.BufferGeometry();
+      var pos=new Float32Array(count*3), col=new Float32Array(count*3);
+      for(var i=0;i<count;i++){
+        pos[i*3]   = (Math.random()-0.5)*spread;
+        pos[i*3+1] = (Math.random()-0.5)*spread*0.62;
+        pos[i*3+2] = (Math.random()-0.5)*depth;
+        var red=Math.random()>0.42;
+        col[i*3]   = red?0.95:0.85;
+        col[i*3+1] = red?0.09:0.85;
+        col[i*3+2] = red?0.09:0.95;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+      geo.setAttribute('color',    new THREE.BufferAttribute(col,3));
+      var m=new THREE.PointsMaterial({ size:size, map:sprite, vertexColors:true,
+        transparent:true, opacity:opacity, depthWrite:false, blending:THREE.AdditiveBlending });
+      var p=new THREE.Points(geo,m); scene.add(p); return p;
+    }
+    var farField =makeField(small?280:560, 80, 50, 0.5, 0.65);
+    var nearField=makeField(small?120:240, 46, 30, 1.0, 0.9);
+
+    var core=new THREE.Group(); core.position.set(0,0,-4); scene.add(core);
+    var knot=new THREE.Mesh(
+      new THREE.TorusKnotGeometry(4.6, 0.85, small?90:150, 18, 2, 3),
+      new THREE.MeshBasicMaterial({ color:0xCC1111, wireframe:true, transparent:true, opacity:0.42 }));
+    var halo=new THREE.Mesh(
+      new THREE.TorusKnotGeometry(4.6, 1.6, 70, 10, 2, 3),
+      new THREE.MeshBasicMaterial({ color:0xFF2020, wireframe:true, transparent:true, opacity:0.10 }));
+    core.add(knot); core.add(halo);
+
+    var shapes=[];
+    function addShape(g,x,y,z,color,op){
+      var m=new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:color, wireframe:true, transparent:true, opacity:op }));
+      m.position.set(x,y,z); scene.add(m); shapes.push(m);
+    }
+    addShape(new THREE.IcosahedronGeometry(2.2,0), -13,  4,  2, 0xffffff, 0.18);
+    addShape(new THREE.OctahedronGeometry(1.7,0),   13, -4,  0, 0xCC1111, 0.30);
+    addShape(new THREE.DodecahedronGeometry(1.5,0),  12,  6, -6, 0xffffff, 0.14);
+
+    var tmx=0, tmy=0, mx=0, my=0, scrollN=0;
+    window.addEventListener('mousemove', function(e){
+      tmx=(e.clientX/window.innerWidth)-0.5;
+      tmy=(e.clientY/window.innerHeight)-0.5;
+    }, {passive:true});
+    window.addEventListener('scroll', function(){
+      var h=hero.offsetHeight||1; scrollN=Math.min(1,(window.pageYOffset||0)/h);
+    }, {passive:true});
+    function resize(){
+      W=hero.clientWidth; H=hero.clientHeight;
+      camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H);
+    }
+    window.addEventListener('resize', resize, {passive:true});
+
+    var running=true, t=0;
+    function frame(){
+      requestAnimationFrame(frame);
+      if(!running) return;
+      t+=0.0024;
+      mx+=(tmx-mx)*0.05; my+=(tmy-my)*0.05;
+      farField.rotation.y  = t*0.35;  farField.rotation.x  = Math.sin(t*0.4)*0.10;
+      nearField.rotation.y = -t*0.55; nearField.rotation.x = Math.cos(t*0.5)*0.12;
+      core.rotation.y += 0.0042;
+      core.rotation.x  = 0.3 + Math.sin(t*0.6)*0.18 + scrollN*1.2;
+      core.rotation.z  = scrollN*0.8;
+      knot.material.opacity = 0.42 + Math.sin(t*3)*0.10;
+      halo.material.opacity = 0.10 + Math.sin(t*3)*0.05;
+      var sc=1+scrollN*0.5; core.scale.set(sc,sc,sc);
+      for(var s=0;s<shapes.length;s++){
+        shapes[s].rotation.x += 0.0022 + s*0.0006;
+        shapes[s].rotation.y += 0.0032 + s*0.0004;
+      }
+      camera.position.x += (mx*7  - camera.position.x)*0.045;
+      camera.position.y += (-my*5 - camera.position.y)*0.045;
+      camera.position.z  = 24 - scrollN*8;
+      camera.lookAt(0,0,-4);
+      renderer.render(scene, camera);
+    }
+    frame();
+    canvas.classList.add('ready');
+    document.addEventListener('visibilitychange', function(){ running=!document.hidden; });
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(es){
+        es.forEach(function(en){ running = en.isIntersecting && !document.hidden; });
+      }, {threshold:0}).observe(hero);
+    }
+  }
+  function fxLoadThree(){
+    if(prefersReduced) return;
+    if(window.THREE){ fxHeroScene(); return; }
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.async=true; s.onload=fxHeroScene; s.onerror=function(){};
+    document.head.appendChild(s);
+  }
+
+  /* 3D tilt + glare sweep on every card */
+  function fxTilt(){
+    if(isTouch||prefersReduced) return;
+    var MAX=11;
+    document.querySelectorAll('.svc-card, .prod-card, .rv-card').forEach(function(card){
+      var glare=fxEl('fx-glare'); card.appendChild(glare);
+      var raf=null, rx=0, ry=0, lift=0;
+      function render(){
+        raf=null;
+        card.style.transform='perspective(820px) rotateX('+rx+'deg) rotateY('+ry+'deg) translateY('+lift+'px) scale(1.02)';
+      }
+      card.addEventListener('mouseenter', function(){
+        card.classList.add('tilt-active'); lift=-8;
+        card.style.boxShadow='0 30px 70px rgba(204,17,17,0.28)';
+        card.style.zIndex='5'; glare.style.opacity='1';
+      });
+      card.addEventListener('mousemove', function(e){
+        var r=card.getBoundingClientRect();
+        var px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+        rx=(0.5-py)*MAX*2; ry=(px-0.5)*MAX*2;
+        glare.style.setProperty('--gx',(px*100)+'%');
+        glare.style.setProperty('--gy',(py*100)+'%');
+        if(!raf) raf=requestAnimationFrame(render);
+      });
+      card.addEventListener('mouseleave', function(){
+        if(raf){ cancelAnimationFrame(raf); raf=null; }
+        card.classList.remove('tilt-active');
+        card.style.transform=''; card.style.boxShadow=''; card.style.zIndex='';
+        glare.style.opacity='0';
+      });
+    });
+  }
+
+  /* magnetic CTAs (incl. outline + secondary buttons) */
+  function fxMagnetic(){
+    if(isTouch||prefersReduced) return;
+    document.querySelectorAll('.btn-red, .btn-outline, .nav-cta, .bk-submit').forEach(function(btn){
+      btn.style.willChange='transform';
+      btn.addEventListener('mousemove', function(e){
+        var r=btn.getBoundingClientRect();
+        var x=(e.clientX-r.left-r.width/2)*0.3;
+        var y=(e.clientY-r.top-r.height/2)*0.4;
+        btn.style.transform='translate('+x+'px,'+y+'px)';
+      });
+      btn.addEventListener('mouseleave', function(){ btn.style.transform=''; });
+    });
+  }
+
+  /* hero logo 3D parallax */
+  function fxLogoParallax(){
+    if(isTouch||prefersReduced) return;
+    var right=document.querySelector('.hero-right');
+    var img=document.querySelector('.hero-logo-img');
+    if(!right||!img) return;
+    right.style.perspective='800px';
+    right.addEventListener('mousemove', function(e){
+      var r=right.getBoundingClientRect();
+      var px=(e.clientX-r.left)/r.width-0.5, py=(e.clientY-r.top)/r.height-0.5;
+      img.style.transform='rotateY('+(px*18)+'deg) rotateX('+(-py*18)+'deg) scale(1.04)';
+      img.style.transition='transform 0.1s linear';
+    });
+    right.addEventListener('mouseleave', function(){
+      img.style.transform=''; img.style.transition='transform 0.5s ease';
+    });
+  }
+
+  /* custom glowing cursor */
+  function fxCursor(){
+    if(isTouch||prefersReduced||!fxFine) return;
+    var dot=fxEl('fx-cursor-dot'), ring=fxEl('fx-cursor-ring');
+    document.body.appendChild(dot); document.body.appendChild(ring);
+    document.body.classList.add('fx-cursor');
+    var mx=0,my=0,rx=0,ry=0;
+    window.addEventListener('mousemove', function(e){
+      mx=e.clientX; my=e.clientY;
+      dot.style.transform='translate('+mx+'px,'+my+'px) translate(-50%,-50%)';
+    }, {passive:true});
+    (function loop(){
+      rx+=(mx-rx)*0.2; ry+=(my-ry)*0.2;
+      ring.style.transform='translate('+rx+'px,'+ry+'px) translate(-50%,-50%)';
+      requestAnimationFrame(loop);
+    })();
+    var sel='a, button, .svc-card, .prod-card, .rv-card, input, textarea, select, [onclick], .nav-cta';
+    document.addEventListener('mouseover', function(e){ if(e.target.closest(sel)) ring.classList.add('hot'); }, {passive:true});
+    document.addEventListener('mouseout',  function(e){ if(e.target.closest(sel)) ring.classList.remove('hot'); }, {passive:true});
+    window.addEventListener('mousedown', function(){ ring.classList.add('down'); }, {passive:true});
+    window.addEventListener('mouseup',   function(){ ring.classList.remove('down'); }, {passive:true});
+  }
+
+  /* scroll progress bar */
+  function fxProgress(){
+    var bar=fxEl('fx-progress'); document.body.appendChild(bar);
+    function upd(){
+      var d=document.documentElement;
+      var max=(d.scrollHeight-d.clientHeight)||1;
+      bar.style.width=(((d.scrollTop||window.pageYOffset)/max)*100)+'%';
+    }
+    window.addEventListener('scroll', upd, {passive:true});
+    window.addEventListener('resize', upd, {passive:true});
+    upd();
+  }
+
+  /* animated count-up on the stat strip */
+  function fxCounters(){
+    if(!('IntersectionObserver' in window)) return;
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(en){
+        if(!en.isIntersecting) return;
+        var node=en.target; io.unobserve(node);
+        var m=node.textContent.trim().match(/([^\d]*)([\d.]+)(.*)/);
+        if(!m) return;
+        var pre=m[1], target=parseFloat(m[2]), suf=m[3];
+        var dec=(m[2].indexOf('.')>=0)?1:0, dur=1500, t0=null;
+        function step(ts){
+          if(!t0) t0=ts;
+          var p=Math.min(1,(ts-t0)/dur), e=1-Math.pow(1-p,3);
+          node.textContent=pre+(target*e).toFixed(dec)+suf;
+          if(p<1) requestAnimationFrame(step); else node.textContent=pre+m[2]+suf;
+        }
+        requestAnimationFrame(step);
+      });
+    }, {threshold:0.4});
+    document.querySelectorAll('.stat-num').forEach(function(n){ io.observe(n); });
+  }
+
+  /* click ripple anywhere */
+  function fxRipple(){
+    if(isTouch||prefersReduced) return;
+    window.addEventListener('click', function(e){
+      var r=fxEl('fx-ripple');
+      r.style.left=e.clientX+'px'; r.style.top=e.clientY+'px';
+      document.body.appendChild(r);
+      setTimeout(function(){ if(r.parentNode) r.parentNode.removeChild(r); }, 700);
+    }, {passive:true});
+  }
+
+  /* cinematic preloader (markup already in <body>) */
+  function fxPreloader(){
+    var pre=document.getElementById('fxPreloader');
+    if(!pre) return;
+    var fill=pre.querySelector('.fx-pre-bar span');
+    var pct=pre.querySelector('.fx-pre-pct');
+    var v=0;
+    var iv=setInterval(function(){
+      v=Math.min(100, v + Math.random()*18 + 7);
+      if(fill) fill.style.width=v+'%';
+      if(pct)  pct.textContent=Math.floor(v)+'%';
+      if(v>=100){
+        clearInterval(iv);
+        setTimeout(function(){
+          pre.classList.add('done');
+          setTimeout(function(){ if(pre.parentNode) pre.parentNode.removeChild(pre); }, 900);
+        }, 250);
+      }
+    }, 120);
+  }
+
   function boot(){
-    try{ loadThree(); }       catch(e){}
-    try{ initTilt(); }        catch(e){}
-    try{ initMagnetic(); }    catch(e){}
-    try{ initLogoParallax(); }catch(e){}
+    try{ if(!prefersReduced) fxPreloader(); }catch(e){}
+    try{ fxLoadThree(); }catch(e){}
+    try{ fxTilt(); }catch(e){}
+    try{ fxMagnetic(); }catch(e){}
+    try{ fxLogoParallax(); }catch(e){}
+    try{ fxCursor(); }catch(e){}
+    try{ fxProgress(); }catch(e){}
+    try{ fxCounters(); }catch(e){}
+    try{ fxRipple(); }catch(e){}
   }
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', boot);
