@@ -1098,6 +1098,9 @@ footer{background:var(--black);border-top:1px solid rgba(204,17,17,0.25);}
 .stripe-pay-btn{width:100%;background:linear-gradient(135deg,#CC1111,#990D0D);color:#ffffff !important;border:none;padding:1.1rem 1rem;font-family:'Bebas Neue','Arial Black',sans-serif;font-size:1.15rem;letter-spacing:0.2em;cursor:pointer;transition:all 0.3s;display:flex;align-items:center;justify-content:center;gap:0.8rem;position:relative;overflow:hidden;margin-top:0.4rem;}
 .stripe-pay-btn:hover{background:linear-gradient(135deg,#FF1515,#CC1111);transform:translateY(-2px);box-shadow:0 8px 30px rgba(204,17,17,0.4);}
 .stripe-pay-btn:active{transform:translateY(0);}
+.stripe-pay-btn svg{width:20px;height:20px;flex-shrink:0;}
+/* safety: any SVG without explicit dimensions must not balloon to 300x150 */
+svg:not([width]){max-width:100%;}
 
 /* ── Trust badges ── */
 .stripe-trust{display:flex;align-items:center;justify-content:center;gap:1rem;margin-top:0.8rem;flex-wrap:wrap;}
@@ -2391,7 +2394,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
 
       <!-- PAY BUTTON -->
       <button class="stripe-pay-btn" id="stripePayBtn" onclick="initiateStripePayment()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         <span id="payBtnText">CONFIRM &amp; PAY SECURELY</span>
         <span class="stripe-lock-icon">🔒</span>
       </button>
