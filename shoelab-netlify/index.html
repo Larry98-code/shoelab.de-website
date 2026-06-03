@@ -294,14 +294,13 @@ nav.scrolled{background:rgba(8,8,8,0.97);border-bottom:1px solid rgba(204,17,17,
 .gallery-hd{margin-bottom:3.5rem;}
 .gallery-grid{
   display:grid;
-  grid-template-columns:2fr 1fr 1fr;
-  grid-template-rows:260px 260px;
-  gap:4px;margin-bottom:2.5rem;
+  grid-template-columns:1fr 1fr;
+  grid-auto-rows:300px;
+  gap:6px;margin-bottom:2.5rem;
 }
 .g-item{
   background:var(--dark3);position:relative;overflow:hidden;cursor:pointer;
 }
-.g-item:first-child{grid-row:1/3;}
 .g-ph{
   width:100%;height:100%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;
@@ -1105,6 +1104,7 @@ footer{background:var(--black);border-top:1px solid rgba(204,17,17,0.25);}
 .stripe-trust-item{display:flex;align-items:center;gap:0.35rem;font-size:0.58rem;color:var(--muted);letter-spacing:0.06em;}
 .stripe-trust-item svg{width:12px;height:12px;color:#22b450;flex-shrink:0;}
 .stripe-powered{display:flex;align-items:center;justify-content:center;gap:0.4rem;margin-top:0.6rem;font-size:0.58rem;color:rgba(255,255,255,0.2);}
+.stripe-powered svg{width:34px;height:15px;flex-shrink:0;}
 .payment-icons{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.2rem;align-items:center;}
 .pm-icon{height:28px;padding:4px 8px;background:#ffffff;border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:0.6rem;font-weight:600;letter-spacing:0.05em;color:#333;display:flex;align-items:center;gap:3px;}
 
@@ -2046,8 +2046,8 @@ img { max-width: 100%; height: auto; display: block; }
           <div class="g-fallback-s">Deep Clean</div>
         </div>
         <img class="g-img" loading="lazy" alt="Deep-cleaned sneakers fresh from the lab"
-             src="https://loremflickr.com/1000/1000/sneakers?lock=21"
-             data-fb="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=1100&amp;q=80"
+             src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
              onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
       </div>
       <div class="g-overlay"><span class="g-tag">Deep Clean</span></div>
@@ -2060,8 +2060,8 @@ img { max-width: 100%; height: auto; display: block; }
           <div class="g-fallback-s">The Autopsy</div>
         </div>
         <img class="g-img" loading="lazy" alt="Close-up sneaker detailing"
-             src="https://loremflickr.com/800/800/sneaker,shoe?lock=32"
-             data-fb="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=700&amp;q=80"
+             src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
              onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
       </div>
       <div class="g-overlay"><span class="g-tag">Detailing</span></div>
@@ -2074,8 +2074,8 @@ img { max-width: 100%; height: auto; display: block; }
           <div class="g-fallback-s">The Revival</div>
         </div>
         <img class="g-img" loading="lazy" alt="Restored sneakers"
-             src="https://loremflickr.com/800/800/sneakers?lock=44"
-             data-fb="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=700&amp;q=80"
+             src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
              onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
       </div>
       <div class="g-overlay"><span class="g-tag">Restoration</span></div>
@@ -2088,8 +2088,8 @@ img { max-width: 100%; height: auto; display: block; }
           <div class="g-fallback-s">Basic Clean</div>
         </div>
         <img class="g-img" loading="lazy" alt="Freshly refreshed white sneakers"
-             src="https://loremflickr.com/800/800/sneakers,white?lock=57"
-             data-fb="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=700&amp;q=80"
+             src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
              onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
       </div>
       <div class="g-overlay"><span class="g-tag">Basic Clean</span></div>
@@ -2340,8 +2340,8 @@ img { max-width: 100%; height: auto; display: block; }
 
       <div class="stripe-powered">
         Powered by
-        <svg viewBox="0 0 60 25" fill="none">
-          <text x="0" y="18" font-family="Arial" font-size="16" font-weight="bold" fill="rgba(255,255,255,0.3)">stripe</text>
+        <svg width="34" height="15" viewBox="0 0 60 25" fill="none" aria-label="Stripe">
+          <text x="0" y="19" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="rgba(255,255,255,0.35)">stripe</text>
         </svg>
       </div>
     </div>
