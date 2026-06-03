@@ -1830,6 +1830,38 @@ img { max-width: 100%; height: auto; display: block; }
 .g-fallback-t{ font-family:'Bebas Neue','Arial Black',sans-serif; font-size:1.05rem; letter-spacing:.15em; color:#fff; }
 .g-fallback-s{ font-size:.55rem; letter-spacing:.25em; color:rgba(204,17,17,0.8); text-transform:uppercase; }
 
+/* — before / after cleaning slider — */
+.ba-hint{ text-align:center; margin:-1.5rem 0 2rem; font-size:.62rem; letter-spacing:.22em;
+  text-transform:uppercase; color:rgba(255,255,255,.4); }
+.ba{ position:absolute; inset:0; overflow:hidden; cursor:ew-resize; touch-action:none;
+  background:#0a0a0c; user-select:none; -webkit-user-select:none; }
+.ba-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.ba-after-wrap,.ba-before-wrap{ position:absolute; inset:0; z-index:2; }
+.ba-before-wrap{ clip-path:inset(0 50% 0 0); will-change:clip-path; z-index:3; }
+.ba-before-wrap .ba-img{ filter:grayscale(.42) sepia(.45) saturate(.7) brightness(.58) contrast(1.08) blur(.4px); }
+.ba-grime{ position:absolute; inset:0; pointer-events:none; mix-blend-mode:multiply;
+  background:radial-gradient(58% 50% at 30% 78%, rgba(74,52,26,.6), transparent 60%),
+             radial-gradient(48% 42% at 72% 30%, rgba(48,36,18,.5), transparent 60%),
+             linear-gradient(120deg, rgba(56,40,20,.4), rgba(18,14,8,.18)); }
+.ba-divider{ position:absolute; top:0; bottom:0; left:50%; width:3px; margin-left:-1.5px; z-index:5;
+  background:rgba(255,255,255,.92); box-shadow:0 0 14px rgba(0,0,0,.7); will-change:left; }
+.ba-handle{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:36px; height:36px; border-radius:50%; background:var(--red); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700;
+  box-shadow:0 2px 16px rgba(0,0,0,.6); border:2px solid #fff; }
+.ba-label{ position:absolute; top:.9rem; z-index:4; font-size:.52rem; font-weight:700;
+  letter-spacing:.2em; text-transform:uppercase; color:#fff; padding:.26rem .55rem; border-radius:3px;
+  background:rgba(0,0,0,.55); pointer-events:none; }
+.ba-label-before{ left:.9rem; border-left:2px solid #CC1111; }
+.ba-label-after{ right:.9rem; border-left:2px solid #22b450; }
+.ba .g-tag{ position:absolute; bottom:1rem; left:1rem; z-index:4; pointer-events:none; }
+.ba-img[style*="display: none"]+.ba-grime{ display:none; }
+.ba-fallback{ position:absolute; inset:0; z-index:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:.5rem; color:rgba(255,255,255,.38);
+  font-size:.55rem; letter-spacing:.25em; text-transform:uppercase;
+  background:linear-gradient(135deg,#1a0a0a,#0a0a0a); }
+.ba-fallback-ic{ font-size:2.6rem; filter:drop-shadow(0 0 22px rgba(204,17,17,.5)); }
+
 /* — shop: branded studio product renders — */
 .prod-img-bg.fx-stage{
   background:radial-gradient(120% 92% at 50% 16%, #2b2b31 0%, #161619 56%, #0a0a0c 100%) !important;
@@ -2037,62 +2069,75 @@ img { max-width: 100%; height: auto; display: block; }
     <div class="rule"></div>
     <p class="sec-sub">Real results, straight from the lab — every pair treated with scientific precision and finished to perfection.</p>
   </div>
+  <p class="ba-hint fade-up">Drag the slider on each pair to reveal the transformation →</p>
   <div class="gallery-grid">
     <div class="g-item fade-up">
-      <div class="g-ph g-photo" style="background:linear-gradient(135deg,#1a0a0a 0%,#2d0808 50%,#0a0a0a 100%);border:none;">
-        <div class="g-fallback">
-          <div class="g-fallback-ic">👟</div>
-          <div class="g-fallback-t">Before &amp; After</div>
-          <div class="g-fallback-s">Deep Clean</div>
-        </div>
-        <img class="g-img" loading="lazy" alt="Deep-cleaned sneakers fresh from the lab"
+      <div class="ba">
+        <div class="ba-fallback"><span class="ba-fallback-ic">👟</span><span>Before / After</span></div>
+        <div class="ba-after-wrap"><img class="ba-img" loading="lazy" alt="Sneaker after a deep clean"
              src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
              data-fb="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
-             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"></div>
+        <div class="ba-before-wrap"><img class="ba-img" loading="lazy" alt="Same sneaker before cleaning — dirty"
+             src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"><div class="ba-grime"></div></div>
+        <span class="ba-label ba-label-before">Before</span>
+        <span class="ba-label ba-label-after">After</span>
+        <div class="ba-divider"><div class="ba-handle">⟷</div></div>
+        <span class="g-tag">Deep Clean</span>
       </div>
-      <div class="g-overlay"><span class="g-tag">Deep Clean</span></div>
     </div>
     <div class="g-item fade-up delay-1">
-      <div class="g-ph g-photo" style="background:linear-gradient(135deg,#0a0a1a 0%,#12123a 100%);border:none;">
-        <div class="g-fallback">
-          <div class="g-fallback-ic">✨</div>
-          <div class="g-fallback-t">Sneaker Detailing</div>
-          <div class="g-fallback-s">The Autopsy</div>
-        </div>
-        <img class="g-img" loading="lazy" alt="Close-up sneaker detailing"
+      <div class="ba">
+        <div class="ba-fallback"><span class="ba-fallback-ic">✨</span><span>Before / After</span></div>
+        <div class="ba-after-wrap"><img class="ba-img" loading="lazy" alt="Sneaker after detailing"
              src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
              data-fb="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
-             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"></div>
+        <div class="ba-before-wrap"><img class="ba-img" loading="lazy" alt="Same sneaker before detailing — dirty"
+             src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"><div class="ba-grime"></div></div>
+        <span class="ba-label ba-label-before">Before</span>
+        <span class="ba-label ba-label-after">After</span>
+        <div class="ba-divider"><div class="ba-handle">⟷</div></div>
+        <span class="g-tag">Detailing</span>
       </div>
-      <div class="g-overlay"><span class="g-tag">Detailing</span></div>
     </div>
     <div class="g-item fade-up delay-2">
-      <div class="g-ph g-photo" style="background:linear-gradient(135deg,#0a1a0a 0%,#0f2a0f 100%);border:none;">
-        <div class="g-fallback">
-          <div class="g-fallback-ic">🔬</div>
-          <div class="g-fallback-t">Full Restoration</div>
-          <div class="g-fallback-s">The Revival</div>
-        </div>
-        <img class="g-img" loading="lazy" alt="Restored sneakers"
+      <div class="ba">
+        <div class="ba-fallback"><span class="ba-fallback-ic">🔬</span><span>Before / After</span></div>
+        <div class="ba-after-wrap"><img class="ba-img" loading="lazy" alt="Sneaker after full restoration"
              src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
              data-fb="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
-             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"></div>
+        <div class="ba-before-wrap"><img class="ba-img" loading="lazy" alt="Same sneaker before restoration — worn"
+             src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"><div class="ba-grime"></div></div>
+        <span class="ba-label ba-label-before">Before</span>
+        <span class="ba-label ba-label-after">After</span>
+        <div class="ba-divider"><div class="ba-handle">⟷</div></div>
+        <span class="g-tag">Restoration</span>
       </div>
-      <div class="g-overlay"><span class="g-tag">Restoration</span></div>
     </div>
     <div class="g-item fade-up delay-3">
-      <div class="g-ph g-photo" style="background:linear-gradient(135deg,#1a1000 0%,#2a1800 100%);border:none;">
-        <div class="g-fallback">
-          <div class="g-fallback-ic">🧴</div>
-          <div class="g-fallback-t">The Refresh</div>
-          <div class="g-fallback-s">Basic Clean</div>
-        </div>
-        <img class="g-img" loading="lazy" alt="Freshly refreshed white sneakers"
+      <div class="ba">
+        <div class="ba-fallback"><span class="ba-fallback-ic">🧴</span><span>Before / After</span></div>
+        <div class="ba-after-wrap"><img class="ba-img" loading="lazy" alt="White sneaker after a fresh clean"
              src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
              data-fb="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
-             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"></div>
+        <div class="ba-before-wrap"><img class="ba-img" loading="lazy" alt="Same white sneaker before cleaning — dirty"
+             src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"><div class="ba-grime"></div></div>
+        <span class="ba-label ba-label-before">Before</span>
+        <span class="ba-label ba-label-after">After</span>
+        <div class="ba-divider"><div class="ba-handle">⟷</div></div>
+        <span class="g-tag">Basic Clean</span>
       </div>
-      <div class="g-overlay"><span class="g-tag">Basic Clean</span></div>
     </div>
   </div>
   <div class="gallery-cta"><a href="#booking" class="btn-outline">See Full Portfolio →</a></div>
@@ -5327,8 +5372,39 @@ const _origHandleUserMessage = handleUserMessage;
     });
   }
 
+  /* Before/after slider — drag the divider to wipe between the dirty "before"
+     and the cleaned "after" (same shoe). Pointer events cover mouse + touch. */
+  function fxBeforeAfter(){
+    document.querySelectorAll('.ba').forEach(function(ba){
+      var before=ba.querySelector('.ba-before-wrap');
+      var divider=ba.querySelector('.ba-divider');
+      if(!before||!divider) return;
+      var dragging=false;
+      function set(p){
+        p=Math.max(4,Math.min(96,p));
+        before.style.clipPath='inset(0 '+(100-p)+'% 0 0)';
+        divider.style.left=p+'%';
+      }
+      function move(e){
+        var r=ba.getBoundingClientRect();
+        var x=(e.clientX!=null?e.clientX:(e.touches&&e.touches[0].clientX))-r.left;
+        set(x/r.width*100);
+      }
+      ba.addEventListener('pointerdown',function(e){
+        dragging=true;
+        try{ ba.setPointerCapture(e.pointerId); }catch(_){}
+        move(e); e.preventDefault();
+      });
+      ba.addEventListener('pointermove',function(e){ if(dragging) move(e); });
+      ba.addEventListener('pointerup',function(){ dragging=false; });
+      ba.addEventListener('pointercancel',function(){ dragging=false; });
+      set(50);
+    });
+  }
+
   function boot(){
     try{ fxProductRenders(); }catch(e){}
+    try{ fxBeforeAfter(); }catch(e){}
     try{ if(!prefersReduced) fxPreloader(); }catch(e){}
     try{ fxLoadThree(); }catch(e){}
     try{ fxTilt(); }catch(e){}
