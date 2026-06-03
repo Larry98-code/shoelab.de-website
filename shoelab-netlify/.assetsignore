@@ -1,0 +1,8 @@
+# Files that should NOT be served as part of the static site
+wesley-worker.js
+wrangler.jsonc
+.assetsignore
+netlify.toml
+README.md
+netlify
+functions
