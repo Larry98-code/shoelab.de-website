@@ -5,3 +5,10 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# Keep the platform-neutral /api/wesley path working on Netlify too
+# (Cloudflare Pages serves it natively via functions/api/wesley.js)
+[[redirects]]
+  from   = "/api/wesley"
+  to     = "/.netlify/functions/wesley"
+  status = 200

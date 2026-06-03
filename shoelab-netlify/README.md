@@ -20,12 +20,19 @@ and falls back to the original static hero if the CDN or WebGL is unavailable.
 ```
 shoelab-netlify/
 ├── index.html                    # Full website (self-contained)
-├── netlify.toml                  # Netlify config
+├── netlify.toml                  # Netlify config (+ /api/wesley redirect)
 ├── README.md                     # This file
+├── functions/
+│   └── api/
+│       └── wesley.js             # Wesley AI proxy — Cloudflare Pages Function
 └── netlify/
     └── functions/
-        └── wesley.js             # Wesley AI secure proxy function
+        └── wesley.js             # Wesley AI proxy — Netlify Function
 ```
+
+> The site calls a single neutral endpoint, **`/api/wesley`**. On Cloudflare it
+> is served by `functions/api/wesley.js`; on Netlify a redirect maps it to the
+> Netlify function. The same code therefore deploys to **either host** unchanged.
 
 ## Deploy to Netlify (Required for Wesley AI to work)
 
@@ -62,7 +69,36 @@ Wesley will now respond to every customer question instantly.
 2. Add custom domain: shoelab.de
 3. Follow DNS instructions
 
-## Why Netlify instead of GitHub Pages?
+## Deploy to Cloudflare Pages (free · unlimited bandwidth)
+
+Recommended if you hit Netlify's bandwidth cap — Cloudflare Pages has
+**unlimited bandwidth and requests** on its free tier, and Pages Functions
+run the Wesley backend for free (100k requests/day).
+
+### Step 1 — Create the project
+1. Go to **dash.cloudflare.com** → **Workers & Pages** → **Create** → **Pages**
+2. **Connect to Git** → choose this GitHub repo
+
+### Step 2 — Build settings
+- **Framework preset:** None
+- **Build command:** *(leave empty)*
+- **Build output directory:** `shoelab-netlify`
+- *(Cloudflare auto-detects `functions/api/wesley.js` → serves it at `/api/wesley`)*
+
+### Step 3 — Add your Anthropic API key (CRITICAL)
+1. Project → **Settings** → **Environment variables** → **Add**
+2. Name: `ANTHROPIC_API_KEY`
+3. Value: your key from console.anthropic.com
+4. Save, then **Deployments → Retry deployment** so the key is picked up
+
+### Step 4 — Custom domain
+1. Project → **Custom domains** → **Set up a domain** → `shoelab.de`
+2. Follow the DNS prompts (instant if your domain is already on Cloudflare)
+
+> **Note:** Hosting is free, but each Wesley message still consumes Anthropic
+> API credits — that's the AI usage, not the hosting (same as on Netlify).
+
+## Why not GitHub Pages?
 GitHub Pages only serves static files — it can't run the Wesley AI backend.
-Netlify runs the serverless function that securely calls the Anthropic API.
-Both hosting and the AI function are completely FREE on Netlify's free tier.
+Netlify and Cloudflare both run the serverless function that securely calls the
+Anthropic API. Hosting is free on either; Cloudflare adds unlimited bandwidth.
