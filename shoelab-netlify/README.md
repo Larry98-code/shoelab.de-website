@@ -81,9 +81,16 @@ run the Wesley backend for free (100k requests/day).
 
 ### Step 2 — Build settings
 - **Framework preset:** None
+- **Root directory** *(under "Advanced")*: **`shoelab-netlify`** ← required
 - **Build command:** *(leave empty)*
-- **Build output directory:** `shoelab-netlify`
-- *(Cloudflare auto-detects `functions/api/wesley.js` → serves it at `/api/wesley`)*
+- **Build output directory:** *(leave default / `/`)*
+
+> ⚠️ **Set the Root directory to `shoelab-netlify`.** Cloudflare only runs
+> Functions from a `/functions` folder at the *project root*. Our function lives
+> at `shoelab-netlify/functions/api/wesley.js`, so the root directory must point
+> there — otherwise the site deploys fine but `/api/wesley` 404s and Wesley
+> won't answer. With the root set correctly, Cloudflare auto-detects the
+> function and serves it at `/api/wesley`.
 
 ### Step 3 — Add your Anthropic API key (CRITICAL)
 1. Project → **Settings** → **Environment variables** → **Add**
