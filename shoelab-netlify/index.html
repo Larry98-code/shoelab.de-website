@@ -40,7 +40,7 @@ a:visited { color: inherit; }
 a:hover { text-decoration: none; }
 button { -webkit-tap-highlight-color: transparent; }
 img { max-width: 100%; display: block; }
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;overflow-x:hidden;width:100%;-webkit-text-size-adjust:100%;}
 body{background:var(--black);color:var(--white);font-family:'Inter','Helvetica Neue','Helvetica',Arial,sans-serif;font-weight:300;overflow-x:hidden;}
 
 /* SCROLLBAR */
@@ -294,14 +294,13 @@ nav.scrolled{background:rgba(8,8,8,0.97);border-bottom:1px solid rgba(204,17,17,
 .gallery-hd{margin-bottom:3.5rem;}
 .gallery-grid{
   display:grid;
-  grid-template-columns:2fr 1fr 1fr;
-  grid-template-rows:260px 260px;
-  gap:4px;margin-bottom:2.5rem;
+  grid-template-columns:1fr 1fr;
+  grid-auto-rows:300px;
+  gap:6px;margin-bottom:2.5rem;
 }
 .g-item{
   background:var(--dark3);position:relative;overflow:hidden;cursor:pointer;
 }
-.g-item:first-child{grid-row:1/3;}
 .g-ph{
   width:100%;height:100%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;
@@ -1105,6 +1104,7 @@ footer{background:var(--black);border-top:1px solid rgba(204,17,17,0.25);}
 .stripe-trust-item{display:flex;align-items:center;gap:0.35rem;font-size:0.58rem;color:var(--muted);letter-spacing:0.06em;}
 .stripe-trust-item svg{width:12px;height:12px;color:#22b450;flex-shrink:0;}
 .stripe-powered{display:flex;align-items:center;justify-content:center;gap:0.4rem;margin-top:0.6rem;font-size:0.58rem;color:rgba(255,255,255,0.2);}
+.stripe-powered svg{width:34px;height:15px;flex-shrink:0;}
 .payment-icons{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.2rem;align-items:center;}
 .pm-icon{height:28px;padding:4px 8px;background:#ffffff;border:1px solid rgba(255,255,255,0.15);border-radius:4px;font-size:0.6rem;font-weight:600;letter-spacing:0.05em;color:#333;display:flex;align-items:center;gap:3px;}
 
@@ -1629,8 +1629,36 @@ footer{background:var(--black);border-top:1px solid rgba(204,17,17,0.25);}
 
 /* ── ADDITIONAL STABILITY FIXES ── */
 * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-input, select, textarea, button { font-family: inherit; }
-img { max-width: 100%; height: auto; display: block; }
+input, select, textarea, button { font-family: inherit; max-width: 100%; }
+img, svg, video, canvas { max-width: 100%; }
+img { height: auto; display: block; }
+
+/* ── RESPONSIVE HARDENING — fit every device / screen size ── */
+/* never allow sideways scroll on any device */
+html, body { max-width: 100%; overflow-x: hidden; }
+/* let grid/flex children shrink instead of forcing the page wider */
+.services-grid > *, .shop-grid > *, .reviews-grid > *, .gallery-grid > *,
+.footer-top > *, .booking-inner > *, .stat-strip > * { min-width: 0; }
+/* break long words / URLs / emails so they can't overflow their card */
+body { overflow-wrap: break-word; word-wrap: break-word; }
+/* keep fixed-position UI (chat, cart, toasts) inside the viewport */
+.wesley-window, .cart-drawer, .cart-toast { max-width: 100vw; }
+/* anchor jumps clear the sticky nav on every size */
+section[id], [id]{ scroll-margin-top: 90px; }
+/* ultra-small phones (≤360px): trim padding so content keeps breathing room */
+@media (max-width: 360px){
+  .section{ padding-left: 0.9rem; padding-right: 0.9rem; }
+  .sec-title{ font-size: 1.9rem; }
+  .hero-title{ font-size: clamp(2.4rem, 13vw, 3.4rem); }
+  nav{ padding: 0 0.8rem; }
+}
+/* very large screens: cap content so it doesn't stretch awkwardly wide */
+@media (min-width: 1700px){
+  .hero-inner, .services-grid, .gallery-grid, .reviews-grid,
+  .shop-grid, .booking-inner, .footer-top, .stat-strip{
+    max-width: 1500px; margin-left: auto; margin-right: auto;
+  }
+}
 
 /* ── GALLERY GRID FIX ── */
 @media(max-width:768px){
@@ -1830,14 +1858,46 @@ img { max-width: 100%; height: auto; display: block; }
 .g-fallback-t{ font-family:'Bebas Neue','Arial Black',sans-serif; font-size:1.05rem; letter-spacing:.15em; color:#fff; }
 .g-fallback-s{ font-size:.55rem; letter-spacing:.25em; color:rgba(204,17,17,0.8); text-transform:uppercase; }
 
+/* — before / after cleaning slider — */
+.ba-hint{ text-align:center; margin:-1.5rem 0 2rem; font-size:.62rem; letter-spacing:.22em;
+  text-transform:uppercase; color:rgba(255,255,255,.4); }
+.ba{ position:absolute; inset:0; overflow:hidden; cursor:ew-resize; touch-action:none;
+  background:#0a0a0c; user-select:none; -webkit-user-select:none; }
+.ba-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.ba-after-wrap,.ba-before-wrap{ position:absolute; inset:0; z-index:2; }
+.ba-before-wrap{ clip-path:inset(0 50% 0 0); will-change:clip-path; z-index:3; }
+.ba-before-wrap .ba-img{ filter:grayscale(.42) sepia(.45) saturate(.7) brightness(.58) contrast(1.08) blur(.4px); }
+.ba-grime{ position:absolute; inset:0; pointer-events:none; mix-blend-mode:multiply;
+  background:radial-gradient(58% 50% at 30% 78%, rgba(74,52,26,.6), transparent 60%),
+             radial-gradient(48% 42% at 72% 30%, rgba(48,36,18,.5), transparent 60%),
+             linear-gradient(120deg, rgba(56,40,20,.4), rgba(18,14,8,.18)); }
+.ba-divider{ position:absolute; top:0; bottom:0; left:50%; width:3px; margin-left:-1.5px; z-index:5;
+  background:rgba(255,255,255,.92); box-shadow:0 0 14px rgba(0,0,0,.7); will-change:left; }
+.ba-handle{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:36px; height:36px; border-radius:50%; background:var(--red); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700;
+  box-shadow:0 2px 16px rgba(0,0,0,.6); border:2px solid #fff; }
+.ba-label{ position:absolute; top:.9rem; z-index:4; font-size:.52rem; font-weight:700;
+  letter-spacing:.2em; text-transform:uppercase; color:#fff; padding:.26rem .55rem; border-radius:3px;
+  background:rgba(0,0,0,.55); pointer-events:none; }
+.ba-label-before{ left:.9rem; border-left:2px solid #CC1111; }
+.ba-label-after{ right:.9rem; border-left:2px solid #22b450; }
+.ba .g-tag{ position:absolute; bottom:1rem; left:1rem; z-index:4; pointer-events:none; }
+.ba-img[style*="display: none"]+.ba-grime{ display:none; }
+.ba-fallback{ position:absolute; inset:0; z-index:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:.5rem; color:rgba(255,255,255,.38);
+  font-size:.55rem; letter-spacing:.25em; text-transform:uppercase;
+  background:linear-gradient(135deg,#1a0a0a,#0a0a0a); }
+.ba-fallback-ic{ font-size:2.6rem; filter:drop-shadow(0 0 22px rgba(204,17,17,.5)); }
+
 /* — shop: branded studio product renders — */
 .prod-img-bg.fx-stage{
   background:radial-gradient(120% 92% at 50% 16%, #2b2b31 0%, #161619 56%, #0a0a0c 100%) !important;
   position:relative; overflow:hidden;
 }
 .fx-stage .fx-prod-svg{
-  width:60%; height:60%; position:relative; z-index:2;
-  filter:drop-shadow(0 16px 20px rgba(0,0,0,.55));
+  width:62%; height:62%; position:relative; z-index:2;
+  filter:drop-shadow(0 20px 24px rgba(0,0,0,.6)) drop-shadow(0 3px 5px rgba(0,0,0,.4));
   transition:transform .55s cubic-bezier(.16,1,.3,1);
 }
 .prod-card:hover .fx-stage .fx-prod-svg{ transform:translateY(-7px) scale(1.06); }
@@ -2037,62 +2097,75 @@ img { max-width: 100%; height: auto; display: block; }
     <div class="rule"></div>
     <p class="sec-sub">Real results, straight from the lab — every pair treated with scientific precision and finished to perfection.</p>
   </div>
+  <p class="ba-hint fade-up">Drag the slider on each pair to reveal the transformation →</p>
   <div class="gallery-grid">
     <div class="g-item fade-up">
-      <div class="g-ph g-photo" style="background:linear-gradient(135deg,#1a0a0a 0%,#2d0808 50%,#0a0a0a 100%);border:none;">
-        <div class="g-fallback">
-          <div class="g-fallback-ic">👟</div>
-          <div class="g-fallback-t">Before &amp; After</div>
-          <div class="g-fallback-s">Deep Clean</div>
-        </div>
-        <img class="g-img" loading="lazy" alt="Deep-cleaned sneakers fresh from the lab"
-             src="https://loremflickr.com/1000/1000/sneakers?lock=21"
-             data-fb="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=1100&amp;q=80"
-             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
+      <div class="ba">
+        <div class="ba-fallback"><span class="ba-fallback-ic">👟</span><span>Before / After</span></div>
+        <div class="ba-after-wrap"><img class="ba-img" loading="lazy" alt="Sneaker after a deep clean"
+             src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"></div>
+        <div class="ba-before-wrap"><img class="ba-img" loading="lazy" alt="Same sneaker before cleaning — dirty"
+             src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=1000&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"><div class="ba-grime"></div></div>
+        <span class="ba-label ba-label-before">Before</span>
+        <span class="ba-label ba-label-after">After</span>
+        <div class="ba-divider"><div class="ba-handle">⟷</div></div>
+        <span class="g-tag">Deep Clean</span>
       </div>
-      <div class="g-overlay"><span class="g-tag">Deep Clean</span></div>
     </div>
     <div class="g-item fade-up delay-1">
-      <div class="g-ph g-photo" style="background:linear-gradient(135deg,#0a0a1a 0%,#12123a 100%);border:none;">
-        <div class="g-fallback">
-          <div class="g-fallback-ic">✨</div>
-          <div class="g-fallback-t">Sneaker Detailing</div>
-          <div class="g-fallback-s">The Autopsy</div>
-        </div>
-        <img class="g-img" loading="lazy" alt="Close-up sneaker detailing"
-             src="https://loremflickr.com/800/800/sneaker,shoe?lock=32"
-             data-fb="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=700&amp;q=80"
-             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
+      <div class="ba">
+        <div class="ba-fallback"><span class="ba-fallback-ic">✨</span><span>Before / After</span></div>
+        <div class="ba-after-wrap"><img class="ba-img" loading="lazy" alt="Sneaker after detailing"
+             src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"></div>
+        <div class="ba-before-wrap"><img class="ba-img" loading="lazy" alt="Same sneaker before detailing — dirty"
+             src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"><div class="ba-grime"></div></div>
+        <span class="ba-label ba-label-before">Before</span>
+        <span class="ba-label ba-label-after">After</span>
+        <div class="ba-divider"><div class="ba-handle">⟷</div></div>
+        <span class="g-tag">Detailing</span>
       </div>
-      <div class="g-overlay"><span class="g-tag">Detailing</span></div>
     </div>
     <div class="g-item fade-up delay-2">
-      <div class="g-ph g-photo" style="background:linear-gradient(135deg,#0a1a0a 0%,#0f2a0f 100%);border:none;">
-        <div class="g-fallback">
-          <div class="g-fallback-ic">🔬</div>
-          <div class="g-fallback-t">Full Restoration</div>
-          <div class="g-fallback-s">The Revival</div>
-        </div>
-        <img class="g-img" loading="lazy" alt="Restored sneakers"
-             src="https://loremflickr.com/800/800/sneakers?lock=44"
-             data-fb="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=700&amp;q=80"
-             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
+      <div class="ba">
+        <div class="ba-fallback"><span class="ba-fallback-ic">🔬</span><span>Before / After</span></div>
+        <div class="ba-after-wrap"><img class="ba-img" loading="lazy" alt="Sneaker after full restoration"
+             src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"></div>
+        <div class="ba-before-wrap"><img class="ba-img" loading="lazy" alt="Same sneaker before restoration — worn"
+             src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"><div class="ba-grime"></div></div>
+        <span class="ba-label ba-label-before">Before</span>
+        <span class="ba-label ba-label-after">After</span>
+        <div class="ba-divider"><div class="ba-handle">⟷</div></div>
+        <span class="g-tag">Restoration</span>
       </div>
-      <div class="g-overlay"><span class="g-tag">Restoration</span></div>
     </div>
     <div class="g-item fade-up delay-3">
-      <div class="g-ph g-photo" style="background:linear-gradient(135deg,#1a1000 0%,#2a1800 100%);border:none;">
-        <div class="g-fallback">
-          <div class="g-fallback-ic">🧴</div>
-          <div class="g-fallback-t">The Refresh</div>
-          <div class="g-fallback-s">Basic Clean</div>
-        </div>
-        <img class="g-img" loading="lazy" alt="Freshly refreshed white sneakers"
-             src="https://loremflickr.com/800/800/sneakers,white?lock=57"
-             data-fb="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=700&amp;q=80"
-             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.classList.add('g-img-fail'); }">
+      <div class="ba">
+        <div class="ba-fallback"><span class="ba-fallback-ic">🧴</span><span>Before / After</span></div>
+        <div class="ba-after-wrap"><img class="ba-img" loading="lazy" alt="White sneaker after a fresh clean"
+             src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"></div>
+        <div class="ba-before-wrap"><img class="ba-img" loading="lazy" alt="Same white sneaker before cleaning — dirty"
+             src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             data-fb="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&amp;fit=crop&amp;w=800&amp;q=80"
+             onerror="var f=this.getAttribute('data-fb'); if(f){this.removeAttribute('data-fb'); this.src=f;} else { this.style.display='none'; }"><div class="ba-grime"></div></div>
+        <span class="ba-label ba-label-before">Before</span>
+        <span class="ba-label ba-label-after">After</span>
+        <div class="ba-divider"><div class="ba-handle">⟷</div></div>
+        <span class="g-tag">Basic Clean</span>
       </div>
-      <div class="g-overlay"><span class="g-tag">Basic Clean</span></div>
     </div>
   </div>
   <div class="gallery-cta"><a href="#booking" class="btn-outline">See Full Portfolio →</a></div>
@@ -2340,8 +2413,8 @@ img { max-width: 100%; height: auto; display: block; }
 
       <div class="stripe-powered">
         Powered by
-        <svg viewBox="0 0 60 25" fill="none">
-          <text x="0" y="18" font-family="Arial" font-size="16" font-weight="bold" fill="rgba(255,255,255,0.3)">stripe</text>
+        <svg width="34" height="15" viewBox="0 0 60 25" fill="none" aria-label="Stripe">
+          <text x="0" y="19" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="rgba(255,255,255,0.35)">stripe</text>
         </svg>
       </div>
     </div>
@@ -5279,14 +5352,30 @@ const _origHandleUserMessage = handleUserMessage;
   function fxProductRenders(){
     var cards=document.querySelectorAll('.prod-card');
     if(!cards.length) return;
+    // shared gradient defs (injected once) — gives the vector renders a glossy, 3D feel
+    if(!document.getElementById('fxDefs')){
+      var d=document.createElement('div');
+      d.id='fxDefs'; d.setAttribute('aria-hidden','true');
+      d.style.cssText='position:absolute;width:0;height:0;overflow:hidden;';
+      d.innerHTML='<svg width="0" height="0"><defs>'
+        +'<linearGradient id="gBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8f969f"/><stop offset="0.15" stop-color="#eef2f6"/><stop offset="0.34" stop-color="#dfe4e9"/><stop offset="0.62" stop-color="#bcc1c9"/><stop offset="1" stop-color="#828992"/></linearGradient>'
+        +'<linearGradient id="gCap" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b0b0e"/><stop offset="0.25" stop-color="#34343c"/><stop offset="0.55" stop-color="#1a1a20"/><stop offset="1" stop-color="#09090c"/></linearGradient>'
+        +'<linearGradient id="gRed" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#860c0c"/><stop offset="0.2" stop-color="#ff2d2d"/><stop offset="0.5" stop-color="#cc1111"/><stop offset="1" stop-color="#770a0a"/></linearGradient>'
+        +'<linearGradient id="gWood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c7a566"/><stop offset="0.32" stop-color="#ecd09a"/><stop offset="1" stop-color="#b5915a"/></linearGradient>'
+        +'<linearGradient id="gBoxF" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c2c7cf"/><stop offset="0.3" stop-color="#eef1f4"/><stop offset="1" stop-color="#cdd2d8"/></linearGradient>'
+        +'<linearGradient id="gBoxS" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9097a0"/><stop offset="1" stop-color="#6f757e"/></linearGradient>'
+        +'<linearGradient id="gCloth" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef1f4"/><stop offset="1" stop-color="#c2c7cf"/></linearGradient>'
+        +'</defs></svg>';
+      document.body.appendChild(d);
+    }
     var logoSrc=(document.querySelector('.nav-logo-img')||{}).src||'';
     var TAG={ bottle:'Cleaner', spray:'Protector', brush:'Brush', box:'Kit', cloth:'Cloth' };
     var SVG={
-      bottle:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><rect x="42" y="6" width="16" height="16" rx="2" fill="#17171b"/><rect x="44" y="20" width="12" height="8" fill="#26262b"/><rect x="28" y="27" width="44" height="96" rx="11" fill="#d9dde3"/><rect x="33" y="33" width="7" height="82" rx="3.5" fill="#fff" opacity="0.5"/><rect x="60" y="33" width="9" height="84" rx="4" fill="#000" opacity="0.1"/><rect x="28" y="64" width="44" height="34" fill="#CC1111"/><rect x="28" y="64" width="44" height="3" fill="#ff3b3b"/><text x="50" y="85" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="9" fill="#fff">SHOELAB</text></svg>',
-      spray:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><rect x="46" y="2" width="10" height="7" rx="1.5" fill="#CC1111"/><rect x="40" y="8" width="22" height="11" rx="2" fill="#17171b"/><rect x="32" y="18" width="36" height="106" rx="9" fill="#d9dde3"/><rect x="37" y="24" width="6" height="94" rx="3" fill="#fff" opacity="0.5"/><rect x="58" y="24" width="8" height="96" rx="4" fill="#000" opacity="0.1"/><rect x="32" y="58" width="36" height="36" fill="#CC1111"/><rect x="32" y="58" width="36" height="3" fill="#ff3b3b"/><text x="50" y="80" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="8" fill="#fff">SHOELAB</text><circle cx="74" cy="14" r="2" fill="#cfd6dd" opacity="0.7"/><circle cx="80" cy="9" r="1.5" fill="#cfd6dd" opacity="0.6"/><circle cx="82" cy="18" r="1.3" fill="#cfd6dd" opacity="0.5"/></svg>',
-      brush:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><rect x="38" y="10" width="24" height="64" rx="11" fill="#d9dde3"/><rect x="42" y="14" width="5" height="54" rx="2.5" fill="#fff" opacity="0.5"/><rect x="38" y="30" width="24" height="14" fill="#CC1111"/><text x="50" y="40" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="7" fill="#fff">SHOELAB</text><rect x="37" y="73" width="26" height="7" rx="1.5" fill="#17171b"/><path d="M37 80 L63 80 L70 116 L30 116 Z" fill="#e6c891"/><path d="M44 80 L44 116 M50 80 L50 116 M56 80 L56 116" stroke="#c8ad74" stroke-width="1.4"/></svg>',
-      box:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><path d="M26 44 L50 30 L92 30 L68 44 Z" fill="#eef1f4"/><path d="M68 44 L92 30 L92 100 L68 114 Z" fill="#aab0b8"/><rect x="26" y="44" width="42" height="70" fill="#d9dde3"/><rect x="30" y="48" width="5" height="62" fill="#fff" opacity="0.4"/><rect x="26" y="66" width="42" height="26" fill="#CC1111"/><rect x="26" y="66" width="42" height="3" fill="#ff3b3b"/><text x="47" y="83" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="9" fill="#fff">SHOELAB</text></svg>',
-      cloth:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><rect x="24" y="54" width="52" height="50" rx="7" fill="#9aa0a8"/><rect x="30" y="44" width="52" height="50" rx="7" fill="#d9dde3"/><path d="M36 44 L36 94 M42 44 L42 94" stroke="#bcc2c9" stroke-width="1.4" opacity="0.7"/><rect x="30" y="44" width="52" height="50" rx="7" fill="none" stroke="#fff" stroke-width="1" opacity="0.3"/><rect x="60" y="40" width="18" height="9" rx="2" fill="#CC1111"/><text x="69" y="47" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="6" fill="#fff">SL</text></svg>'
+      bottle:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><ellipse cx="50" cy="126" rx="28" ry="4" fill="#000" opacity="0.38"/><rect x="42" y="6" width="16" height="16" rx="2" fill="url(#gCap)"/><rect x="44" y="20" width="12" height="8" fill="#222227"/><rect x="28" y="27" width="44" height="96" rx="11" fill="url(#gBody)"/><rect x="32" y="31" width="6" height="86" rx="3" fill="#fff" opacity="0.55"/><rect x="62" y="33" width="8" height="84" rx="4" fill="#000" opacity="0.1"/><rect x="28" y="64" width="44" height="34" fill="url(#gRed)"/><rect x="28" y="64" width="44" height="3" fill="#ff6a6a" opacity="0.85"/><text x="50" y="85" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="9" fill="#fff">SHOELAB</text></svg>',
+      spray:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><ellipse cx="50" cy="126" rx="24" ry="4" fill="#000" opacity="0.38"/><rect x="46" y="2" width="10" height="7" rx="1.5" fill="url(#gRed)"/><rect x="40" y="8" width="22" height="11" rx="2" fill="url(#gCap)"/><rect x="32" y="18" width="36" height="106" rx="9" fill="url(#gBody)"/><rect x="36" y="22" width="5" height="96" rx="2.5" fill="#fff" opacity="0.55"/><rect x="58" y="24" width="8" height="96" rx="4" fill="#000" opacity="0.1"/><rect x="32" y="58" width="36" height="36" fill="url(#gRed)"/><rect x="32" y="58" width="36" height="3" fill="#ff6a6a" opacity="0.85"/><text x="50" y="80" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="8" fill="#fff">SHOELAB</text><circle cx="74" cy="14" r="2" fill="#cfd6dd" opacity="0.7"/><circle cx="80" cy="9" r="1.5" fill="#cfd6dd" opacity="0.6"/><circle cx="82" cy="18" r="1.3" fill="#cfd6dd" opacity="0.5"/></svg>',
+      brush:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><ellipse cx="50" cy="119" rx="22" ry="4" fill="#000" opacity="0.35"/><rect x="38" y="10" width="24" height="64" rx="11" fill="url(#gBody)"/><rect x="42" y="14" width="5" height="54" rx="2.5" fill="#fff" opacity="0.55"/><rect x="38" y="30" width="24" height="14" fill="url(#gRed)"/><text x="50" y="40" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="7" fill="#fff">SHOELAB</text><rect x="37" y="73" width="26" height="7" rx="1.5" fill="url(#gCap)"/><path d="M37 80 L63 80 L70 116 L30 116 Z" fill="url(#gWood)"/><path d="M44 80 L44 116 M50 80 L50 116 M56 80 L56 116" stroke="#b5915a" stroke-width="1.4" opacity="0.6"/></svg>',
+      box:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><ellipse cx="56" cy="118" rx="34" ry="5" fill="#000" opacity="0.35"/><path d="M26 44 L50 30 L92 30 L68 44 Z" fill="#f3f5f7"/><path d="M68 44 L92 30 L92 100 L68 114 Z" fill="url(#gBoxS)"/><rect x="26" y="44" width="42" height="70" fill="url(#gBoxF)"/><rect x="30" y="48" width="5" height="62" fill="#fff" opacity="0.45"/><rect x="26" y="66" width="42" height="26" fill="url(#gRed)"/><rect x="26" y="66" width="42" height="3" fill="#ff6a6a" opacity="0.85"/><text x="47" y="83" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="9" fill="#fff">SHOELAB</text></svg>',
+      cloth:'<svg class="fx-prod-svg" viewBox="0 0 100 130"><ellipse cx="53" cy="105" rx="32" ry="5" fill="#000" opacity="0.32"/><rect x="24" y="54" width="52" height="50" rx="7" fill="#9aa0a8"/><rect x="30" y="44" width="52" height="50" rx="7" fill="url(#gCloth)"/><path d="M36 44 L36 94 M42 44 L42 94" stroke="#bcc2c9" stroke-width="1.4" opacity="0.7"/><rect x="30" y="44" width="52" height="50" rx="7" fill="none" stroke="#fff" stroke-width="1" opacity="0.35"/><rect x="60" y="40" width="18" height="9" rx="2" fill="url(#gRed)"/><text x="69" y="47" text-anchor="middle" font-family="Bebas Neue, Arial Black, sans-serif" font-size="6" fill="#fff">SL</text></svg>'
     };
     function pick(card){
       var n=((card.querySelector('.prod-name')||{}).textContent||'').toLowerCase();
@@ -5311,8 +5400,39 @@ const _origHandleUserMessage = handleUserMessage;
     });
   }
 
+  /* Before/after slider — drag the divider to wipe between the dirty "before"
+     and the cleaned "after" (same shoe). Pointer events cover mouse + touch. */
+  function fxBeforeAfter(){
+    document.querySelectorAll('.ba').forEach(function(ba){
+      var before=ba.querySelector('.ba-before-wrap');
+      var divider=ba.querySelector('.ba-divider');
+      if(!before||!divider) return;
+      var dragging=false;
+      function set(p){
+        p=Math.max(4,Math.min(96,p));
+        before.style.clipPath='inset(0 '+(100-p)+'% 0 0)';
+        divider.style.left=p+'%';
+      }
+      function move(e){
+        var r=ba.getBoundingClientRect();
+        var x=(e.clientX!=null?e.clientX:(e.touches&&e.touches[0].clientX))-r.left;
+        set(x/r.width*100);
+      }
+      ba.addEventListener('pointerdown',function(e){
+        dragging=true;
+        try{ ba.setPointerCapture(e.pointerId); }catch(_){}
+        move(e); e.preventDefault();
+      });
+      ba.addEventListener('pointermove',function(e){ if(dragging) move(e); });
+      ba.addEventListener('pointerup',function(){ dragging=false; });
+      ba.addEventListener('pointercancel',function(){ dragging=false; });
+      set(50);
+    });
+  }
+
   function boot(){
     try{ fxProductRenders(); }catch(e){}
+    try{ fxBeforeAfter(); }catch(e){}
     try{ if(!prefersReduced) fxPreloader(); }catch(e){}
     try{ fxLoadThree(); }catch(e){}
     try{ fxTilt(); }catch(e){}

@@ -1,0 +1,11 @@
+{
+  // ShoeLab.de — static site + Wesley AI on Cloudflare Workers (Static Assets)
+  // Deployed with: npx wrangler deploy   (root/Path = shoelab-netlify)
+  "name": "shoelab-website",
+  "compatibility_date": "2025-05-01",
+  "main": "wesley-worker.js",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS"
+  }
+}
