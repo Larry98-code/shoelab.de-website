@@ -4,5 +4,7 @@ wrangler.jsonc
 .assetsignore
 netlify.toml
 README.md
+BACKEND.md
+schema.sql
 netlify
 functions
