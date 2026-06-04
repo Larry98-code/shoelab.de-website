@@ -2241,7 +2241,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
 
       <!-- Subscription Benefits -->
       <div style="margin-top:2rem;">
-        <p style="font-size:0.6rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--red);margin-bottom:1rem;">WHY SUBSCRIBE?</p>
+        <p style="font-size:0.6rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--red);margin-bottom:1rem;" data-i18n="bk.whySub">WHY SUBSCRIBE?</p>
         <div style="display:flex;flex-direction:column;gap:0.7rem;">
           <div style="display:flex;align-items:flex-start;gap:0.8rem;">
             <span style="color:var(--red);font-size:1rem;flex-shrink:0;">✦</span>
@@ -2296,8 +2296,8 @@ section[id], [id]{ scroll-margin-top: 90px; }
 
     <!-- BOOKING FORM WITH PAYMENT -->
     <div class="bk-form fade-up delay-1">
-      <h3 class="bk-form-title">Reserve Your Slot</h3>
-      <p class="bk-form-sub">Secure booking · Instant confirmation</p>
+      <h3 class="bk-form-title" data-i18n="bk.title">Reserve Your Slot</h3>
+      <p class="bk-form-sub" data-i18n="bk.sub">Secure booking · Instant confirmation</p>
 
       <!-- STEP 1: Payment Type Toggle -->
       <div style="margin-bottom:0.5rem;">
@@ -2360,12 +2360,12 @@ section[id], [id]{ scroll-margin-top: 90px; }
         <div class="fg"><label>First Name</label><input type="text" id="bkFirstName" placeholder="Max"/></div>
         <div class="fg"><label>Last Name</label><input type="text" id="bkLastName" placeholder="Mustermann"/></div>
       </div>
-      <div class="fg"><label>Email</label><input type="email" id="bkEmail" placeholder="max@email.de"/></div>
+      <div class="fg"><label data-i18n="bk.email">Email</label><input type="email" id="bkEmail" placeholder="max@email.de"/></div>
       <div class="fg"><label>Phone / WhatsApp</label><input type="tel" id="bkPhone" placeholder="+49 …"/></div>
 
       <!-- Service selector (one-time only) -->
       <div class="fg" id="serviceSelectWrap">
-        <label>Service</label>
+        <label data-i18n="bk.service">Service</label>
         <select id="bkService" onchange="updateBookingSummary()">
           <option value="" disabled selected>Select a service</option>
           <option value="basic|18.00">The ShoeLab Refresh — €18</option>
@@ -2375,9 +2375,9 @@ section[id], [id]{ scroll-margin-top: 90px; }
       </div>
 
       <div class="frow">
-        <div class="fg"><label>Preferred Date</label><input type="date" id="bkDate"/></div>
+        <div class="fg"><label data-i18n="bk.date">Preferred Date</label><input type="date" id="bkDate"/></div>
         <div class="fg">
-          <label>Time Slot</label>
+          <label data-i18n="bk.time">Time Slot</label>
           <select id="bkTime">
             <option value="" disabled selected>Choose time</option>
             <option>10:00 – 11:00</option><option>11:00 – 12:00</option>
@@ -2387,13 +2387,13 @@ section[id], [id]{ scroll-margin-top: 90px; }
           </select>
         </div>
       </div>
-      <div class="fg"><label>Notes (brand, model, issue)</label>
+      <div class="fg"><label data-i18n="bk.notes">Notes (brand, model, issue)</label>
         <textarea id="bkNotes" placeholder="e.g. Nike Air Max 1, yellowed soles, scuff on left toe…"></textarea>
       </div>
 
       <!-- Order Summary -->
       <div class="booking-summary" id="bookingSummary">
-        <div class="bs-title">Order Summary</div>
+        <div class="bs-title" data-i18n="bk.summary">Order Summary</div>
         <div class="bs-row"><span id="bsSvcName">Service</span><span id="bsSvcPrice">—</span></div>
         <div class="bs-row" id="bsTypeRow"><span id="bsType">One-Time</span><span id="bsDiscount"></span></div>
         <div class="bs-row total"><span>Total</span><span id="bsTotal">—</span></div>
@@ -2451,7 +2451,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <!-- PAY BUTTON -->
       <button class="stripe-pay-btn" id="stripePayBtn" onclick="initiateStripePayment()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <span id="payBtnText">CONFIRM &amp; PAY SECURELY</span>
+        <span id="payBtnText" data-i18n="bk.pay">CONFIRM &amp; PAY SECURELY</span>
         <span class="stripe-lock-icon">🔒</span>
       </button>
 
@@ -2841,7 +2841,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
 <!-- CART DRAWER -->
 <div class="cart-drawer" id="cartDrawer">
   <div class="cart-header">
-    <span class="cart-header-title">Your Cart</span>
+    <span class="cart-header-title" data-i18n="cart.title">Your Cart</span>
     <button class="cart-close-btn" onclick="toggleCart()">✕</button>
   </div>
   <div class="cart-items" id="cartItems">
@@ -2853,12 +2853,12 @@ section[id], [id]{ scroll-margin-top: 90px; }
   </div>
   <div class="cart-footer" id="cartFooter" style="display:none;">
     <div class="cart-subtotal">
-      <span class="cart-subtotal-label">Subtotal</span>
+      <span class="cart-subtotal-label" data-i18n="cart.subtotal">Subtotal</span>
       <span class="cart-subtotal-val" id="cartTotal">€0.00</span>
     </div>
-    <p class="cart-shipping">🚚 Free shipping on orders over €50</p>
-    <button class="cart-checkout" onclick="checkout()">PROCEED TO CHECKOUT</button>
-    <button class="cart-continue" onclick="toggleCart()">Continue Shopping</button>
+    <p class="cart-shipping" data-i18n="cart.shipping">🚚 Free shipping on orders over €50</p>
+    <button class="cart-checkout" onclick="checkout()" data-i18n="cart.checkout">PROCEED TO CHECKOUT</button>
+    <button class="cart-continue" onclick="toggleCart()" data-i18n="cart.continue">Continue Shopping</button>
   </div>
 </div>
 
@@ -2879,7 +2879,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
         <img src="/img/shoelab-logo.png" alt="ShoeLab logo" class="ft-logo-img" loading="lazy" decoding="async" width="40" height="40"/>
         <span class="ft-brand-name">ShoeLab<span>.de</span></span>
       </div>
-      <p class="ft-tagline">Bremen's premier sneaker care lab. Every pair treated with precision, passion and pro-grade products.</p>
+      <p class="ft-tagline" data-i18n="ft.tagline">Bremen's premier sneaker care lab. Every pair treated with precision, passion and pro-grade products.</p>
       <div class="ft-socials" style="flex-direction:column;gap:0.6rem;margin-top:0.5rem;">
         <a href="https://www.instagram.com/shoelab.brmn?igsh=ano3bHluZThpYnVx&utm_source=qr" target="_blank" class="ft-social-brand">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
@@ -2892,7 +2892,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       </div>
     </div>
     <div>
-      <p class="ft-col-title">Navigation</p>
+      <p class="ft-col-title" data-i18n="ft.nav">Navigation</p>
       <ul class="ft-links">
         <li><a href="#services" class="nav-link" data-section="services">Services</a></li>
         <li><a href="#gallery" class="nav-link" data-section="gallery">Gallery</a></li>
@@ -2903,7 +2903,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       </ul>
     </div>
     <div>
-      <p class="ft-col-title">Services</p>
+      <p class="ft-col-title" data-i18n="ft.servicesCol">Services</p>
       <ul class="ft-links">
         <li><a href="#services">The ShoeLab Refresh</a></li>
         <li><a href="#services">The ShoeLab Revival</a></li>
@@ -2911,11 +2911,11 @@ section[id], [id]{ scroll-margin-top: 90px; }
       </ul>
     </div>
     <div>
-      <p class="ft-col-title">Opening Hours</p>
+      <p class="ft-col-title" data-i18n="ft.hours">Opening Hours</p>
       <ul class="ft-hours">
-        <li><span>Mon – Fri</span><span>10:00 – 19:00</span></li>
-        <li><span>Saturday</span><span>10:00 – 16:00</span></li>
-        <li><span>Sunday</span><span>Closed</span></li>
+        <li><span data-i18n="ft.monfri">Mon – Fri</span><span>10:00 – 19:00</span></li>
+        <li><span data-i18n="ft.sat">Saturday</span><span>10:00 – 16:00</span></li>
+        <li><span data-i18n="ft.sun">Sunday</span><span data-i18n="ft.closed">Closed</span></li>
       </ul>
     </div>
   </div>
@@ -5742,7 +5742,7 @@ const _origHandleUserMessage = handleUserMessage;
       "booking.label":"Reservations","booking.title":"Book Your <span class=\"red\">Appointment</span>","booking.sub":"Reserve your slot online and drop your sneakers at our lab in Bremen. Choose a one-time clean or subscribe monthly and never worry about dirty kicks again.",
       "shop.label":"The Lab Store","shop.title":"Shop <span class=\"red\">Products</span>","shop.sub":"Only the brands the pros trust. Every product hand-picked and used in our own studio.",
       "reviews.label":"Client Reviews","reviews.title":"What They <span class=\"red\">Say</span>","reviews.count":"from 500+ happy clients · Google & Instagram","reviews.more":"Read full review →",
-      "acc.title":"Welcome to ShoeLab","acc.login":"Log In","acc.signup":"Sign Up","acc.name":"Full Name","acc.email":"Email","acc.password":"Password","acc.loginBtn":"Log In","acc.signupBtn":"Create Account","acc.guest":"Continue as Guest","acc.guestNote":"Shop and book without an account","acc.or":"or","acc.welcome":"Welcome back","acc.logout":"Log Out","cookie.text":"We use only essential cookies to keep you logged in and remember your language. By using this site you agree to our <a href='/datenschutz.html'>privacy policy</a>.","cookie.ok":"Got it",
+      "acc.title":"Welcome to ShoeLab","acc.login":"Log In","acc.signup":"Sign Up","acc.name":"Full Name","acc.email":"Email","acc.password":"Password","acc.loginBtn":"Log In","acc.signupBtn":"Create Account","acc.guest":"Continue as Guest","acc.guestNote":"Shop and book without an account","acc.or":"or","acc.welcome":"Welcome back","acc.logout":"Log Out","cookie.text":"We use only essential cookies to keep you logged in and remember your language. By using this site you agree to our <a href='/datenschutz.html'>privacy policy</a>.","cookie.ok":"Got it","ft.nav":"Navigation","ft.servicesCol":"Services","ft.hours":"Opening Hours","ft.monfri":"Mon – Fri","ft.sat":"Saturday","ft.sun":"Sunday","ft.closed":"Closed","ft.tagline":"Bremen's premier sneaker care lab. Every pair treated with precision, passion and pro-grade products.","cart.title":"Your Cart","cart.empty":"Your cart is empty","cart.emptyHint":"Add some products above","cart.subtotal":"Subtotal","cart.shipping":"🚚 Free shipping on orders over €50","cart.checkout":"PROCEED TO CHECKOUT","cart.continue":"Continue Shopping","bk.title":"Reserve Your Slot","bk.sub":"Secure booking · Instant confirmation","bk.firstName":"First Name","bk.lastName":"Last Name","bk.email":"Email","bk.phone":"Phone / WhatsApp","bk.service":"Service","bk.date":"Preferred Date","bk.time":"Time Slot","bk.notes":"Notes (brand, model, issue)","bk.summary":"Order Summary","bk.pay":"CONFIRM & PAY SECURELY","bk.whySub":"WHY SUBSCRIBE?",
       "shop.cart":"+ Cart","shop.addcart":"Add to Cart","filter.all":"All Products","filter.cleaner":"Cleaners","filter.brush":"Brushes","filter.protector":"Protectors","filter.kit":"Kits","filter.accessory":"Accessories",
       "prod.name.0":"Premium Shoe Cleaner","prod.name.1":"3-Brush Cleaning Set","prod.name.2":"Ultimate Protector Spray","prod.name.3":"Pro Cleaning Kit","prod.name.4":"Sole Sauce Whitener","prod.name.5":"Pro Microfibre Cloth","prod.name.6":"Repel Water + Stain","prod.name.7":"Cure Wipes 12-Pack",
       "prod.badge.0":"Best Seller","prod.badge.1":"New","prod.badge.2":"Top Rated","prod.badge.3":"Bundle","prod.badge.5":"Exclusive","prod.badge.7":"Value Pack",
@@ -5756,7 +5756,7 @@ const _origHandleUserMessage = handleUserMessage;
       "booking.label":"Reservierungen","booking.title":"Termin <span class=\"red\">buchen</span>","booking.sub":"Reserviere deinen Slot online und bring deine Sneaker in unser Lab in Bremen. Wähle eine einmalige Reinigung oder ein Monatsabo und mach dir nie wieder Sorgen um schmutzige Schuhe.",
       "shop.label":"Der Lab-Store","shop.title":"Produkte <span class=\"red\">shoppen</span>","shop.sub":"Nur die Marken, denen die Profis vertrauen. Jedes Produkt handverlesen und in unserem eigenen Studio verwendet.",
       "reviews.label":"Kundenbewertungen","reviews.title":"Was sie <span class=\"red\">sagen</span>","reviews.count":"von 500+ zufriedenen Kunden · Google & Instagram","reviews.more":"Ganze Bewertung lesen →",
-      "acc.title":"Willkommen bei ShoeLab","acc.login":"Anmelden","acc.signup":"Registrieren","acc.name":"Vollständiger Name","acc.email":"E-Mail","acc.password":"Passwort","acc.loginBtn":"Anmelden","acc.signupBtn":"Konto erstellen","acc.guest":"Als Gast fortfahren","acc.guestNote":"Einkaufen und buchen ohne Konto","acc.or":"oder","acc.welcome":"Willkommen zurück","acc.logout":"Abmelden","cookie.text":"Wir verwenden nur technisch notwendige Cookies, um Sie angemeldet zu halten und Ihre Sprache zu speichern. Mit der Nutzung dieser Seite stimmen Sie unserer <a href='/datenschutz.html'>Datenschutzerklärung</a> zu.","cookie.ok":"Verstanden",
+      "acc.title":"Willkommen bei ShoeLab","acc.login":"Anmelden","acc.signup":"Registrieren","acc.name":"Vollständiger Name","acc.email":"E-Mail","acc.password":"Passwort","acc.loginBtn":"Anmelden","acc.signupBtn":"Konto erstellen","acc.guest":"Als Gast fortfahren","acc.guestNote":"Einkaufen und buchen ohne Konto","acc.or":"oder","acc.welcome":"Willkommen zurück","acc.logout":"Abmelden","cookie.text":"Wir verwenden nur technisch notwendige Cookies, um Sie angemeldet zu halten und Ihre Sprache zu speichern. Mit der Nutzung dieser Seite stimmen Sie unserer <a href='/datenschutz.html'>Datenschutzerklärung</a> zu.","cookie.ok":"Verstanden","ft.nav":"Navigation","ft.servicesCol":"Leistungen","ft.hours":"Öffnungszeiten","ft.monfri":"Mo – Fr","ft.sat":"Samstag","ft.sun":"Sonntag","ft.closed":"Geschlossen","ft.tagline":"Bremens führendes Sneaker-Pflegelabor. Jedes Paar mit Präzision, Leidenschaft und Profi-Produkten behandelt.","cart.title":"Dein Warenkorb","cart.empty":"Dein Warenkorb ist leer","cart.emptyHint":"Füge oben Produkte hinzu","cart.subtotal":"Zwischensumme","cart.shipping":"🚚 Kostenloser Versand ab €50","cart.checkout":"ZUR KASSE","cart.continue":"Weiter einkaufen","bk.title":"Termin reservieren","bk.sub":"Sichere Buchung · Sofortige Bestätigung","bk.firstName":"Vorname","bk.lastName":"Nachname","bk.email":"E-Mail","bk.phone":"Telefon / WhatsApp","bk.service":"Leistung","bk.date":"Wunschdatum","bk.time":"Zeitfenster","bk.notes":"Notizen (Marke, Modell, Problem)","bk.summary":"Bestellübersicht","bk.pay":"SICHER BESTÄTIGEN & ZAHLEN","bk.whySub":"WARUM ABONNIEREN?",
       "shop.cart":"+ Korb","shop.addcart":"In den Korb","filter.all":"Alle Produkte","filter.cleaner":"Reiniger","filter.brush":"Bürsten","filter.protector":"Schutz","filter.kit":"Sets","filter.accessory":"Zubehör",
       "prod.name.0":"Premium Schuhreiniger","prod.name.1":"3-Bürsten-Reinigungsset","prod.name.2":"Ultimativer Schutzspray","prod.name.3":"Profi-Reinigungsset","prod.name.4":"Sohlen-Aufheller","prod.name.5":"Profi-Mikrofasertuch","prod.name.6":"Wasser- und Fleckenschutz","prod.name.7":"Cure Wipes 12er-Pack",
       "prod.badge.0":"Bestseller","prod.badge.1":"Neu","prod.badge.2":"Top bewertet","prod.badge.3":"Set","prod.badge.5":"Exklusiv","prod.badge.7":"Sparpaket",
@@ -5770,7 +5770,7 @@ const _origHandleUserMessage = handleUserMessage;
       "booking.label":"Rezerwacje","booking.title":"Zarezerwuj <span class=\"red\">wizytę</span>","booking.sub":"Zarezerwuj termin online i przynieś swoje sneakery do naszego Labu w Bremie. Wybierz jednorazowe czyszczenie lub abonament miesięczny i nie martw się więcej o brudne buty.",
       "shop.label":"Sklep Labu","shop.title":"Produkty <span class=\"red\">w sklepie</span>","shop.sub":"Tylko marki, którym ufają profesjonaliści. Każdy produkt ręcznie wybrany i używany w naszym studiu.",
       "reviews.label":"Opinie klientów","reviews.title":"Co <span class=\"red\">mówią</span>","reviews.count":"od ponad 500 zadowolonych klientów · Google & Instagram","reviews.more":"Przeczytaj całą opinię →",
-      "acc.title":"Witamy w ShoeLab","acc.login":"Zaloguj się","acc.signup":"Załóż konto","acc.name":"Imię i nazwisko","acc.email":"E-mail","acc.password":"Hasło","acc.loginBtn":"Zaloguj się","acc.signupBtn":"Utwórz konto","acc.guest":"Kontynuuj jako gość","acc.guestNote":"Kupuj i rezerwuj bez konta","acc.or":"lub","acc.welcome":"Witaj ponownie","acc.logout":"Wyloguj się","cookie.text":"Używamy wyłącznie niezbędnych plików cookie, aby utrzymać Twoje zalogowanie i zapamiętać język. Korzystając z tej strony, akceptujesz naszą <a href='/datenschutz.html'>politykę prywatności</a>.","cookie.ok":"Rozumiem",
+      "acc.title":"Witamy w ShoeLab","acc.login":"Zaloguj się","acc.signup":"Załóż konto","acc.name":"Imię i nazwisko","acc.email":"E-mail","acc.password":"Hasło","acc.loginBtn":"Zaloguj się","acc.signupBtn":"Utwórz konto","acc.guest":"Kontynuuj jako gość","acc.guestNote":"Kupuj i rezerwuj bez konta","acc.or":"lub","acc.welcome":"Witaj ponownie","acc.logout":"Wyloguj się","cookie.text":"Używamy wyłącznie niezbędnych plików cookie, aby utrzymać Twoje zalogowanie i zapamiętać język. Korzystając z tej strony, akceptujesz naszą <a href='/datenschutz.html'>politykę prywatności</a>.","cookie.ok":"Rozumiem","ft.nav":"Nawigacja","ft.servicesCol":"Usługi","ft.hours":"Godziny otwarcia","ft.monfri":"Pon – Pt","ft.sat":"Sobota","ft.sun":"Niedziela","ft.closed":"Zamknięte","ft.tagline":"Najlepsze laboratorium pielęgnacji sneakerów w Bremie. Każda para z precyzją, pasją i profesjonalnymi produktami.","cart.title":"Twój koszyk","cart.empty":"Twój koszyk jest pusty","cart.emptyHint":"Dodaj produkty powyżej","cart.subtotal":"Suma częściowa","cart.shipping":"🚚 Darmowa wysyłka od €50","cart.checkout":"DO KASY","cart.continue":"Kontynuuj zakupy","bk.title":"Zarezerwuj termin","bk.sub":"Bezpieczna rezerwacja · Natychmiastowe potwierdzenie","bk.firstName":"Imię","bk.lastName":"Nazwisko","bk.email":"E-mail","bk.phone":"Telefon / WhatsApp","bk.service":"Usługa","bk.date":"Preferowana data","bk.time":"Przedział czasowy","bk.notes":"Uwagi (marka, model, problem)","bk.summary":"Podsumowanie zamówienia","bk.pay":"POTWIERDŹ I ZAPŁAĆ","bk.whySub":"DLACZEGO SUBSKRYPCJA?",
       "shop.cart":"+ Koszyk","shop.addcart":"Do koszyka","filter.all":"Wszystkie produkty","filter.cleaner":"Środki czyszczące","filter.brush":"Szczotki","filter.protector":"Ochrona","filter.kit":"Zestawy","filter.accessory":"Akcesoria",
       "prod.name.0":"Premium środek do czyszczenia","prod.name.1":"Zestaw 3 szczotek","prod.name.2":"Spray ochronny Ultimate","prod.name.3":"Profesjonalny zestaw czyszczący","prod.name.4":"Wybielacz do podeszew","prod.name.5":"Profesjonalna ściereczka z mikrofibry","prod.name.6":"Ochrona przed wodą i plamami","prod.name.7":"Chusteczki Cure 12-pak",
       "prod.badge.0":"Bestseller","prod.badge.1":"Nowość","prod.badge.2":"Najlepiej oceniany","prod.badge.3":"Zestaw","prod.badge.5":"Ekskluzywne","prod.badge.7":"Pakiet oszczędnościowy",
@@ -5784,7 +5784,7 @@ const _origHandleUserMessage = handleUserMessage;
       "booking.label":"Запись","booking.title":"Запись на <span class=\"red\">приём</span>","booking.sub":"Забронируйте время онлайн и принесите кроссовки в нашу лабораторию в Бремене. Выберите разовую чистку или ежемесячную подписку — и забудьте о грязной обуви.",
       "shop.label":"Магазин лаборатории","shop.title":"Купить <span class=\"red\">товары</span>","shop.sub":"Только бренды, которым доверяют профессионалы. Каждый продукт отобран вручную и используется в нашей студии.",
       "reviews.label":"Отзывы клиентов","reviews.title":"Что <span class=\"red\">говорят</span>","reviews.count":"от 500+ довольных клиентов · Google и Instagram","reviews.more":"Читать весь отзыв →",
-      "acc.title":"Добро пожаловать в ShoeLab","acc.login":"Войти","acc.signup":"Регистрация","acc.name":"Полное имя","acc.email":"Эл. почта","acc.password":"Пароль","acc.loginBtn":"Войти","acc.signupBtn":"Создать аккаунт","acc.guest":"Продолжить как гость","acc.guestNote":"Покупки и запись без аккаунта","acc.or":"или","acc.welcome":"С возвращением","acc.logout":"Выйти","cookie.text":"Мы используем только необходимые файлы cookie, чтобы сохранять вход и язык. Используя сайт, вы соглашаетесь с нашей <a href='/datenschutz.html'>политикой конфиденциальности</a>.","cookie.ok":"Понятно",
+      "acc.title":"Добро пожаловать в ShoeLab","acc.login":"Войти","acc.signup":"Регистрация","acc.name":"Полное имя","acc.email":"Эл. почта","acc.password":"Пароль","acc.loginBtn":"Войти","acc.signupBtn":"Создать аккаунт","acc.guest":"Продолжить как гость","acc.guestNote":"Покупки и запись без аккаунта","acc.or":"или","acc.welcome":"С возвращением","acc.logout":"Выйти","cookie.text":"Мы используем только необходимые файлы cookie, чтобы сохранять вход и язык. Используя сайт, вы соглашаетесь с нашей <a href='/datenschutz.html'>политикой конфиденциальности</a>.","cookie.ok":"Понятно","ft.nav":"Навигация","ft.servicesCol":"Услуги","ft.hours":"Часы работы","ft.monfri":"Пн – Пт","ft.sat":"Суббота","ft.sun":"Воскресенье","ft.closed":"Закрыто","ft.tagline":"Лучшая лаборатория ухода за кроссовками в Бремене. Каждая пара — с точностью, страстью и профессиональными средствами.","cart.title":"Ваша корзина","cart.empty":"Ваша корзина пуста","cart.emptyHint":"Добавьте товары выше","cart.subtotal":"Подытог","cart.shipping":"🚚 Бесплатная доставка от €50","cart.checkout":"ОФОРМИТЬ ЗАКАЗ","cart.continue":"Продолжить покупки","bk.title":"Забронировать время","bk.sub":"Безопасное бронирование · Мгновенное подтверждение","bk.firstName":"Имя","bk.lastName":"Фамилия","bk.email":"Эл. почта","bk.phone":"Телефон / WhatsApp","bk.service":"Услуга","bk.date":"Желаемая дата","bk.time":"Время","bk.notes":"Заметки (бренд, модель, проблема)","bk.summary":"Сводка заказа","bk.pay":"ПОДТВЕРДИТЬ И ОПЛАТИТЬ","bk.whySub":"ПОЧЕМУ ПОДПИСКА?",
       "shop.cart":"+ В корзину","shop.addcart":"В корзину","filter.all":"Все товары","filter.cleaner":"Очистители","filter.brush":"Щётки","filter.protector":"Защита","filter.kit":"Наборы","filter.accessory":"Аксессуары",
       "prod.name.0":"Премиальный очиститель","prod.name.1":"Набор из 3 щёток","prod.name.2":"Спрей-защита Ultimate","prod.name.3":"Профессиональный набор для чистки","prod.name.4":"Отбеливатель подошвы","prod.name.5":"Профессиональная микрофибра","prod.name.6":"Защита от воды и пятен","prod.name.7":"Салфетки Cure, 12 шт.",
       "prod.badge.0":"Хит продаж","prod.badge.1":"Новинка","prod.badge.2":"Высший рейтинг","prod.badge.3":"Набор","prod.badge.5":"Эксклюзив","prod.badge.7":"Выгодный набор",
@@ -5798,7 +5798,7 @@ const _origHandleUserMessage = handleUserMessage;
       "booking.label":"Бронювання","booking.title":"Запис на <span class=\"red\">візит</span>","booking.sub":"Забронюйте час онлайн і принесіть кросівки до нашої лабораторії в Бремені. Оберіть разову чистку або щомісячну підписку — і забудьте про брудне взуття.",
       "shop.label":"Магазин лабораторії","shop.title":"Придбати <span class=\"red\">товари</span>","shop.sub":"Лише бренди, яким довіряють професіонали. Кожен продукт відібраний вручну та використовується в нашій студії.",
       "reviews.label":"Відгуки клієнтів","reviews.title":"Що <span class=\"red\">кажуть</span>","reviews.count":"від 500+ задоволених клієнтів · Google та Instagram","reviews.more":"Читати весь відгук →",
-      "acc.title":"Ласкаво просимо до ShoeLab","acc.login":"Увійти","acc.signup":"Реєстрація","acc.name":"Повне ім'я","acc.email":"Ел. пошта","acc.password":"Пароль","acc.loginBtn":"Увійти","acc.signupBtn":"Створити акаунт","acc.guest":"Продовжити як гість","acc.guestNote":"Покупки та запис без акаунта","acc.or":"або","acc.welcome":"З поверненням","acc.logout":"Вийти","cookie.text":"Ми використовуємо лише необхідні файли cookie, щоб зберігати вхід і мову. Користуючись сайтом, ви погоджуєтесь з нашою <a href='/datenschutz.html'>політикою конфіденційності</a>.","cookie.ok":"Зрозуміло",
+      "acc.title":"Ласкаво просимо до ShoeLab","acc.login":"Увійти","acc.signup":"Реєстрація","acc.name":"Повне ім'я","acc.email":"Ел. пошта","acc.password":"Пароль","acc.loginBtn":"Увійти","acc.signupBtn":"Створити акаунт","acc.guest":"Продовжити як гість","acc.guestNote":"Покупки та запис без акаунта","acc.or":"або","acc.welcome":"З поверненням","acc.logout":"Вийти","cookie.text":"Ми використовуємо лише необхідні файли cookie, щоб зберігати вхід і мову. Користуючись сайтом, ви погоджуєтесь з нашою <a href='/datenschutz.html'>політикою конфіденційності</a>.","cookie.ok":"Зрозуміло","ft.nav":"Навігація","ft.servicesCol":"Послуги","ft.hours":"Години роботи","ft.monfri":"Пн – Пт","ft.sat":"Субота","ft.sun":"Неділя","ft.closed":"Зачинено","ft.tagline":"Найкраща лабораторія догляду за кросівками в Бремені. Кожна пара — з точністю, пристрастю та професійними засобами.","cart.title":"Ваш кошик","cart.empty":"Ваш кошик порожній","cart.emptyHint":"Додайте товари вище","cart.subtotal":"Проміжний підсумок","cart.shipping":"🚚 Безкоштовна доставка від €50","cart.checkout":"ОФОРМИТИ ЗАМОВЛЕННЯ","cart.continue":"Продовжити покупки","bk.title":"Забронювати час","bk.sub":"Безпечне бронювання · Миттєве підтвердження","bk.firstName":"Ім'я","bk.lastName":"Прізвище","bk.email":"Ел. пошта","bk.phone":"Телефон / WhatsApp","bk.service":"Послуга","bk.date":"Бажана дата","bk.time":"Час","bk.notes":"Примітки (бренд, модель, проблема)","bk.summary":"Підсумок замовлення","bk.pay":"ПІДТВЕРДИТИ ТА ОПЛАТИТИ","bk.whySub":"ЧОМУ ПІДПИСКА?",
       "shop.cart":"+ У кошик","shop.addcart":"У кошик","filter.all":"Усі товари","filter.cleaner":"Очисники","filter.brush":"Щітки","filter.protector":"Захист","filter.kit":"Набори","filter.accessory":"Аксесуари",
       "prod.name.0":"Преміальний очисник","prod.name.1":"Набір із 3 щіток","prod.name.2":"Спрей-захист Ultimate","prod.name.3":"Професійний набір для чищення","prod.name.4":"Відбілювач підошви","prod.name.5":"Професійна мікрофібра","prod.name.6":"Захист від води та плям","prod.name.7":"Серветки Cure, 12 шт.",
       "prod.badge.0":"Хіт продажів","prod.badge.1":"Новинка","prod.badge.2":"Найвищий рейтинг","prod.badge.3":"Набір","prod.badge.5":"Ексклюзив","prod.badge.7":"Вигідний набір",
@@ -5812,7 +5812,7 @@ const _origHandleUserMessage = handleUserMessage;
       "booking.label":"Prenotazioni","booking.title":"Prenota il tuo <span class=\"red\">appuntamento</span>","booking.sub":"Prenota il tuo slot online e porta le tue sneaker nel nostro Lab a Brema. Scegli una pulizia singola o un abbonamento mensile e non preoccuparti più delle scarpe sporche.",
       "shop.label":"Il negozio del Lab","shop.title":"Acquista <span class=\"red\">prodotti</span>","shop.sub":"Solo i marchi di cui si fidano i professionisti. Ogni prodotto selezionato a mano e usato nel nostro studio.",
       "reviews.label":"Recensioni dei clienti","reviews.title":"Cosa <span class=\"red\">dicono</span>","reviews.count":"da oltre 500 clienti soddisfatti · Google e Instagram","reviews.more":"Leggi la recensione completa →",
-      "acc.title":"Benvenuto in ShoeLab","acc.login":"Accedi","acc.signup":"Registrati","acc.name":"Nome completo","acc.email":"Email","acc.password":"Password","acc.loginBtn":"Accedi","acc.signupBtn":"Crea account","acc.guest":"Continua come ospite","acc.guestNote":"Acquista e prenota senza account","acc.or":"oppure","acc.welcome":"Bentornato","acc.logout":"Esci","cookie.text":"Utilizziamo solo cookie essenziali per mantenere la sessione e ricordare la lingua. Utilizzando questo sito accetti la nostra <a href='/datenschutz.html'>informativa sulla privacy</a>.","cookie.ok":"Ho capito",
+      "acc.title":"Benvenuto in ShoeLab","acc.login":"Accedi","acc.signup":"Registrati","acc.name":"Nome completo","acc.email":"Email","acc.password":"Password","acc.loginBtn":"Accedi","acc.signupBtn":"Crea account","acc.guest":"Continua come ospite","acc.guestNote":"Acquista e prenota senza account","acc.or":"oppure","acc.welcome":"Bentornato","acc.logout":"Esci","cookie.text":"Utilizziamo solo cookie essenziali per mantenere la sessione e ricordare la lingua. Utilizzando questo sito accetti la nostra <a href='/datenschutz.html'>informativa sulla privacy</a>.","cookie.ok":"Ho capito","ft.nav":"Navigazione","ft.servicesCol":"Servizi","ft.hours":"Orari di apertura","ft.monfri":"Lun – Ven","ft.sat":"Sabato","ft.sun":"Domenica","ft.closed":"Chiuso","ft.tagline":"Il principale laboratorio di cura delle sneaker di Brema. Ogni paio trattato con precisione, passione e prodotti professionali.","cart.title":"Il tuo carrello","cart.empty":"Il tuo carrello è vuoto","cart.emptyHint":"Aggiungi prodotti sopra","cart.subtotal":"Subtotale","cart.shipping":"🚚 Spedizione gratuita da €50","cart.checkout":"VAI AL PAGAMENTO","cart.continue":"Continua lo shopping","bk.title":"Prenota il tuo posto","bk.sub":"Prenotazione sicura · Conferma immediata","bk.firstName":"Nome","bk.lastName":"Cognome","bk.email":"Email","bk.phone":"Telefono / WhatsApp","bk.service":"Servizio","bk.date":"Data preferita","bk.time":"Fascia oraria","bk.notes":"Note (marca, modello, problema)","bk.summary":"Riepilogo ordine","bk.pay":"CONFERMA E PAGA","bk.whySub":"PERCHÉ ABBONARSI?",
       "shop.cart":"+ Carrello","shop.addcart":"Aggiungi al carrello","filter.all":"Tutti i prodotti","filter.cleaner":"Detergenti","filter.brush":"Spazzole","filter.protector":"Protettivi","filter.kit":"Kit","filter.accessory":"Accessori",
       "prod.name.0":"Detergente per scarpe premium","prod.name.1":"Set 3 spazzole","prod.name.2":"Spray protettivo Ultimate","prod.name.3":"Kit di pulizia Pro","prod.name.4":"Sbiancante per suole","prod.name.5":"Panno in microfibra Pro","prod.name.6":"Protezione acqua + macchie","prod.name.7":"Salviette Cure 12 pezzi",
       "prod.badge.0":"Più venduto","prod.badge.1":"Novità","prod.badge.2":"Top di gamma","prod.badge.3":"Kit","prod.badge.5":"Esclusivo","prod.badge.7":"Pacco convenienza",
@@ -5826,7 +5826,7 @@ const _origHandleUserMessage = handleUserMessage;
       "booking.label":"Reservas","booking.title":"Reserva tu <span class=\"red\">cita</span>","booking.sub":"Reserva tu turno online y deja tus zapatillas en nuestro Lab en Bremen. Elige una limpieza única o una suscripción mensual y olvídate de las zapatillas sucias.",
       "shop.label":"La tienda del Lab","shop.title":"Comprar <span class=\"red\">productos</span>","shop.sub":"Solo las marcas en las que confían los profesionales. Cada producto seleccionado a mano y usado en nuestro estudio.",
       "reviews.label":"Reseñas de clientes","reviews.title":"Lo que <span class=\"red\">dicen</span>","reviews.count":"de más de 500 clientes satisfechos · Google e Instagram","reviews.more":"Leer reseña completa →",
-      "acc.title":"Bienvenido a ShoeLab","acc.login":"Iniciar sesión","acc.signup":"Registrarse","acc.name":"Nombre completo","acc.email":"Correo","acc.password":"Contraseña","acc.loginBtn":"Iniciar sesión","acc.signupBtn":"Crear cuenta","acc.guest":"Continuar como invitado","acc.guestNote":"Compra y reserva sin cuenta","acc.or":"o","acc.welcome":"Bienvenido de nuevo","acc.logout":"Cerrar sesión","cookie.text":"Usamos solo cookies esenciales para mantener tu sesión y recordar tu idioma. Al usar este sitio aceptas nuestra <a href='/datenschutz.html'>política de privacidad</a>.","cookie.ok":"Entendido",
+      "acc.title":"Bienvenido a ShoeLab","acc.login":"Iniciar sesión","acc.signup":"Registrarse","acc.name":"Nombre completo","acc.email":"Correo","acc.password":"Contraseña","acc.loginBtn":"Iniciar sesión","acc.signupBtn":"Crear cuenta","acc.guest":"Continuar como invitado","acc.guestNote":"Compra y reserva sin cuenta","acc.or":"o","acc.welcome":"Bienvenido de nuevo","acc.logout":"Cerrar sesión","cookie.text":"Usamos solo cookies esenciales para mantener tu sesión y recordar tu idioma. Al usar este sitio aceptas nuestra <a href='/datenschutz.html'>política de privacidad</a>.","cookie.ok":"Entendido","ft.nav":"Navegación","ft.servicesCol":"Servicios","ft.hours":"Horario","ft.monfri":"Lun – Vie","ft.sat":"Sábado","ft.sun":"Domingo","ft.closed":"Cerrado","ft.tagline":"El laboratorio de cuidado de zapatillas líder en Bremen. Cada par tratado con precisión, pasión y productos profesionales.","cart.title":"Tu carrito","cart.empty":"Tu carrito está vacío","cart.emptyHint":"Añade productos arriba","cart.subtotal":"Subtotal","cart.shipping":"🚚 Envío gratis desde €50","cart.checkout":"TRAMITAR PEDIDO","cart.continue":"Seguir comprando","bk.title":"Reserva tu cita","bk.sub":"Reserva segura · Confirmación instantánea","bk.firstName":"Nombre","bk.lastName":"Apellido","bk.email":"Correo","bk.phone":"Teléfono / WhatsApp","bk.service":"Servicio","bk.date":"Fecha preferida","bk.time":"Franja horaria","bk.notes":"Notas (marca, modelo, problema)","bk.summary":"Resumen del pedido","bk.pay":"CONFIRMAR Y PAGAR","bk.whySub":"¿POR QUÉ SUSCRIBIRSE?",
       "shop.cart":"+ Carrito","shop.addcart":"Añadir al carrito","filter.all":"Todos los productos","filter.cleaner":"Limpiadores","filter.brush":"Cepillos","filter.protector":"Protectores","filter.kit":"Kits","filter.accessory":"Accesorios",
       "prod.name.0":"Limpiador de calzado premium","prod.name.1":"Set de 3 cepillos","prod.name.2":"Spray protector Ultimate","prod.name.3":"Kit de limpieza Pro","prod.name.4":"Blanqueador de suelas","prod.name.5":"Paño de microfibra Pro","prod.name.6":"Protección agua + manchas","prod.name.7":"Toallitas Cure 12 unidades",
       "prod.badge.0":"Más vendido","prod.badge.1":"Nuevo","prod.badge.2":"Mejor valorado","prod.badge.3":"Pack","prod.badge.5":"Exclusivo","prod.badge.7":"Pack ahorro",
