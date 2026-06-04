@@ -1,22 +1,18 @@
 {
-  // ShoeLab.de — static site + Wesley AI on Cloudflare Workers (Static Assets)
-  // Deployed with: npx wrangler deploy   (root/Path = shoelab-netlify)
-  "name": "shoelab-website",
+  // ShoeLab.de — Cloudflare Pages configuration.
+  // Pages reads this file on every Git deploy. The D1 binding below is applied
+  // automatically, so it does not need to be set in the dashboard.
+  "name": "shoelab-de-website",
   "compatibility_date": "2025-05-01",
-  "main": "wesley-worker.js",
-  "assets": {
-    "directory": ".",
-    "binding": "ASSETS"
-  },
+  // Static site: no build step. Output dir is this folder (relative to this file).
+  "pages_build_output_dir": ".",
   // D1 database for accounts, bookings, contact messages and reviews.
-  // Create it with:  npx wrangler d1 create shoelab
-  // then paste the returned database_id below (and bind it in the Pages
-  // dashboard under Settings → Functions → D1 bindings, variable name DB).
+  // Bound as env.DB inside functions/.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "shoelab",
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+      "database_id": "f3465854-9f04-4bff-817f-17bd0707be01"
     }
   ]
 }
