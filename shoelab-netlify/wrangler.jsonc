@@ -7,5 +7,16 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS"
-  }
+  },
+  // D1 database for accounts, bookings, contact messages and reviews.
+  // Create it with:  npx wrangler d1 create shoelab
+  // then paste the returned database_id below (and bind it in the Pages
+  // dashboard under Settings → Functions → D1 bindings, variable name DB).
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "shoelab",
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+    }
+  ]
 }

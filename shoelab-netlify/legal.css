@@ -1,0 +1,52 @@
+/* Shared styling for ShoeLab.de legal pages — matches the main site theme. */
+:root{
+  --red:#CC1111; --black:#080808; --dark:#111; --dark2:#181818;
+  --white:#fff; --muted:#888; --border:rgba(255,255,255,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+body{
+  background:var(--black);color:var(--white);
+  font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:300;
+  line-height:1.7;overflow-x:hidden;
+}
+a{color:var(--red);text-decoration:none;}
+a:hover{text-decoration:underline;}
+.legal-nav{
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.5rem;background:rgba(8,8,8,0.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.legal-nav .brand{
+  font-family:'Bebas Neue','Arial Black',Impact,sans-serif;font-size:1.5rem;letter-spacing:0.08em;color:#fff;
+}
+.legal-nav .brand span{color:var(--red);}
+.legal-nav .back{font-size:0.8rem;color:var(--muted);}
+.legal-nav .back:hover{color:#fff;}
+.legal-wrap{max-width:820px;margin:0 auto;padding:3.5rem 1.5rem 5rem;}
+.legal-wrap h1{
+  font-family:'Bebas Neue','Arial Black',Impact,sans-serif;font-weight:400;
+  font-size:2.6rem;letter-spacing:0.05em;margin-bottom:0.4rem;
+}
+.legal-wrap h1 span{color:var(--red);}
+.legal-wrap .updated{color:var(--muted);font-size:0.8rem;margin-bottom:2.5rem;}
+.legal-wrap h2{
+  font-size:1.15rem;font-weight:600;margin:2.2rem 0 0.7rem;color:#fff;
+  padding-top:1.2rem;border-top:1px solid var(--border);
+}
+.legal-wrap h3{font-size:0.98rem;font-weight:600;margin:1.4rem 0 0.4rem;color:#eee;}
+.legal-wrap p,.legal-wrap li{color:#c9c9c9;font-size:0.92rem;margin-bottom:0.8rem;}
+.legal-wrap ul{padding-left:1.3rem;margin-bottom:1rem;}
+.legal-wrap strong{color:#fff;font-weight:600;}
+.legal-wrap .box{
+  background:var(--dark2);border:1px solid var(--border);border-radius:12px;
+  padding:1.2rem 1.4rem;margin:1.2rem 0;
+}
+.legal-foot{
+  text-align:center;padding:2rem 1.5rem;border-top:1px solid var(--border);
+  color:var(--muted);font-size:0.78rem;
+}
+@media(max-width:600px){
+  .legal-wrap{padding:2.5rem 1.2rem 4rem;}
+  .legal-wrap h1{font-size:2.1rem;}
+}
