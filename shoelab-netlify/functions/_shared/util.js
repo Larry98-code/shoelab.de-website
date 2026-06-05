@@ -181,3 +181,43 @@ export async function sendEmail(env, { to, subject, text, replyTo }) {
 export function notifyAddress(env) {
   return env.NOTIFY_EMAIL || 'Shoelab.de@gmail.com';
 }
+
+// ---- Stripe helpers -------------------------------------------------------
+// Form-encode a flat object for Stripe's API.
+export function stripeForm(obj) {
+  return Object.keys(obj)
+    .filter((k) => obj[k] != null)
+    .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(obj[k]))
+    .join('&');
+}
+
+export async function stripeApi(env, path, body) {
+  const res = await fetch('https://api.stripe.com/v1/' + path, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + env.STRIPE_SECRET_KEY,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: stripeForm(body || {}),
+  });
+  return res.json();
+}
+
+// Verify a Stripe webhook signature (t=...,v1=...) against the raw body.
+export async function verifyStripeSignature(rawBody, sigHeader, secret) {
+  if (!sigHeader || !secret) return false;
+  const parts = {};
+  sigHeader.split(',').forEach((kv) => {
+    const i = kv.indexOf('=');
+    if (i > 0) parts[kv.slice(0, i).trim()] = kv.slice(i + 1).trim();
+  });
+  if (!parts.t || !parts.v1) return false;
+  const signed = parts.t + '.' + rawBody;
+  const key = await hmacKey(secret);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(signed));
+  const expected = [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (expected.length !== parts.v1.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ parts.v1.charCodeAt(i);
+  return diff === 0;
+}

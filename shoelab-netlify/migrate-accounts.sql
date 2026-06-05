@@ -7,3 +7,4 @@ ALTER TABLE users ADD COLUMN address TEXT;
 ALTER TABLE users ADD COLUMN city    TEXT;
 ALTER TABLE users ADD COLUMN postal  TEXT;
 ALTER TABLE users ADD COLUMN country TEXT;
+ALTER TABLE users ADD COLUMN stripe_customer_id TEXT;
