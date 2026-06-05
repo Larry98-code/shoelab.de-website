@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
   city       TEXT,
   postal     TEXT,
   country    TEXT,
+  stripe_customer_id TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

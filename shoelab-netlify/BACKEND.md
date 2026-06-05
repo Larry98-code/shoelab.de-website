@@ -17,6 +17,13 @@ email is not configured.
 | `/api/account/me` | GET | Current logged-in user (or `null`) |
 | `/api/booking` | POST | Store a booking + email studio & customer |
 | `/api/contact` | POST | Store a contact message + email studio |
+| `/api/account/update` | POST | Update profile + address (auth) |
+| `/api/account/password` | POST | Change password, verifies current (auth) |
+| `/api/account/orders` | GET | Signed-in user's bookings/orders (auth) |
+| `/api/account/forgot` | POST | Email a password-reset link |
+| `/api/account/reset` | POST | Set a new password from the emailed token |
+| `/api/account/billing-portal` | POST | Open the Stripe Customer Portal (auth) |
+| `/api/stripe/webhook` | POST | Stripe events → mark orders paid, link customer |
 | `/api/reviews` | GET / POST | List approved reviews / submit a review |
 
 Sessions are signed cookies (HMAC-SHA256). Passwords are hashed with
@@ -45,9 +52,28 @@ Dashboard → **Settings → Environment variables** (mark secrets as *Encrypted
 |---|---|---|
 | `ANTHROPIC_API_KEY` | yes | Wesley AI (already set) |
 | `SESSION_SECRET` | yes | Long random string — signs session cookies |
-| `RESEND_API_KEY` | optional | Enables confirmation emails (resend.com) |
+| `RESEND_API_KEY` | for emails | Enables confirmation + password-reset emails (resend.com) |
 | `MAIL_FROM` | optional | e.g. `ShoeLab <hi@shoelabonline.de>` (verify the domain in Resend) |
 | `NOTIFY_EMAIL` | optional | Where studio notifications go (default `Shoelab.de@gmail.com`) |
+| `STRIPE_SECRET_KEY` | for portal | `sk_live_…` — enables the Customer Portal button |
+| `STRIPE_WEBHOOK_SECRET` | for webhook | `whsec_…` from Stripe → Developers → Webhooks |
+
+### Password reset
+`/api/account/forgot` emails a one-hour signed link to `/reset.html?token=…`
+(requires `RESEND_API_KEY`). `/api/account/reset` consumes the token.
+
+### Stripe (payments)
+1. In Stripe → **Developers → Webhooks → Add endpoint**:
+   URL `https://shoelabonline.de/api/stripe/webhook`, events
+   `checkout.session.completed`, `payment_intent.succeeded`, `invoice.paid`.
+2. Copy the **Signing secret** (`whsec_…`) into `STRIPE_WEBHOOK_SECRET`, and your
+   `sk_live_…` into `STRIPE_SECRET_KEY`.
+3. Pass the customer email (and ideally the booking id as metadata) when creating
+   Checkout Sessions so the webhook can mark the right order paid.
+
+### Account profile migration
+After deploying, run **`migrate-accounts.sql`** once in the D1 Console to add the
+profile/address + `stripe_customer_id` columns to existing databases.
 
 Generate a session secret:
 ```bash
