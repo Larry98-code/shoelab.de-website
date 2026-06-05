@@ -8,6 +8,11 @@ CREATE TABLE IF NOT EXISTS users (
   email      TEXT NOT NULL UNIQUE,
   pw_salt    TEXT NOT NULL,
   pw_hash    TEXT NOT NULL,
+  phone      TEXT,
+  address    TEXT,
+  city       TEXT,
+  postal     TEXT,
+  country    TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
