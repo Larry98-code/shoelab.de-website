@@ -8,6 +8,19 @@
 
 const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
 
+// Some model generations return multiple content blocks (reasoning first,
+// answer second). Normalise to a single text block so every client works.
+function normalizeReply(data) {
+  if (!data || !Array.isArray(data.content)) return data;
+  const text = data.content
+    .filter((c) => c && c.type === 'text' && c.text)
+    .map((c) => c.text)
+    .join('\n\n');
+  if (!text) return data;
+  return Object.assign({}, data, { content: [{ type: 'text', text }] });
+}
+
+
 function cors() {
   return {
     'Access-Control-Allow-Origin': '*',
@@ -68,7 +81,7 @@ export async function onRequestPost(context) {
     for (const model of MODELS) {
       const r = await callAnthropic(env.ANTHROPIC_API_KEY, model, sys, messages);
       if (r.ok) {
-        return json(r.data, 200, { 'X-Wesley-Model': model });
+        return json(normalizeReply(r.data), 200, { 'X-Wesley-Model': model });
       }
       last = r;
       console.error('wesley: model ' + model + ' failed (' + r.status + '): ' + JSON.stringify(r.data).slice(0, 300));
