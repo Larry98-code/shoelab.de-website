@@ -34,6 +34,19 @@ async function wesley(request, env) {
     return json({ error: 'Messages required' }, 400);
   }
 
+
+// Some model generations return multiple content blocks (reasoning first,
+// answer second). Normalise to a single text block so every client works.
+function normalizeReply(data) {
+  if (!data || !Array.isArray(data.content)) return data;
+  const text = data.content
+    .filter((c) => c && c.type === 'text' && c.text)
+    .map((c) => c.text)
+    .join('\n\n');
+  if (!text) return data;
+  return Object.assign({}, data, { content: [{ type: 'text', text }] });
+}
+
   // Strongest model first; fall back automatically if the account lacks access.
   const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
 
@@ -55,7 +68,7 @@ async function wesley(request, env) {
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (response.ok) return json(data, 200, { 'X-Wesley-Model': model });
+      if (response.ok) return json(normalizeReply(data), 200, { 'X-Wesley-Model': model });
       last = { status: response.status, data };
       console.error('wesley: model ' + model + ' failed (' + response.status + '): ' + JSON.stringify(data).slice(0, 300));
       const type = data && data.error && data.error.type;

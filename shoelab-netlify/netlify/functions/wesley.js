@@ -40,6 +40,19 @@ const handler = async (event) => {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Messages required' }) };
   }
 
+
+// Some model generations return multiple content blocks (reasoning first,
+// answer second). Normalise to a single text block so every client works.
+function normalizeReply(data) {
+  if (!data || !Array.isArray(data.content)) return data;
+  const text = data.content
+    .filter((c) => c && c.type === 'text' && c.text)
+    .map((c) => c.text)
+    .join('\n\n');
+  if (!text) return data;
+  return Object.assign({}, data, { content: [{ type: 'text', text }] });
+}
+
   // Strongest model first; fall back automatically if the account lacks access.
   const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
 
@@ -61,7 +74,7 @@ const handler = async (event) => {
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (response.ok) return { statusCode: 200, headers, body: JSON.stringify(data) };
+      if (response.ok) return { statusCode: 200, headers, body: JSON.stringify(normalizeReply(data)) };
       last = { status: response.status, data };
       console.error('wesley: model ' + model + ' failed (' + response.status + '):', JSON.stringify(data).slice(0, 300));
       const type = data && data.error && data.error.type;
