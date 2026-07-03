@@ -50,8 +50,8 @@ export async function onRequestPost(context) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 800,
+        model: 'claude-sonnet-5',
+        max_tokens: 1200,
         system: system || 'You are Wesley, the helpful AI assistant for ShoeLab.de shoe cleaning studio in Bremen, Germany.',
         messages: messages,
       }),
