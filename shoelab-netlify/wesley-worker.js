@@ -34,32 +34,40 @@ async function wesley(request, env) {
     return json({ error: 'Messages required' }, 400);
   }
 
+  // Strongest model first; fall back automatically if the account lacks access.
+  const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
+
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 1200,
-        system: system || 'You are Wesley, the helpful AI assistant for ShoeLab.de shoe cleaning studio in Bremen, Germany.',
-        messages: messages,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return json({
-        content: [{ type: 'text', text: "Sorry, I'm having a brief issue. Please try again in a moment!" }],
-      }, 200);
+    let last = null;
+    for (const model of MODELS) {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 1200,
+          system: system || 'You are Wesley, the helpful AI assistant for ShoeLab.de shoe cleaning studio in Bremen, Germany.',
+          messages: messages,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) return json(data, 200, { 'X-Wesley-Model': model });
+      last = { status: response.status, data };
+      console.error('wesley: model ' + model + ' failed (' + response.status + '): ' + JSON.stringify(data).slice(0, 300));
+      const type = data && data.error && data.error.type;
+      if (response.status === 401 || (response.status === 400 && type !== 'not_found_error')) break;
     }
-
-    return json(data, 200);
+    const type = (last && last.data && last.data.error && last.data.error.type) || '';
+    let msg = "Sorry, I'm having a brief issue. Please try again in a moment!";
+    if (last && last.status === 401) msg = "I'm being reconnected by the team — please try again shortly, or WhatsApp us at +49 177 2258878!";
+    if (last && (last.status === 429 || type === 'overloaded_error')) msg = "I'm getting a lot of questions right now! 😅 Give me a few seconds and try again.";
+    return json({ content: [{ type: 'text', text: msg }] }, 200, { 'X-Wesley-Error': String(last && last.status) + ':' + type });
   } catch (err) {
+    console.error('wesley: network error: ' + String(err).slice(0, 200));
     return json({
       content: [{ type: 'text', text: "I'm reconnecting — please send your message again!" }],
     }, 200);
