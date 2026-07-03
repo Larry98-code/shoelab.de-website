@@ -574,6 +574,14 @@ footer{background:var(--black);border-top:1px solid rgba(204,17,17,0.25);}
 }
 .prod-card:hover .prod-img-bg { transform: scale(1.04); }
 .prod-emoji { font-size: 3.5rem; filter: drop-shadow(0 4px 20px rgba(204,17,17,0.3)); }
+.prod-photo {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: 1;
+  opacity: 0; transition: opacity 0.35s ease;
+}
+.prod-img-bg { position: relative; }
+.prod-quick { z-index: 3; }
+.prod-badge { z-index: 3; }
 .prod-render {
   width: 68%; max-width: 190px; height: auto; max-height: 82%;
   filter: drop-shadow(0 16px 22px rgba(0,0,0,0.55));
@@ -2643,6 +2651,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <div class="prod-card fade-up" data-cat="cleaner">
         <div class="prod-img-wrap">
           <div class="prod-img-bg" style="background:radial-gradient(120% 95% at 50% 4%, #26262b 0%, #17171a 48%, #0b0b0d 100%);">
+            <img class="prod-photo" src="/img/products/prod-0.jpg" alt="Premium Shoe Cleaner" loading="lazy" decoding="async" onerror="this.remove()" onload="this.style.opacity=1"/>
             <svg class="prod-render" viewBox="0 0 200 230" role="img" aria-label="ShoeLab Lab Serum No.1 cleaner bottle" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <radialGradient id="p0-floor" cx="50%" cy="50%" r="50%">
@@ -2720,6 +2729,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <div class="prod-card fade-up delay-1" data-cat="brush">
         <div class="prod-img-wrap">
           <div class="prod-img-bg" style="background:radial-gradient(120% 95% at 50% 4%, #26262b 0%, #17171a 48%, #0b0b0d 100%);">
+            <img class="prod-photo" src="/img/products/prod-1.jpg" alt="3-Brush Cleaning Set" loading="lazy" decoding="async" onerror="this.remove()" onload="this.style.opacity=1"/>
             <svg class="prod-render" viewBox="0 0 200 230" role="img" aria-label="ShoeLab three-brush cleaning set" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <radialGradient id="p1-floor" cx="50%" cy="50%" r="50%">
@@ -2776,6 +2786,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <div class="prod-card fade-up delay-2" data-cat="protector">
         <div class="prod-img-wrap">
           <div class="prod-img-bg" style="background:radial-gradient(120% 95% at 50% 4%, #26262b 0%, #17171a 48%, #0b0b0d 100%);">
+            <img class="prod-photo" src="/img/products/prod-2.jpg" alt="Ultimate Protector Spray" loading="lazy" decoding="async" onerror="this.remove()" onload="this.style.opacity=1"/>
             <svg class="prod-render" viewBox="0 0 200 230" role="img" aria-label="ShoeLab ShieldX protector spray can" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <radialGradient id="p2-floor" cx="50%" cy="50%" r="50%">
@@ -2854,6 +2865,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <div class="prod-card fade-up delay-3" data-cat="kit">
         <div class="prod-img-wrap">
           <div class="prod-img-bg" style="background:radial-gradient(120% 95% at 50% 4%, #26262b 0%, #17171a 48%, #0b0b0d 100%);">
+            <img class="prod-photo" src="/img/products/prod-3.jpg" alt="Pro Cleaning Kit" loading="lazy" decoding="async" onerror="this.remove()" onload="this.style.opacity=1"/>
             <svg class="prod-render" viewBox="0 0 200 230" role="img" aria-label="ShoeLab Field Kit cleaning box" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <radialGradient id="p3-floor" cx="50%" cy="50%" r="50%">
@@ -2941,6 +2953,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <div class="prod-card fade-up" data-cat="cleaner">
         <div class="prod-img-wrap">
           <div class="prod-img-bg" style="background:radial-gradient(120% 95% at 50% 4%, #26262b 0%, #17171a 48%, #0b0b0d 100%);">
+            <img class="prod-photo" src="/img/products/prod-4.jpg" alt="Sole Sauce Whitener" loading="lazy" decoding="async" onerror="this.remove()" onload="this.style.opacity=1"/>
             <svg class="prod-render" viewBox="0 0 200 230" role="img" aria-label="ShoeLab WhiteOut sole whitener bottle" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <radialGradient id="p4-floor" cx="50%" cy="50%" r="50%">
@@ -3017,6 +3030,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <div class="prod-card fade-up delay-1" data-cat="accessory">
         <div class="prod-img-wrap">
           <div class="prod-img-bg" style="background:radial-gradient(120% 95% at 50% 4%, #26262b 0%, #17171a 48%, #0b0b0d 100%);">
+            <img class="prod-photo" src="/img/products/prod-5.jpg" alt="Pro Microfibre Cloth" loading="lazy" decoding="async" onerror="this.remove()" onload="this.style.opacity=1"/>
             <svg class="prod-render" viewBox="0 0 200 230" role="img" aria-label="ShoeLab Skin microfibre cloth" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <radialGradient id="p5-floor" cx="50%" cy="50%" r="50%">
@@ -3085,6 +3099,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <div class="prod-card fade-up delay-2" data-cat="protector">
         <div class="prod-img-wrap">
           <div class="prod-img-bg" style="background:radial-gradient(120% 95% at 50% 4%, #26262b 0%, #17171a 48%, #0b0b0d 100%);">
+            <img class="prod-photo" src="/img/products/prod-6.jpg" alt="Repel Water + Stain" loading="lazy" decoding="async" onerror="this.remove()" onload="this.style.opacity=1"/>
             <svg class="prod-render" viewBox="0 0 200 230" role="img" aria-label="ShoeLab Ghost Guard repellent spray bottle" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <radialGradient id="p6-floor" cx="50%" cy="50%" r="50%">
@@ -3163,6 +3178,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <div class="prod-card fade-up delay-3" data-cat="accessory">
         <div class="prod-img-wrap">
           <div class="prod-img-bg" style="background:radial-gradient(120% 95% at 50% 4%, #26262b 0%, #17171a 48%, #0b0b0d 100%);">
+            <img class="prod-photo" src="/img/products/prod-7.jpg" alt="Cure Wipes 12-Pack" loading="lazy" decoding="async" onerror="this.remove()" onload="this.style.opacity=1"/>
             <svg class="prod-render" viewBox="0 0 200 230" role="img" aria-label="ShoeLab QuickDose cleaning wipes pack" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <radialGradient id="p7-floor" cx="50%" cy="50%" r="50%">
