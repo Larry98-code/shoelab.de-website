@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="ShoeLab Brush Catalog — hand-finished shoe brushes in beech and walnut. Choose your bristle."/>
+<title>Brush Catalog — ShoeLab.de</title>
+<link rel="canonical" href="https://shoelabonline.de/brushes.html"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<style>
+:root{ --red:#CC1111; --red-bright:#FF2020; --black:#080808; --dark2:#181818; --muted:#888; --border:rgba(255,255,255,0.08); }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+body{background:var(--black);color:#fff;font-family:'Inter','Helvetica Neue',Arial,sans-serif;font-weight:300;overflow-x:hidden;}
+a{color:inherit;text-decoration:none;}
+nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.5rem;background:rgba(8,8,8,0.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+.brand{font-family:'Bebas Neue','Arial Black',Impact,sans-serif;font-size:1.5rem;letter-spacing:0.08em;}
+.brand span{color:var(--red);}
+.back{font-size:0.8rem;color:var(--muted);}
+.back:hover{color:#fff;}
+header{max-width:1080px;margin:0 auto;padding:3rem 1.5rem 1.5rem;text-align:center;}
+.eyebrow{font-size:0.62rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--red);margin-bottom:0.6rem;}
+h1{font-family:'Bebas Neue','Arial Black',Impact,sans-serif;font-weight:400;font-size:clamp(2.4rem,6vw,3.6rem);letter-spacing:0.06em;line-height:1;}
+h1 span{color:var(--red);}
+.sub{color:#999;font-size:0.9rem;max-width:520px;margin:0.9rem auto 0;line-height:1.6;}
+.grid{max-width:1080px;margin:0 auto;padding:2rem 1.5rem 5rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.2rem;}
+.card{background:var(--dark2);border:1px solid var(--border);border-radius:18px;overflow:hidden;
+  display:flex;flex-direction:column;transition:transform 0.25s,border-color 0.25s;}
+.card:hover{transform:translateY(-4px);border-color:rgba(204,17,17,0.5);}
+.card-img{aspect-ratio:1/1;background:linear-gradient(180deg,#ffffff 0%,#f1f1f4 100%);position:relative;}
+.card-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.badge{position:absolute;top:0.8rem;left:0.8rem;background:var(--red);color:#fff;
+  font-family:'Bebas Neue',sans-serif;font-size:0.7rem;letter-spacing:0.14em;padding:0.22rem 0.6rem;}
+.card-body{padding:1rem 1.1rem 1.2rem;display:flex;flex-direction:column;gap:0.35rem;flex:1;}
+.name{font-size:0.95rem;font-weight:600;color:#fff;}
+.desc{font-size:0.74rem;color:#999;line-height:1.5;flex:1;}
+.row{display:flex;align-items:center;justify-content:space-between;margin-top:0.6rem;}
+.price{font-size:1.05rem;font-weight:600;}
+.add{background:var(--red);color:#fff;border:none;border-radius:9px;padding:0.6rem 1.1rem;cursor:pointer;
+  font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:0.14em;}
+.add:hover{background:var(--red-bright);}
+.note{max-width:1080px;margin:0 auto;padding:0 1.5rem 3rem;text-align:center;color:#777;font-size:0.75rem;}
+footer{text-align:center;padding:2rem 1.5rem;border-top:1px solid var(--border);color:var(--muted);font-size:0.78rem;}
+footer a{color:var(--red);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="brand">SHOE<span>LAB</span></a>
+  <a href="/#shop" class="back" data-t="back">← Back to the shop</a>
+</nav>
+
+<header>
+  <p class="eyebrow" data-t="eyebrow">Hand-finished · Beech &amp; Walnut</p>
+  <h1>SHOE<span>LAB</span> <span data-t="title" style="color:#fff;">Brush Catalog</span></h1>
+  <p class="sub" data-t="sub">Choose your bristle — from gentle hog hair for suede to stiff boar for soles. Every brush is lab-approved.</p>
+</header>
+
+<div class="grid" id="grid"></div>
+<p class="note" data-t="note">Adding a brush takes you back to the shop with it in your cart.</p>
+
+<footer>© 2026 ShoeLab · Bremen — <a href="/">shoelabonline.de</a></footer>
+
+<script>
+(function(){
+  /* ── PRICES ARE PLACEHOLDERS — set final prices here ── */
+  var ITEMS = [
+    { id:'r8r-brush',        img:'/img/products/prod-1.jpg',           name:'Complete 3-Brush Set',     d:'set',        price:24.99, badge:'set' },
+    { id:'brush-soft',       img:'/img/products/brush-soft.jpg',       name:'Soft Hog Bristle Brush',   d:'soft',       price:9.99 },
+    { id:'brush-medium',     img:'/img/products/brush-medium.jpg',     name:'Medium Synthetic Brush',   d:'medium',     price:9.99 },
+    { id:'brush-stiff',      img:'/img/products/brush-stiff.jpg',      name:'Stiff Boar Bristle Brush', d:'stiff',      price:9.99 },
+    { id:'brush-applicator', img:'/img/products/brush-applicator.jpg', name:'Sole Applicator Brush',    d:'applicator', price:7.99 },
+    { id:'brush-flat',       img:'/img/products/brush-flat.jpg',       name:'Precision Flat Brush',     d:'flat',       price:8.99 },
+    { id:'brush-dauber',     img:'/img/products/brush-dauber.jpg',     name:'Polish Dauber',            d:'dauber',     price:6.99 }
+  ];
+
+  var I18N = {
+    en:{ back:'← Back to the shop', eyebrow:'Hand-finished · Beech & Walnut', title:'Brush Catalog',
+      sub:'Choose your bristle — from gentle hog hair for suede to stiff boar for soles. Every brush is lab-approved.',
+      note:'Adding a brush takes you back to the shop with it in your cart.', add:'+ Cart', badge:'Best Value',
+      set:'All three bristles — the full arsenal in one box.', soft:'Gentle on suede, nubuck and knits.',
+      medium:'The all-rounder for leather and mesh.', stiff:'Deep scrub for soles and rubber.',
+      applicator:'Works solution deep into midsoles.', flat:'Precision cleaning for seams and panels.',
+      dauber:'Even polish and cream application.' },
+    de:{ back:'← Zurück zum Shop', eyebrow:'Handgefertigt · Buche & Walnuss', title:'Bürsten-Katalog',
+      sub:'Wähle deine Borste — vom sanften Schweinehaar für Wildleder bis zur festen Wildschweinborste für Sohlen. Jede Bürste ist Lab-geprüft.',
+      note:'Beim Hinzufügen geht es zurück zum Shop — die Bürste liegt dann im Warenkorb.', add:'+ Warenkorb', badge:'Bestes Angebot',
+      set:'Alle drei Borsten — das komplette Arsenal in einer Box.', soft:'Sanft zu Wildleder, Nubuk und Strick.',
+      medium:'Der Allrounder für Leder und Mesh.', stiff:'Tiefenreinigung für Sohlen und Gummi.',
+      applicator:'Arbeitet Reiniger tief in die Zwischensohle ein.', flat:'Präzise Reinigung für Nähte und Panels.',
+      dauber:'Gleichmäßiges Auftragen von Polish und Creme.' },
+    pl:{ back:'← Powrót do sklepu', eyebrow:'Ręczne wykończenie · Buk i orzech', title:'Katalog szczotek',
+      sub:'Wybierz włosie — od delikatnego dla zamszu po sztywne do podeszew. Każda szczotka zatwierdzona przez lab.',
+      note:'Po dodaniu wrócisz do sklepu ze szczotką w koszyku.', add:'+ Koszyk', badge:'Najlepsza oferta',
+      set:'Wszystkie trzy rodzaje włosia — pełny arsenał w jednym pudełku.', soft:'Delikatna dla zamszu, nubuku i dzianin.',
+      medium:'Uniwersalna do skóry i siatki.', stiff:'Głębokie szorowanie podeszew i gumy.',
+      applicator:'Wciera środek głęboko w międzypodeszwę.', flat:'Precyzyjne czyszczenie szwów i paneli.',
+      dauber:'Równomierna aplikacja pasty i kremu.' },
+    ru:{ back:'← Назад в магазин', eyebrow:'Ручная работа · Бук и орех', title:'Каталог щёток',
+      sub:'Выберите щетину — от мягкой для замши до жёсткой для подошв. Каждая щётка одобрена лабораторией.',
+      note:'После добавления вы вернётесь в магазин — щётка будет в корзине.', add:'+ Корзина', badge:'Выгодно',
+      set:'Все три вида щетины — полный арсенал в одной коробке.', soft:'Бережно для замши, нубука и текстиля.',
+      medium:'Универсальная для кожи и сетки.', stiff:'Глубокая чистка подошв и резины.',
+      applicator:'Втирает средство глубоко в подошву.', flat:'Точная чистка швов и панелей.',
+      dauber:'Равномерное нанесение крема и полироли.' },
+    uk:{ back:'← Назад до магазину', eyebrow:'Ручна робота · Бук і горіх', title:'Каталог щіток',
+      sub:'Оберіть щетину — від м’якої для замші до жорсткої для підошов. Кожна щітка схвалена лабораторією.',
+      note:'Після додавання ви повернетесь до магазину — щітка буде в кошику.', add:'+ Кошик', badge:'Вигідно',
+      set:'Усі три види щетини — повний арсенал в одній коробці.', soft:'Дбайливо для замші, нубуку та текстилю.',
+      medium:'Універсальна для шкіри та сітки.', stiff:'Глибоке чищення підошов і гуми.',
+      applicator:'Втирає засіб глибоко в підошву.', flat:'Точне чищення швів і панелей.',
+      dauber:'Рівномірне нанесення крему та поліролі.' },
+    it:{ back:'← Torna al negozio', eyebrow:'Finitura a mano · Faggio e noce', title:'Catalogo spazzole',
+      sub:'Scegli le setole — dalle morbide per il camoscio alle rigide per le suole. Ogni spazzola è approvata dal lab.',
+      note:'Aggiungendo una spazzola torni al negozio con l’articolo nel carrello.', add:'+ Carrello', badge:'Più conveniente',
+      set:'Tutte e tre le setole — l’arsenale completo in una scatola.', soft:'Delicata su camoscio, nabuk e tessuti.',
+      medium:'Il tuttofare per pelle e mesh.', stiff:'Pulizia profonda per suole e gomma.',
+      applicator:'Applica la soluzione in profondità nell’intersuola.', flat:'Pulizia di precisione per cuciture e pannelli.',
+      dauber:'Applicazione uniforme di cere e creme.' },
+    es:{ back:'← Volver a la tienda', eyebrow:'Acabado a mano · Haya y nogal', title:'Catálogo de cepillos',
+      sub:'Elige tus cerdas — desde suaves para ante hasta rígidas para suelas. Cada cepillo está aprobado por el lab.',
+      note:'Al añadir un cepillo vuelves a la tienda con él en tu carrito.', add:'+ Carrito', badge:'Mejor precio',
+      set:'Las tres cerdas — el arsenal completo en una caja.', soft:'Suave con ante, nobuk y tejidos.',
+      medium:'La todoterreno para piel y malla.', stiff:'Frotado profundo para suelas y goma.',
+      applicator:'Aplica la solución a fondo en la entresuela.', flat:'Limpieza de precisión para costuras y paneles.',
+      dauber:'Aplicación uniforme de cremas y betún.' }
+  };
+
+  var lang='en';
+  try{ var l=localStorage.getItem('shoelab_lang'); if(l && I18N[l]) lang=l; }catch(e){}
+  var T=I18N[lang];
+  document.documentElement.lang=lang;
+  document.querySelectorAll('[data-t]').forEach(function(el){
+    var v=T[el.getAttribute('data-t')]; if(v) el.textContent=v;
+  });
+
+  var grid=document.getElementById('grid');
+  grid.innerHTML = ITEMS.map(function(b){
+    return '<div class="card">'
+      +'<div class="card-img">'+(b.badge?'<span class="badge">'+T.badge+'</span>':'')
+      +'<img src="'+b.img+'" alt="'+b.name+'" loading="lazy"/></div>'
+      +'<div class="card-body"><div class="name">'+b.name+'</div>'
+      +'<div class="desc">'+(T[b.d]||'')+'</div>'
+      +'<div class="row"><span class="price">€'+b.price.toFixed(2)+'</span>'
+      +'<button class="add" data-id="'+b.id+'">'+T.add+'</button></div></div></div>';
+  }).join('');
+  grid.querySelectorAll('.add').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      window.location.href='/?add='+encodeURIComponent(btn.getAttribute('data-id'))+'#shop';
+    });
+  });
+})();
+</script>
+</body>
+</html>
