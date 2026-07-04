@@ -69,13 +69,13 @@ footer a{color:var(--red);}
 (function(){
   /* ── PRICES ARE PLACEHOLDERS — set final prices here ── */
   var ITEMS = [
-    { id:'r8r-brush',        img:'/img/products/prod-1.jpg',           name:'Complete 3-Brush Set',     d:'set',        price:24.99, badge:'set' },
-    { id:'brush-soft',       img:'/img/products/brush-soft.jpg',       name:'Soft Hog Bristle Brush',   d:'soft',       price:9.99 },
-    { id:'brush-medium',     img:'/img/products/brush-medium.jpg',     name:'Medium Synthetic Brush',   d:'medium',     price:9.99 },
-    { id:'brush-stiff',      img:'/img/products/brush-stiff.jpg',      name:'Stiff Boar Bristle Brush', d:'stiff',      price:9.99 },
-    { id:'brush-applicator', img:'/img/products/brush-applicator.jpg', name:'Sole Applicator Brush',    d:'applicator', price:7.99 },
-    { id:'brush-flat',       img:'/img/products/brush-flat.jpg',       name:'Precision Flat Brush',     d:'flat',       price:8.99 },
-    { id:'brush-dauber',     img:'/img/products/brush-dauber.jpg',     name:'Polish Dauber',            d:'dauber',     price:6.99 }
+    { id:'r8r-brush',        img:'/img/products/prod-1.jpg?v=3',           name:'Complete 3-Brush Set',     d:'set',        price:24.99, badge:'set' },
+    { id:'brush-soft',       img:'/img/products/brush-soft.jpg?v=3',       name:'Soft Hog Bristle Brush',   d:'soft',       price:9.99 },
+    { id:'brush-medium',     img:'/img/products/brush-medium.jpg?v=3',     name:'Medium Synthetic Brush',   d:'medium',     price:9.99 },
+    { id:'brush-stiff',      img:'/img/products/brush-stiff.jpg?v=3',      name:'Stiff Boar Bristle Brush', d:'stiff',      price:9.99 },
+    { id:'brush-applicator', img:'/img/products/brush-applicator.jpg?v=3', name:'Sole Applicator Brush',    d:'applicator', price:7.99 },
+    { id:'brush-flat',       img:'/img/products/brush-flat.jpg?v=3',       name:'Precision Flat Brush',     d:'flat',       price:8.99 },
+    { id:'brush-dauber',     img:'/img/products/brush-dauber.jpg?v=3',     name:'Polish Dauber',            d:'dauber',     price:6.99 }
   ];
 
   var I18N = {
@@ -121,6 +121,13 @@ footer a{color:var(--red);}
       medium:'Il tuttofare per pelle e mesh.', stiff:'Pulizia profonda per suole e gomma.',
       applicator:'Applica la soluzione in profondità nell’intersuola.', flat:'Pulizia di precisione per cuciture e pannelli.',
       dauber:'Applicazione uniforme di cere e creme.' },
+    fr:{ back:'← Retour à la boutique', eyebrow:'Fini main · Hêtre et noyer', title:'Catalogue de brosses',
+      sub:'Choisis tes poils — des poils de porc doux pour le daim aux poils de sanglier durs pour les semelles. Chaque brosse est approuvée par le lab.',
+      note:'En ajoutant une brosse, tu reviens à la boutique avec l\'article dans ton panier.', add:'+ Panier', badge:'Meilleur prix',
+      set:'Les trois types de poils — l\'arsenal complet dans une boîte.', soft:'Douce pour le daim, le nubuck et les mailles.',
+      medium:'La polyvalente pour le cuir et le mesh.', stiff:'Récurage en profondeur pour semelles et caoutchouc.',
+      applicator:'Fait pénétrer la solution au cœur des semelles.', flat:'Nettoyage de précision pour coutures et empiècements.',
+      dauber:'Application uniforme de cirages et crèmes.' },
     es:{ back:'← Volver a la tienda', eyebrow:'Acabado a mano · Haya y nogal', title:'Catálogo de cepillos',
       sub:'Elige tus cerdas — desde suaves para ante hasta rígidas para suelas. Cada cepillo está aprobado por el lab.',
       note:'Al añadir un cepillo vuelves a la tienda con él en tu carrito.', add:'+ Carrito', badge:'Mejor precio',
