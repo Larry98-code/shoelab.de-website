@@ -9,6 +9,7 @@
 
 <!-- SEO / canonical -->
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+<link rel="stylesheet" href="/css/deconstruct.css?v=1"/>
 <link rel="canonical" href="https://shoelabonline.de/"/>
 <meta name="geo.region" content="DE-HB"/>
 <meta name="geo.placename" content="Bremen"/>
@@ -522,8 +523,8 @@ a:visited { color: inherit; }
 a:hover { text-decoration: none; }
 button { -webkit-tap-highlight-color: transparent; }
 img { max-width: 100%; display: block; }
-html{scroll-behavior:smooth;overflow-x:hidden;width:100%;-webkit-text-size-adjust:100%;}
-body{background:var(--black);color:var(--white);font-family:'Inter','Helvetica Neue','Helvetica',Arial,sans-serif;font-weight:300;overflow-x:hidden;}
+html{scroll-behavior:smooth;overflow-x:hidden;overflow-x:clip;width:100%;-webkit-text-size-adjust:100%;}
+body{background:var(--black);color:var(--white);font-family:'Inter','Helvetica Neue','Helvetica',Arial,sans-serif;font-weight:300;overflow-x:hidden;overflow-x:clip;}
 
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:3px;}
@@ -2133,7 +2134,7 @@ img { height: auto; display: block; }
 
 /* ── RESPONSIVE HARDENING — fit every device / screen size ── */
 /* never allow sideways scroll on any device */
-html, body { max-width: 100%; overflow-x: hidden; }
+html, body { max-width: 100%; overflow-x: hidden; overflow-x: clip; }
 /* let grid/flex children shrink instead of forcing the page wider */
 .services-grid > *, .shop-grid > *, .reviews-grid > *, .gallery-grid > *,
 .footer-top > *, .booking-inner > *, .stat-strip > * { min-width: 0; }
@@ -2422,6 +2423,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
 </style>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="/js/sl-geo.js?v=1"></script>
+<script src="/js/deconstruct.js?v=1" defer></script>
 </head>
 <body>
 
@@ -2472,6 +2474,45 @@ section[id], [id]{ scroll-margin-top: 90px; }
 </div>
 
 <!-- HERO -->
+<!-- ══════════════════════════════════════════════════
+     DECONSTRUCTED — scroll-driven sneaker assembly
+     A different pair every visit. css/deconstruct.css + js/deconstruct.js
+══════════════════════════════════════════════════ -->
+<section id="deconstruct" aria-label="Sneaker anatomy">
+  <div class="dc-stage">
+    <div class="dc-glow" aria-hidden="true"></div>
+
+    <div class="dc-shoe" id="dcShoe"></div>
+
+    <div class="dc-sweep" id="dcSweep" aria-hidden="true"><i></i></div>
+    <div class="dc-vignette" aria-hidden="true"></div>
+    <div class="dc-grain" aria-hidden="true"></div>
+
+    <div class="dc-model lg" id="dcModel">
+      <em aria-hidden="true"></em>
+      <div><b>&nbsp;</b><span>&nbsp;</span></div>
+    </div>
+
+    <div class="dc-count lg" id="dcCount"><b>0</b><span>Layers</span></div>
+
+    <div class="dc-rail" aria-hidden="true"><i></i></div>
+
+    <div class="dc-copy lg">
+      <p class="dc-kicker dc-swap" id="dcKicker">Anatomy</p>
+      <p class="dc-line dc-swap" id="dcLine">Every sneaker is engineering. Scroll to put this one back together.</p>
+    </div>
+
+    <button class="dc-shuffle lg" id="dcShuffle" type="button" aria-label="Show another sneaker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/>
+      </svg>
+      <span>Shuffle</span>
+    </button>
+
+    <div class="dc-hint" id="dcHint" aria-hidden="true"><span>Scroll</span><i></i></div>
+  </div>
+</section>
+
 <section id="hero">
   <div class="hero-bg-lines"></div>
   <div class="hero-red-glow"></div>

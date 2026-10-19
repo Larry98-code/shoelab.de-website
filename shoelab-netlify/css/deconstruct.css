@@ -1,0 +1,225 @@
+/* ShoeLab — "Deconstructed": a scroll-driven sneaker assembly.
+   Every rule is scoped under #deconstruct so it cannot leak into the
+   rest of the page. */
+
+#deconstruct{
+  --dc-red:#CC1111;
+  --dc-glass:rgba(255,255,255,0.07);
+  position:relative;
+  /* three screens of scroll drive one screen of animation */
+  height:340vh;
+  background:#000;
+  isolation:isolate;
+}
+#deconstruct *{box-sizing:border-box;}
+
+/* ── sticky stage ─────────────────────────────────────────────── */
+.dc-stage{
+  position:sticky; top:0; height:100vh; width:100%;
+  overflow:hidden; display:grid; place-items:center;
+  background:
+    radial-gradient(120% 90% at 50% 42%, #191919 0%, #0a0a0a 55%, #000 100%);
+}
+
+/* a spotlight that blooms as the shoe comes together */
+.dc-glow{
+  position:absolute; left:50%; top:50%; width:min(120vh,120vw); aspect-ratio:1;
+  translate:-50% -50%; pointer-events:none; z-index:0;
+  background:radial-gradient(circle,
+    rgba(204,17,17,calc(0.16 * var(--p,0))) 0%,
+    rgba(204,17,17,calc(0.05 * var(--p,0))) 32%,
+    transparent 62%);
+  filter:blur(26px);
+  opacity:calc(0.35 + 0.65 * var(--p,0));
+}
+
+/* film grain, very light — keeps the big black areas from banding */
+.dc-grain{
+  position:absolute; inset:0; z-index:6; pointer-events:none; opacity:.16;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.5'/></svg>");
+}
+
+.dc-vignette{
+  position:absolute; inset:0; z-index:5; pointer-events:none;
+  background:radial-gradient(130% 100% at 50% 50%, transparent 52%, rgba(0,0,0,.72) 100%);
+}
+
+/* ── the exploded sneaker ─────────────────────────────────────── */
+.dc-shoe{
+  position:relative; z-index:2;
+  width:min(76vw, 760px);
+  height:100vh;
+  display:block;
+  transform-style:preserve-3d;
+  perspective:1400px;
+}
+.dc-layer{
+  position:absolute; left:50%; top:50%;
+  will-change:transform,opacity,filter;
+  transform-origin:50% 50%;
+}
+.dc-layer img{
+  display:block; width:100%; height:auto;
+  /* a contact shadow so parts feel like objects, not cut-outs */
+  filter:drop-shadow(0 18px 26px rgba(0,0,0,.62));
+}
+/* the light sweep that crosses the stack at the moment it locks together */
+.dc-sweep{
+  position:absolute; inset:0; z-index:3; pointer-events:none; overflow:hidden;
+}
+.dc-sweep i{
+  position:absolute; top:-30%; left:var(--sx,-40%); width:28%; height:160%;
+  background:linear-gradient(100deg, transparent, rgba(255,255,255,.17) 44%,
+             rgba(255,255,255,.30) 50%, rgba(255,255,255,.17) 56%, transparent);
+  filter:blur(14px); transform:rotate(9deg); opacity:var(--so,0);
+}
+
+/* ── liquid glass ─────────────────────────────────────────────── */
+.lg{
+  position:relative;
+  background:linear-gradient(135deg, rgba(255,255,255,.11), rgba(255,255,255,.035));
+  -webkit-backdrop-filter:blur(26px) saturate(200%) brightness(1.08);
+  backdrop-filter:blur(26px) saturate(200%) brightness(1.08);
+  border-radius:26px;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255,255,255,.40),
+    inset 0 -1px 0 0 rgba(255,255,255,.07),
+    inset 1px 0 0 0 rgba(255,255,255,.10),
+    inset -1px 0 0 0 rgba(255,255,255,.10),
+    0 24px 70px rgba(0,0,0,.58),
+    0 2px 10px rgba(0,0,0,.40);
+  overflow:hidden;
+}
+/* specular bloom that follows the pointer */
+.lg::before{
+  content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:radial-gradient(62% 86% at var(--mx,50%) var(--my,0%),
+    rgba(255,255,255,.22), rgba(255,255,255,0) 62%);
+  transition:background .25s ease-out;
+}
+/* refractive rim — brightest where light would bend hardest */
+.lg::after{
+  content:''; position:absolute; inset:0; border-radius:inherit; padding:1px;
+  pointer-events:none;
+  background:linear-gradient(135deg,
+    rgba(255,255,255,.55), rgba(255,255,255,0) 34%,
+    rgba(255,255,255,0) 64%, rgba(255,255,255,.30));
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite:exclude;
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .lg{ background:rgba(22,22,24,.86); }
+}
+
+/* ── copy ─────────────────────────────────────────────────────── */
+.dc-copy{
+  position:absolute; z-index:4; left:50%; translate:-50% 0;
+  bottom:clamp(1.4rem,5vh,3.2rem);
+  width:min(92vw,560px); padding:1.1rem 1.3rem;
+  text-align:center; color:#fff;
+}
+.dc-kicker{
+  font-size:.58rem; letter-spacing:.34em; text-transform:uppercase;
+  color:var(--dc-red); margin-bottom:.5rem;
+}
+.dc-title{
+  font-family:'Bebas Neue','Arial Black',Impact,sans-serif; font-weight:400;
+  font-size:clamp(1.6rem,4.4vw,2.5rem); letter-spacing:.045em; line-height:1;
+  margin:0 0 .35rem;
+}
+.dc-line{
+  font-size:.82rem; color:#c9c9c9; line-height:1.55; font-weight:300;
+  min-height:2.5em;
+}
+.dc-swap{display:block; transition:opacity .45s ease, transform .45s ease;}
+.dc-swap.out{opacity:0; transform:translateY(8px);}
+
+/* model badge, top-left */
+.dc-model{
+  position:absolute; z-index:4; top:clamp(4.6rem,9vh,6.4rem); left:clamp(1rem,4vw,2.4rem);
+  padding:.6rem .95rem; display:flex; align-items:center; gap:.7rem;
+}
+.dc-model > div{display:flex; flex-direction:column; gap:2px; line-height:1.2;}
+.dc-model b{
+  font-family:'Bebas Neue',sans-serif; font-weight:400; font-size:.98rem;
+  letter-spacing:.09em; color:#fff;
+}
+.dc-model span{font-size:.62rem; color:#9a9a9a; letter-spacing:.1em; text-transform:uppercase;}
+.dc-model em{
+  font-style:normal; width:6px; height:6px; border-radius:50%;
+  background:var(--dc-red); box-shadow:0 0 10px var(--dc-red);
+}
+
+/* layer counter, top-right */
+.dc-count{
+  position:absolute; z-index:4; top:clamp(4.6rem,9vh,6.4rem); right:clamp(1rem,4vw,2.4rem);
+  padding:.55rem .85rem; text-align:right;
+}
+.dc-count b{
+  display:block; font-family:'Bebas Neue',sans-serif; font-size:1.25rem;
+  letter-spacing:.08em; color:#fff; line-height:1;
+}
+.dc-count span{font-size:.55rem; letter-spacing:.2em; text-transform:uppercase; color:#8d8d8d;}
+
+/* assembly progress rail */
+.dc-rail{
+  position:absolute; z-index:4; right:clamp(1rem,4vw,2.4rem); top:50%; translate:0 -50%;
+  width:3px; height:min(34vh,230px); border-radius:3px;
+  background:rgba(255,255,255,.12); overflow:hidden;
+}
+.dc-rail i{
+  position:absolute; left:0; top:0; width:100%; height:calc(var(--p,0) * 100%);
+  background:linear-gradient(180deg,#FF2020,var(--dc-red));
+  box-shadow:0 0 14px rgba(204,17,17,.75);
+}
+
+/* scroll hint, fades out once they start */
+.dc-hint{
+  position:absolute; z-index:4; left:50%; translate:-50% 0; bottom:1.1rem;
+  display:flex; flex-direction:column; align-items:center; gap:.4rem;
+  font-size:.56rem; letter-spacing:.28em; text-transform:uppercase; color:#777;
+  transition:opacity .4s ease;
+}
+.dc-hint i{
+  width:1px; height:26px;
+  background:linear-gradient(180deg,transparent,#CC1111);
+  animation:dcDrop 1.9s ease-in-out infinite;
+}
+@keyframes dcDrop{0%,100%{opacity:.25;transform:scaleY(.55);}50%{opacity:1;transform:scaleY(1);}}
+
+/* shuffle control */
+/* Sits under the model badge: both bottom corners already belong to the
+   cart button and the Wesley launcher. */
+.dc-shuffle{
+  position:absolute; z-index:5; left:clamp(1rem,4vw,2.4rem);
+  top:calc(clamp(4.6rem,9vh,6.4rem) + 56px);
+  padding:.62rem .9rem; display:flex; align-items:center; gap:.5rem;
+  color:#ddd; font-size:.62rem; letter-spacing:.14em; text-transform:uppercase;
+  cursor:pointer; border:none; font-family:inherit;
+}
+.dc-shuffle:hover{color:#fff;}
+.dc-shuffle svg{width:13px;height:13px;}
+
+@media(max-width:780px){
+  #deconstruct{height:300vh;}
+  .dc-shoe{width:84vw;}
+  .dc-rail{display:none;}
+  .dc-count{right:clamp(1rem,4vw,2.4rem);}
+  /* keep the text clear of the cart and Wesley buttons, which float over
+     the bottom corners on every page */
+  .dc-copy{bottom:1rem; width:min(96vw,560px); padding:.85rem 3.4rem;}
+  .dc-line{font-size:.76rem;}
+  .dc-kicker{font-size:.54rem;}
+  .dc-shuffle{top:calc(clamp(4.6rem,9vh,6.4rem) + 52px); left:.9rem;}
+}
+
+/* Someone who asked for less motion gets the assembled shoe, no scroll
+   choreography and no sweep. */
+@media(prefers-reduced-motion:reduce){
+  #deconstruct{height:100vh;}
+  .dc-hint,.dc-sweep{display:none;}
+  .dc-layer{transition:none!important;}
+}
