@@ -74,7 +74,7 @@
       var q = (w.location.search || '').match(/[?&]dc=([\w-]+)/);
       if (q) {
         var forced = SHOES.filter(function (s) { return s.id === q[1]; })[0];
-        if (forced) return forced;
+        if (forced) { pinned = true; return forced; }
       }
     } catch (e) {}
 
@@ -107,6 +107,13 @@
 
   /* ── build ──────────────────────────────────────────────────────── */
   var root, stage, shoeBox, els = [], shoe, geom = null, raf = 0, lastP = -1;
+
+  // Auto-advance. tx is the transition: 0 = settled, 1 = blown apart and
+  // gone. The outgoing pair explodes to 1, the next is built at 1 and
+  // reassembles to 0, all at whatever point of the scroll the visitor is at.
+  var AUTO_MS = 8000;
+  var tx = 0, swapping = false, timer = 0, lastScroll = 0, visible = true, pinned = false;
+  var ring = [], ringAt = 0;
   var copyEls = {}, chapter = -1;
 
   function buildShoe(s) {
@@ -130,13 +137,6 @@
       shoeBox.appendChild(div);
       els.push(div);
     });
-    var cnt = d.getElementById('dcCount');
-    if (cnt) cnt.firstElementChild.textContent = String(s.l.length).padStart(2, '0');
-    var mdl = d.getElementById('dcModel');
-    if (mdl) {
-      mdl.querySelector('b').textContent = s.label;
-      mdl.querySelector('span').textContent = s.sub;
-    }
     geom = null;
     measure();
     render(lastP < 0 ? 0 : lastP, true);
@@ -222,6 +222,17 @@
         }
       }
 
+      if (tx > 0) {
+        // blow apart away from the middle of the stack, drift, soften, fade
+        var away = i - (n - 1) / 2;
+        yc += away * (70 + 18 * n) * tx * posScale;
+        xc += sgn * 46 * tx * posScale;
+        rot += sgn * 9 * tx;
+        sc *= 1 - 0.14 * tx;
+        blur += 16 * tx;
+        op *= 1 - tx;
+      }
+
       var el = els[i];
       el.style.transform =
         'translate3d(' + (xc - g.ws[i] / 2).toFixed(2) + 'px,' +
@@ -258,6 +269,7 @@
 
   /* ── scroll ─────────────────────────────────────────────────────── */
   function onScroll() {
+    lastScroll = Date.now();
     if (raf) return;
     raf = w.requestAnimationFrame(function () {
       raf = 0;
@@ -265,6 +277,52 @@
       var travel = root.offsetHeight - w.innerHeight;
       var p = travel > 0 ? clamp(-r.top / travel, 0, 1) : 1;
       render(p);
+    });
+  }
+
+  /* ── auto-advance ───────────────────────────────────────────────── */
+  function preload(s) {
+    return Promise.all(s.l.map(function (L) {
+      return new Promise(function (res) {
+        var im = new Image();
+        im.onload = im.onerror = function () { res(); };
+        im.src = BASE + L[0];
+      });
+    }));
+  }
+
+  function tween(from, to, ms, easeFn, done) {
+    var t0 = 0;
+    function step(now) {
+      if (!t0) t0 = now;
+      var k = Math.min(1, (now - t0) / ms);
+      tx = from + (to - from) * easeFn(k);
+      render(lastP < 0 ? 0 : lastP, true);
+      if (k < 1) w.requestAnimationFrame(step); else if (done) done();
+    }
+    w.requestAnimationFrame(step);
+  }
+  function easeIn(k) { return k * k * k; }
+  function easeOut(k) { return 1 - Math.pow(1 - k, 3); }
+
+  function schedule(ms) {
+    clearTimeout(timer);
+    if (pinned || reduce || !visible || d.hidden) return;
+    timer = setTimeout(advance, ms == null ? AUTO_MS : ms);
+  }
+
+  function advance() {
+    if (swapping || !visible || d.hidden) return;
+    // never change the pair under someone's thumb mid-scroll
+    if (Date.now() - lastScroll < 900) { schedule(450); return; }
+    ringAt = (ringAt + 1) % ring.length;
+    var nxt = ring[ringAt];
+    swapping = true;
+    preload(nxt).then(function () {
+      tween(0, 1, 560, easeIn, function () {
+        buildShoe(nxt);
+        tween(1, 0, 950, easeOut, function () { swapping = false; schedule(); });
+      });
     });
   }
 
@@ -295,12 +353,19 @@
       }
     }, { passive: true });
 
-    var shuf = d.getElementById('dcShuffle');
-    if (shuf) shuf.addEventListener('click', function () {
-      buildShoe(pickShoe());
-      shuf.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }],
-                   { duration: 520, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    // every pair once per cycle, the opening pair first, the rest shuffled
+    ring = [shoe].concat(shuffled(SHOES.filter(function (s) { return s.id !== shoe.id; })));
+    ringAt = 0;
+    if ('IntersectionObserver' in w) {
+      new IntersectionObserver(function (es) {
+        visible = es[0].isIntersecting;
+        if (visible) schedule(); else clearTimeout(timer);
+      }, { threshold: 0.25 }).observe(stage);
+    }
+    d.addEventListener('visibilitychange', function () {
+      if (d.hidden) clearTimeout(timer); else schedule();
     });
+    schedule();
 
     // keep the copy in the visitor's language when they switch it
     try {

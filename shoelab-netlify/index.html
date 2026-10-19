@@ -9,7 +9,8 @@
 
 <!-- SEO / canonical -->
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
-<link rel="stylesheet" href="/css/deconstruct.css?v=1"/>
+<link rel="stylesheet" href="/css/deconstruct.css?v=2"/>
+<link rel="stylesheet" href="/css/hero-showcase.css?v=2"/>
 <link rel="canonical" href="https://shoelabonline.de/"/>
 <meta name="geo.region" content="DE-HB"/>
 <meta name="geo.placename" content="Bremen"/>
@@ -2368,7 +2369,8 @@ section[id], [id]{ scroll-margin-top: 90px; }
 </style>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="/js/sl-geo.js?v=1"></script>
-<script src="/js/deconstruct.js?v=1" defer></script>
+<script src="/js/deconstruct.js?v=2" defer></script>
+<script src="/js/hero-showcase.js?v=4" defer></script>
 </head>
 <body>
 
@@ -2433,13 +2435,6 @@ section[id], [id]{ scroll-margin-top: 90px; }
     <div class="dc-vignette" aria-hidden="true"></div>
     <div class="dc-grain" aria-hidden="true"></div>
 
-    <div class="dc-model lg" id="dcModel">
-      <em aria-hidden="true"></em>
-      <div><b>&nbsp;</b><span>&nbsp;</span></div>
-    </div>
-
-    <div class="dc-count lg" id="dcCount"><b>0</b><span>Layers</span></div>
-
     <div class="dc-rail" aria-hidden="true"><i></i></div>
 
     <div class="dc-copy lg">
@@ -2447,20 +2442,14 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <p class="dc-line dc-swap" id="dcLine">Every sneaker is engineering. Scroll to put this one back together.</p>
     </div>
 
-    <button class="dc-shuffle lg" id="dcShuffle" type="button" aria-label="Show another sneaker">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/>
-      </svg>
-      <span>Shuffle</span>
-    </button>
-
     <div class="dc-hint" id="dcHint" aria-hidden="true"><span>Scroll</span><i></i></div>
   </div>
 </section>
 
 <section id="hero">
   <div class="hero-bg-lines"></div>
-  <div class="hero-red-glow"></div>
+  <div class="hs-aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="hs-veil" aria-hidden="true"></div>
   <div class="hero-inner">
     <div class="hero-left">
       <p class="hero-eyebrow" data-i18n="hero.eyebrow">Bremen's Premier Shoe Care Studio</p>
@@ -2476,11 +2465,8 @@ section[id], [id]{ scroll-margin-top: 90px; }
       </div>
     </div>
     <div class="hero-right">
-      <div class="hero-logo-wrap">
-        <div class="hero-logo-ring"></div>
-        <div class="hero-logo-ring2"></div>
-        <img src="/img/shoelab-logo-320.png" alt="ShoeLab logo" class="hero-logo-img" decoding="async"/>
-        <div class="hero-badge">Bremen · Germany</div>
+      <div class="hs" id="heroShowcase">
+        <noscript><img src="/img/showcase/jordan1.webp" alt="Air Jordan 1 Low" style="width:100%;height:auto;"/></noscript>
       </div>
     </div>
   </div>
@@ -5659,7 +5645,6 @@ const _origHandleUserMessage = handleUserMessage;
        ShoeLab-branded renders baked into the markup. */
     try{ fxBeforeAfter(); }catch(e){}
     try{ if(!prefersReduced) fxPreloader(); }catch(e){}
-    try{ fxLoadThree(); }catch(e){}
     try{ fxTilt(); }catch(e){}
     try{ fxMagnetic(); }catch(e){}
     try{ fxLogoParallax(); }catch(e){}

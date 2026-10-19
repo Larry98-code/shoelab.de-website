@@ -137,32 +137,7 @@
 .dc-swap{display:block; transition:opacity .45s ease, transform .45s ease;}
 .dc-swap.out{opacity:0; transform:translateY(8px);}
 
-/* model badge, top-left */
-.dc-model{
-  position:absolute; z-index:4; top:clamp(4.6rem,9vh,6.4rem); left:clamp(1rem,4vw,2.4rem);
-  padding:.6rem .95rem; display:flex; align-items:center; gap:.7rem;
-}
-.dc-model > div{display:flex; flex-direction:column; gap:2px; line-height:1.2;}
-.dc-model b{
-  font-family:'Bebas Neue',sans-serif; font-weight:400; font-size:.98rem;
-  letter-spacing:.09em; color:#fff;
-}
-.dc-model span{font-size:.62rem; color:#9a9a9a; letter-spacing:.1em; text-transform:uppercase;}
-.dc-model em{
-  font-style:normal; width:6px; height:6px; border-radius:50%;
-  background:var(--dc-red); box-shadow:0 0 10px var(--dc-red);
-}
 
-/* layer counter, top-right */
-.dc-count{
-  position:absolute; z-index:4; top:clamp(4.6rem,9vh,6.4rem); right:clamp(1rem,4vw,2.4rem);
-  padding:.55rem .85rem; text-align:right;
-}
-.dc-count b{
-  display:block; font-family:'Bebas Neue',sans-serif; font-size:1.25rem;
-  letter-spacing:.08em; color:#fff; line-height:1;
-}
-.dc-count span{font-size:.55rem; letter-spacing:.2em; text-transform:uppercase; color:#8d8d8d;}
 
 /* assembly progress rail */
 .dc-rail{
@@ -191,29 +166,16 @@
 @keyframes dcDrop{0%,100%{opacity:.25;transform:scaleY(.55);}50%{opacity:1;transform:scaleY(1);}}
 
 /* shuffle control */
-/* Sits under the model badge: both bottom corners already belong to the
-   cart button and the Wesley launcher. */
-.dc-shuffle{
-  position:absolute; z-index:5; left:clamp(1rem,4vw,2.4rem);
-  top:calc(clamp(4.6rem,9vh,6.4rem) + 56px);
-  padding:.62rem .9rem; display:flex; align-items:center; gap:.5rem;
-  color:#ddd; font-size:.62rem; letter-spacing:.14em; text-transform:uppercase;
-  cursor:pointer; border:none; font-family:inherit;
-}
-.dc-shuffle:hover{color:#fff;}
-.dc-shuffle svg{width:13px;height:13px;}
 
 @media(max-width:780px){
   #deconstruct{height:300vh;}
   .dc-shoe{width:84vw;}
   .dc-rail{display:none;}
-  .dc-count{right:clamp(1rem,4vw,2.4rem);}
   /* keep the text clear of the cart and Wesley buttons, which float over
      the bottom corners on every page */
-  .dc-copy{bottom:1rem; width:min(96vw,560px); padding:.85rem 3.4rem;}
+  .dc-copy{bottom:1rem; width:min(96vw,560px); padding:.85rem 4rem;}
   .dc-line{font-size:.76rem;}
   .dc-kicker{font-size:.54rem;}
-  .dc-shuffle{top:calc(clamp(4.6rem,9vh,6.4rem) + 52px); left:.9rem;}
 }
 
 /* Someone who asked for less motion gets the assembled shoe, no scroll
