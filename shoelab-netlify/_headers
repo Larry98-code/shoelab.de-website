@@ -10,6 +10,10 @@
 /img/*
   Cache-Control: public, max-age=31536000, immutable
 
+# sneaker layer art — fixed names, may be re-cut, so keep it a day
+/img/deconstruct/*
+  Cache-Control: public, max-age=86400
+
 # product photos keep fixed names (prod-N.jpg) and may be replaced — short cache
 /img/products/*
   Cache-Control: public, max-age=3600
