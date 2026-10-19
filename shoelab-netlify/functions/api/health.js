@@ -2,7 +2,7 @@
 // GET /api/health  →  human-readable JSON: is the key valid, which models
 // respond, and the exact Anthropic error if not. Costs ~1 token per model.
 
-import { sendEmail, notifyAddress } from '../_shared/util.js';
+import { sendEmail, notifyAddress, DEFAULT_FROM } from '../_shared/util.js';
 
 const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
 
@@ -23,15 +23,16 @@ export async function onRequestGet(context) {
   out.email = {
     resendKeyConfigured: !!env.RESEND_API_KEY,
     keyPrefix: env.RESEND_API_KEY ? env.RESEND_API_KEY.slice(0, 8) + '…' : null,
-    from: env.MAIL_FROM || 'ShoeLab <onboarding@resend.dev>  (default — only delivers to the Resend account owner)',
+    from: env.MAIL_FROM || DEFAULT_FROM + '  (default)',
+    newsletterKeyConfigured: !!env.RESEND_CONTACTS_KEY,
     bookingsGoTo: notifyAddress(env),
     customAddressSet: !!env.NOTIFY_EMAIL,
     stripeWebhookSecret: !!env.STRIPE_WEBHOOK_SECRET,
     dropoffAddressSet: !!env.DROPOFF_ADDRESS,
     verdict: env.RESEND_API_KEY
-      ? (env.MAIL_FROM
-          ? '✅ Booking emails are configured.'
-          : '⚠️ Emails will send, but MAIL_FROM is unset so Resend uses onboarding@resend.dev, which only delivers to the address that owns the Resend account. Verify your domain and set MAIL_FROM to e.g. "ShoeLab <booking@shoelabonline.de>".')
+      ? (env.RESEND_CONTACTS_KEY
+          ? '✅ Booking and newsletter emails are configured.'
+          : '⚠️ Booking emails are configured, but RESEND_CONTACTS_KEY is unset, so newsletter confirmations cannot add subscribers.')
       : '❌ RESEND_API_KEY is not set — NO booking emails are being sent. Add it under Settings → Variables and Secrets, then redeploy.',
   };
 

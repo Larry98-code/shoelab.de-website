@@ -26,8 +26,9 @@ Secrets**, add:
 
 | Variable | Value | Required |
 |---|---|---|
-| `RESEND_API_KEY` | From [resend.com](https://resend.com) → API Keys | **Yes** |
-| `MAIL_FROM` | `ShoeLab <booking@shoelabonline.de>` | Strongly recommended |
+| `RESEND_API_KEY` | Sending-only key "shoelab-website (sending)", restricted to `mail.shoelabonline.de` | **Yes** |
+| `RESEND_CONTACTS_KEY` | Full-access key "shoelab-website (newsletter)" — only the newsletter confirm route uses it | For the newsletter |
+| `MAIL_FROM` | Optional — defaults to `ShoeLab.de <info@mail.shoelabonline.de>` | No |
 | `NOTIFY_EMAIL` | Where bookings land, e.g. `Shoelab.de@gmail.com` | Optional |
 | `STRIPE_WEBHOOK_SECRET` | From Stripe → Developers → Webhooks | For `[PAID]` |
 | `DROPOFF_ADDRESS` | Your full drop-off address, e.g. `Musterweg 12, 28217 Bremen` | Recommended |
@@ -40,10 +41,17 @@ printed only in the confirmation a customer receives after booking — never on
 the site, and not in your own copy. If you leave it unset, customers are told
 you'll send the address on WhatsApp before their appointment.
 
-**About `MAIL_FROM`:** without it, Resend sends from `onboarding@resend.dev`,
-which **only delivers to the address that owns the Resend account**. Customers
-get nothing. To fix it, add `shoelabonline.de` under Resend → Domains, add the
-DNS records it gives you, and set `MAIL_FROM` to an address on that domain.
+**About `MAIL_FROM`:** the domain `mail.shoelabonline.de` is set up in Resend
+(EU region). All mail goes out as `ShoeLab.de <info@mail.shoelabonline.de>`, and
+customer replies land in the `info@` inbox in Resend.
+
+## Newsletter (double opt-in)
+
+The footer form posts to `/api/newsletter/subscribe`, which emails a
+confirmation link. Only after the click does `/api/newsletter/confirm` add the
+address to the Resend segment **Newsletter**, subscribed to the topic
+**ShoeLab News**. Write and send campaigns in Resend → Broadcasts to that
+segment; Resend adds the unsubscribe link.
 
 ## Check it works
 
