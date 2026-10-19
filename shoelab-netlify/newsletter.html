@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<title>Newsletter — ShoeLab.de</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/legal.css"/>
+</head>
+<body>
+<nav class="legal-nav">
+  <a href="/" class="brand">SHOE<span>LAB</span></a>
+  <a href="/" class="back">← Zurück zur Startseite</a>
+</nav>
+<main class="legal-wrap">
+  <h1>News<span>letter</span></h1>
+  <div class="box" id="msg-ok" hidden>
+    <p><strong>Danke, deine Anmeldung ist bestätigt.</strong> Du bekommst ab jetzt Neuigkeiten, Angebote und Pflegetipps von ShoeLab.de. Abmelden kannst du dich jederzeit über den Link in jeder E-Mail.</p>
+    <p><em>Thanks, you're subscribed. You can unsubscribe any time with the link in every email.</em></p>
+  </div>
+  <div class="box" id="msg-invalid" hidden>
+    <p><strong>Dieser Bestätigungslink ist ungültig oder abgelaufen.</strong> Bitte melde dich auf der Startseite erneut an.</p>
+    <p><em>This confirmation link is invalid or has expired. Please sign up again on the homepage.</em></p>
+  </div>
+  <div class="box" id="msg-error" hidden>
+    <p><strong>Da ist etwas schiefgelaufen.</strong> Bitte versuche es später noch einmal oder schreib uns an info@mail.shoelabonline.de.</p>
+    <p><em>Something went wrong. Please try again later.</em></p>
+  </div>
+</main>
+<footer class="legal-foot">© 2026 ShoeLab · Bremen — <a href="/datenschutz.html">Datenschutz</a> · <a href="/impressum.html">Impressum</a></footer>
+<script>
+  (function () {
+    var s = new URLSearchParams(location.search).get('status');
+    var el = document.getElementById('msg-' + (s === 'ok' || s === 'invalid' ? s : 'error'));
+    if (el) el.hidden = false;
+  })();
+</script>
+</body>
+</html>

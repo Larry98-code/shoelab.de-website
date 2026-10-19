@@ -154,28 +154,67 @@ export async function currentUser(request, env) {
 }
 
 // ---- transactional email via Resend (best-effort) -------------------------
-export async function sendEmail(env, { to, subject, text, replyTo }) {
+// Sender and reply address live on the verified Resend subdomain. Replies to
+// customer mail land in the info@ inbox in Resend unless a caller overrides
+// replyTo (owner notifications reply straight to the customer).
+export const DEFAULT_FROM = 'ShoeLab.de <info@mail.shoelabonline.de>';
+export const DEFAULT_REPLY_TO = 'info@mail.shoelabonline.de';
+
+export async function sendEmail(env, { to, subject, text, html, replyTo, headers, idempotencyKey }) {
   if (!env.RESEND_API_KEY) return { skipped: 'no RESEND_API_KEY' };
-  const from = env.MAIL_FROM || 'ShoeLab <onboarding@resend.dev>';
+  const from = env.MAIL_FROM || DEFAULT_FROM;
   try {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + env.RESEND_API_KEY,
-        'Content-Type': 'application/json',
-      },
+      headers: Object.assign(
+        {
+          Authorization: 'Bearer ' + env.RESEND_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
+      ),
       body: JSON.stringify({
         from,
         to: Array.isArray(to) ? to : [to],
         subject,
         text,
-        ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(html ? { html } : {}),
+        reply_to: replyTo || env.REPLY_TO || DEFAULT_REPLY_TO,
+        ...(headers ? { headers } : {}),
       }),
     });
-    return { ok: r.ok };
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) console.log('resend send failed', r.status, JSON.stringify(data));
+    else console.log('resend sent', data.id);
+    return { ok: r.ok, id: data.id, status: r.status };
   } catch (e) {
     return { error: String(e) };
   }
+}
+
+// ---- Resend contacts (newsletter) ----------------------------------------
+// Contacts need a full-access key, so it is a separate secret that only the
+// newsletter confirm route reads. The sending key above stays sending-only.
+export async function resendApi(env, method, path, body) {
+  if (!env.RESEND_CONTACTS_KEY) return { ok: false, status: 0, data: { error: 'no RESEND_CONTACTS_KEY' } };
+  const r = await fetch('https://api.resend.com' + path, {
+    method,
+    headers: {
+      Authorization: 'Bearer ' + env.RESEND_CONTACTS_KEY,
+      'Content-Type': 'application/json',
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  const data = await r.json().catch(() => ({}));
+  return { ok: r.ok, status: r.status, data };
+}
+
+export const NEWSLETTER_SEGMENT_ID = '778e00ad-524d-4733-b541-2d76b2095802';
+export const NEWSLETTER_TOPIC_ID = 'f2e19ca1-034f-4776-a9c9-bf4c1f26f547';
+
+export function siteOrigin(request, env) {
+  if (env.SITE_URL) return String(env.SITE_URL).replace(/\/+$/, '');
+  return new URL(request.url).origin;
 }
 
 // Where a booked customer brings their shoes. The studio runs from home, so
