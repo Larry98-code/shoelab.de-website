@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#080808"/>
+<title>Booking Confirmed — ShoeLab Bremen</title>
+<meta name="description" content="Your ShoeLab booking is confirmed."/>
+<link rel="canonical" href="https://shoelabonline.de/thank-you.html"/>
+<!-- Confirmation pages must never be indexed: they would rank for nothing and
+     leak order context into search results. -->
+<meta name="robots" content="noindex, nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="stylesheet" href="/css/flow.css?v=1"/>
+</head>
+<body>
+
+<nav class="fl-nav">
+  <a href="/" class="fl-brand">
+    <img src="/img/shoelab-logo-96.png" alt="ShoeLab logo" width="36" height="36" decoding="async"/>
+    <span class="fl-brand-text">SHOE<span>LAB</span></span>
+  </a>
+  <div class="fl-nav-tools">
+    <a href="/" class="fl-back" data-t="backHome">Back to ShoeLab</a>
+    <div class="fl-lang">
+      <button class="fl-lang-btn" id="flLangBtn" aria-label="Language">🌐 <span id="flLangCur">EN</span> ▾</button>
+      <div class="fl-lang-menu" id="flLangMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="fl-main">
+  <div class="fl-steps">
+    <div class="fl-step done"><span class="fl-step-dot">✓</span><span class="fl-step-label" data-t="step1">Service</span></div>
+    <span class="fl-step-bar"></span>
+    <div class="fl-step done"><span class="fl-step-dot">✓</span><span class="fl-step-label" data-t="step2">Payment</span></div>
+    <span class="fl-step-bar"></span>
+    <div class="fl-step active"><span class="fl-step-dot">3</span><span class="fl-step-label" data-t="step3">Confirmed</span></div>
+  </div>
+
+  <div class="done-wrap">
+    <div class="done-ico">✓</div>
+    <p class="fl-eyebrow" data-t="tEyebrow">Step 3 of 3</p>
+    <h1 class="fl-title"><span data-t="tTitleA">You're</span> <span class="red" data-t="tTitleB">Booked</span></h1>
+    <p class="fl-sub" data-t="tSub">Your slot is confirmed. A confirmation is on its way to your inbox.</p>
+
+    <div class="done-ref">
+      <small style="display:block;font-size:0.6rem;letter-spacing:0.18em;color:#888;margin-bottom:0.25rem;" data-t="refLbl">Your reference</small>
+      <span id="doneRef">SL-—</span>
+    </div>
+
+    <div class="fl-card" style="text-align:left;" id="doneSummary">
+      <div class="sum-line"><span data-t="sService">Service</span><span id="doneService">—</span></div>
+      <div class="sum-line"><span data-t="sWhen">When</span><span id="doneWhen">—</span></div>
+      <div class="sum-div"></div>
+      <div class="sum-total"><span data-t="sTotal">Total</span><b id="doneAmount">—</b></div>
+      <small id="donePeriod" style="color:#888;font-size:0.72rem;display:block;margin-top:0.3rem;"></small>
+    </div>
+
+    <div class="done-next">
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:0.06em;font-size:1.2rem;margin-bottom:0.5rem;" data-t="next">What happens next</h2>
+      <ul>
+        <li><b>1.</b><span data-t="n1">Bring your pair to the lab at your chosen slot — or message us on WhatsApp to arrange a pickup.</span></li>
+        <li><b>2.</b><span data-t="n2">We inspect, photograph and treat them. You get an update when work begins.</span></li>
+        <li><b>3.</b><span data-t="n3">Collect them fresh, or we deliver them back. Most treatments are done within 48 hours.</span></li>
+      </ul>
+    </div>
+
+    <div class="btn-row" style="margin-top:1.6rem;">
+      <a class="btn btn-ghost" href="/" data-t="backHome">Back to ShoeLab</a>
+      <a class="btn" href="https://wa.me/491772258878" target="_blank" rel="noopener" data-t="questions">Questions? Message us on WhatsApp</a>
+    </div>
+  </div>
+</main>
+
+<footer class="fl-foot">
+  <div>© 2026 ShoeLab · Wallerheerstraße, 28217 Bremen · <a href="tel:+491772258878">+49 177 2258878</a></div>
+  <div class="fl-foot-links">
+    <a href="/">Home</a><a href="/impressum.html">Impressum</a>
+    <a href="/datenschutz.html">Datenschutz</a><a href="/agb.html">AGB</a><a href="/widerruf.html">Widerruf</a>
+  </div>
+</footer>
+
+<script src="/js/sl-geo.js?v=1"></script>
+<script src="/js/flow.js?v=1"></script>
+<script>
+(function(){
+  var F = window.SLFlow;
+  var el = function(id){ return document.getElementById(id); };
+  var order = F.getOrder() || {};
+  var q;
+  try { q = new URLSearchParams(location.search); } catch(e) { q = { get: function(){ return null; } }; }
+
+  var service = q.get('service') || order.serviceName || '';
+  var amount  = q.get('amount') || q.get('price') || order.amount || '';
+  var isSub   = q.get('sub') === '1' || order.plan === 'subscription';
+  var when    = (order.date && order.time) ? (order.date + ' · ' + order.time) : '';
+
+  // Prefer the real booking row id; fall back to a readable derived code.
+  var ref = order.bookingId
+    ? ('SL-' + String(order.bookingId).padStart(5, '0'))
+    : F.makeRef((order.email || service || 'shoelab').split('').reduce(function(a, c){ return a + c.charCodeAt(0); }, 0));
+
+  function render(){
+    el('doneRef').textContent = ref;
+    el('doneService').textContent = service || '—';
+    el('doneWhen').textContent = when || '—';
+    el('doneAmount').textContent = amount ? F.money(amount) : '—';
+    el('donePeriod').textContent = isSub ? F.t('billedMonthly') : '';
+    if (!service && !when) el('doneSummary').style.display = 'none';
+  }
+
+  F.initLang(render);
+  render();
+
+  // The booking is finished — don't let a refresh or a back-button replay it.
+  F.clearOrder();
+})();
+</script>
+</body>
+</html>

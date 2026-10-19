@@ -1,5 +1,15 @@
 User-agent: *
 Allow: /
+
+# Transactional pages — no search value, and they depend on session state.
+Disallow: /checkout.html
+Disallow: /thank-you.html
+Disallow: /reset.html
 Disallow: /api/
+
+# Let crawlers fetch the assets they need to render the page properly.
+Allow: /css/
+Allow: /js/
+Allow: /img/
 
 Sitemap: https://shoelabonline.de/sitemap.xml

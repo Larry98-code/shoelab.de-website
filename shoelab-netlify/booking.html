@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#080808"/>
+<title>Book an Appointment — ShoeLab Bremen</title>
+<meta name="description" content="Book your sneaker cleaning, restoration or full detailing at ShoeLab in Bremen. Choose a treatment, pick a slot and pay securely online. Confirmation within minutes."/>
+<link rel="canonical" href="https://shoelabonline.de/booking.html"/>
+<meta name="robots" content="index, follow, max-image-preview:large"/>
+
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="ShoeLab.de"/>
+<meta property="og:title" content="Book an Appointment — ShoeLab Bremen"/>
+<meta property="og:description" content="Choose a treatment, pick your slot and pay securely. Bremen's premier sneaker care lab."/>
+<meta property="og:url" content="https://shoelabonline.de/booking.html"/>
+<meta property="og:image" content="https://shoelabonline.de/og-image.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:locale" content="de_DE"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Book an Appointment — ShoeLab Bremen"/>
+<meta name="twitter:description" content="Choose a treatment, pick your slot and pay securely."/>
+<meta name="twitter:image" content="https://shoelabonline.de/og-image.png"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="stylesheet" href="/css/flow.css?v=1"/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://shoelabonline.de/booking.html#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "ShoeLab",
+          "item": "https://shoelabonline.de/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Book an appointment",
+          "item": "https://shoelabonline.de/booking.html"
+        }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://shoelabonline.de/booking.html#webpage",
+      "url": "https://shoelabonline.de/booking.html",
+      "name": "Book an Appointment — ShoeLab Bremen",
+      "description": "Choose a treatment, pick a slot and pay securely online.",
+      "isPartOf": {
+        "@id": "https://shoelabonline.de/#website"
+      },
+      "about": {
+        "@id": "https://shoelabonline.de/#localbusiness"
+      },
+      "breadcrumb": {
+        "@id": "https://shoelabonline.de/booking.html#breadcrumb"
+      },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "ReserveAction",
+      "@id": "https://shoelabonline.de/booking.html#reserve",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://shoelabonline.de/booking.html",
+        "actionPlatform": [
+          "https://schema.org/DesktopWebPlatform",
+          "https://schema.org/MobileWebPlatform"
+        ]
+      },
+      "result": {
+        "@type": "Reservation",
+        "name": "Shoe care appointment"
+      },
+      "agent": {
+        "@id": "https://shoelabonline.de/#localbusiness"
+      }
+    }
+  ]
+}
+</script>
+
+</head>
+<body>
+
+<nav class="fl-nav">
+  <a href="/" class="fl-brand">
+    <img src="/img/shoelab-logo-96.png" alt="ShoeLab logo" width="36" height="36" decoding="async"/>
+    <span class="fl-brand-text">SHOE<span>LAB</span></span>
+  </a>
+  <div class="fl-nav-tools">
+    <a href="/#services" class="fl-back" data-t="back">← Back to site</a>
+    <div class="fl-lang">
+      <button class="fl-lang-btn" id="flLangBtn" aria-label="Language">🌐 <span id="flLangCur">EN</span> ▾</button>
+      <div class="fl-lang-menu" id="flLangMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="fl-main">
+  <header class="fl-head">
+    <p class="fl-eyebrow" data-t="bEyebrow">Step 1 of 3</p>
+    <h1 class="fl-title"><span data-t="bTitleA">Book Your</span> <span class="red" data-t="bTitleB">Appointment</span></h1>
+    <p class="fl-sub" data-t="bSub">Pick your treatment, choose a slot, and drop your pair at the lab in Bremen. Takes under a minute.</p>
+  </header>
+
+  <div class="fl-steps">
+    <div class="fl-step active"><span class="fl-step-dot">1</span><span class="fl-step-label" data-t="step1">Service</span></div>
+    <span class="fl-step-bar"></span>
+    <div class="fl-step"><span class="fl-step-dot">2</span><span class="fl-step-label" data-t="step2">Payment</span></div>
+    <span class="fl-step-bar"></span>
+    <div class="fl-step"><span class="fl-step-dot">3</span><span class="fl-step-label" data-t="step3">Confirmed</span></div>
+  </div>
+
+  <div class="fl-alert" id="flAlert"></div>
+
+  <div class="plan-wrap">
+    <div class="plan-toggle" role="tablist" aria-label="Billing">
+      <button type="button" id="planOnce" class="on" role="tab" aria-selected="true" data-t="planOnce">One-time</button>
+      <button type="button" id="planMonth" role="tab" aria-selected="false" data-t="planMonth">Monthly</button>
+    </div>
+  </div>
+  <small class="plan-save" id="planSave" data-t="planSave">Monthly plans save you up to 22%</small>
+
+  <h2 class="sr-only" data-t="svcChoose">Choose your treatment</h2>
+  <div class="fl-grid" id="svcGrid" role="radiogroup" aria-label="Treatment"></div>
+
+  <div class="fl-two" style="margin-top:2rem;">
+    <div>
+      <section class="fl-card" style="margin-bottom:1.2rem;">
+        <h2 data-t="when">When should we expect you?</h2>
+        <p class="fl-card-note" id="hoursNote" data-t="hours">Mon–Fri 10:00–19:00 · Sat 10:00–16:00 · Sun closed</p>
+        <div class="fl-field">
+          <label class="fl-label" for="bkDate" data-t="date">Preferred date</label>
+          <input class="fl-input" type="date" id="bkDate" autocomplete="off"/>
+          <span class="fl-err"></span>
+        </div>
+        <div class="fl-field">
+          <span class="fl-label" data-t="time">Time slot</span>
+          <div class="slots" id="slotGrid"></div>
+          <span class="fl-err" id="slotErr"></span>
+        </div>
+      </section>
+
+      <section class="fl-card">
+        <h2 data-t="details">Your details</h2>
+        <div class="fl-row">
+          <div class="fl-field">
+            <label class="fl-label" for="bkFirst" data-t="first">First name</label>
+            <input class="fl-input" type="text" id="bkFirst" autocomplete="given-name"/>
+            <span class="fl-err"></span>
+          </div>
+          <div class="fl-field">
+            <label class="fl-label" for="bkLast" data-t="last">Last name</label>
+            <input class="fl-input" type="text" id="bkLast" autocomplete="family-name"/>
+            <span class="fl-err"></span>
+          </div>
+        </div>
+        <div class="fl-row">
+          <div class="fl-field">
+            <label class="fl-label" for="bkEmail" data-t="email">Email</label>
+            <input class="fl-input" type="email" id="bkEmail" autocomplete="email" inputmode="email"/>
+            <span class="fl-err"></span>
+          </div>
+          <div class="fl-field">
+            <label class="fl-label" for="bkPhone" data-t="phone">Phone / WhatsApp</label>
+            <input class="fl-input" type="tel" id="bkPhone" autocomplete="tel" inputmode="tel"/>
+            <span class="fl-err"></span>
+          </div>
+        </div>
+        <div class="fl-field">
+          <label class="fl-label" for="bkNotes" data-t="notes">Notes (brand, model, issue)</label>
+          <textarea class="fl-textarea" id="bkNotes" data-t-ph="notesPh" placeholder="e.g. White Air Force 1, scuffed toe box and yellowed soles"></textarea>
+        </div>
+      </section>
+    </div>
+
+    <aside class="fl-card sum">
+      <span class="sum-badge" id="sumBadge" data-t="bEyebrow">Step 1 of 3</span>
+      <h2 data-t="summary">Your booking</h2>
+      <div class="sum-div"></div>
+      <div class="sum-line"><span data-t="sService">Service</span><span id="sumService">—</span></div>
+      <div class="sum-line"><span data-t="sPlan">Plan</span><span id="sumPlan">—</span></div>
+      <div class="sum-line"><span data-t="sWhen">When</span><span id="sumWhen">—</span></div>
+      <div class="sum-div"></div>
+      <div class="sum-total"><span data-t="sTotal">Total</span><b id="sumTotal">—</b></div>
+      <small id="sumPeriod" style="color:#888;font-size:0.72rem;display:block;margin-top:0.3rem;"></small>
+      <button class="btn" id="bkContinue" style="margin-top:1.2rem;" data-t="continueBtn">Continue to payment</button>
+      <div class="pay-secure">🔒 <span data-t="secure">Secure checkout · SSL encrypted</span></div>
+    </aside>
+  </div>
+</main>
+
+<footer class="fl-foot">
+  <div>© 2026 ShoeLab · Wallerheerstraße, 28217 Bremen · <a href="tel:+491772258878">+49 177 2258878</a></div>
+  <div class="fl-foot-links">
+    <a href="/">Home</a><a href="/impressum.html">Impressum</a>
+    <a href="/datenschutz.html">Datenschutz</a><a href="/agb.html">AGB</a><a href="/widerruf.html">Widerruf</a>
+  </div>
+</footer>
+
+<script src="/js/sl-geo.js?v=1"></script>
+<script src="/js/flow.js?v=1"></script>
+<script>
+(function(){
+  var F = window.SLFlow, G = window.SLGeo;
+  var plan = 'onetime';
+  var svcId = null, slot = null;
+
+  // Deep links: /booking.html?service=revival&plan=monthly
+  try {
+    var q = new URLSearchParams(location.search);
+    var s = (q.get('service')||'').toLowerCase();
+    if (F.serviceById(s)) svcId = s;
+    if ((q.get('plan')||'').toLowerCase() === 'monthly') plan = 'subscription';
+  } catch(e){}
+
+  // Resume a booking the visitor started earlier in this tab.
+  var prev = F.getOrder();
+  if (prev && !svcId) { svcId = prev.serviceId || null; plan = prev.plan || plan; }
+
+  var el = function(id){ return document.getElementById(id); };
+
+  function renderPlanToggle(){
+    el('planOnce').classList.toggle('on', plan === 'onetime');
+    el('planMonth').classList.toggle('on', plan === 'subscription');
+    el('planOnce').setAttribute('aria-selected', plan === 'onetime');
+    el('planMonth').setAttribute('aria-selected', plan === 'subscription');
+  }
+
+  function renderServices(){
+    el('svcGrid').innerHTML = F.SERVICES.map(function(s){
+      var price = plan === 'subscription' ? s.month : s.once;
+      var per = plan === 'subscription' ? F.t('monthLbl') : F.t('onceLbl');
+      return '<label class="svc-opt' + (s.id === svcId ? ' sel' : '') + '" data-id="' + s.id + '" role="radio" tabindex="0" aria-checked="' + (s.id === svcId) + '">'
+        + '<input type="radio" name="svc" value="' + s.id + '"' + (s.id === svcId ? ' checked' : '') + '/>'
+        + '<span class="svc-check">✓</span>'
+        + '<span class="svc-tag">' + F.t(s.tag) + '</span>'
+        + '<span class="svc-name">' + s.name + '</span>'
+        + '<span class="svc-desc">' + F.t(s.desc) + '</span>'
+        + '<span class="svc-price"><b>' + F.money(price) + '</b><small>' + per + '</small></span>'
+        + '</label>';
+    }).join('');
+    el('svcGrid').querySelectorAll('.svc-opt').forEach(function(opt){
+      var pick = function(){ svcId = opt.getAttribute('data-id'); renderServices(); renderSummary(); };
+      opt.addEventListener('click', pick);
+      opt.addEventListener('keydown', function(e){
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(); }
+      });
+    });
+  }
+
+  // Saturday closes at 16:00, so the late slots disappear; Sunday is closed.
+  function slotsFor(dateStr){
+    if (!dateStr) return F.SLOTS;
+    var d = new Date(dateStr + 'T12:00:00');
+    var day = d.getDay();
+    if (day === 0) return [];
+    if (day === 6) return F.SLOTS.filter(function(t){ return parseInt(t,10) < 16; });
+    return F.SLOTS;
+  }
+
+  function renderSlots(){
+    var avail = slotsFor(el('bkDate').value);
+    if (!avail.length) {
+      el('slotGrid').innerHTML = '<p style="color:#888;font-size:0.8rem;grid-column:1/-1;">' + F.t('closedSun') + '</p>';
+      slot = null; renderSummary(); return;
+    }
+    if (slot && avail.indexOf(slot) === -1) slot = null;
+    el('slotGrid').innerHTML = avail.map(function(t){
+      return '<button type="button" class="slot' + (t === slot ? ' sel' : '') + '" data-slot="' + t + '">' + t + '</button>';
+    }).join('');
+    el('slotGrid').querySelectorAll('.slot').forEach(function(b){
+      b.addEventListener('click', function(){
+        slot = b.getAttribute('data-slot');
+        renderSlots(); renderSummary();
+        F.fieldError(el('slotGrid').parentNode.querySelector('.slots') || el('slotGrid'), false);
+        el('slotErr').classList.remove('on');
+      });
+    });
+    renderSummary();
+  }
+
+  function renderSummary(){
+    var s = F.serviceById(svcId);
+    el('sumService').textContent = s ? s.name : F.t('notChosen');
+    el('sumPlan').textContent = plan === 'subscription' ? F.t('planMonth') : F.t('planOnce');
+    var dv = el('bkDate').value;
+    el('sumWhen').textContent = dv && slot ? (dv + ' · ' + slot) : F.t('notChosen');
+    if (s) {
+      var price = plan === 'subscription' ? s.month : s.once;
+      el('sumTotal').textContent = F.money(price);
+      el('sumPeriod').textContent = plan === 'subscription' ? F.t('billedMonthly') : '';
+    } else {
+      el('sumTotal').textContent = '—';
+      el('sumPeriod').textContent = '';
+    }
+  }
+
+  function render(){ renderPlanToggle(); renderServices(); renderSlots(); renderSummary(); }
+
+  el('planOnce').addEventListener('click', function(){ plan='onetime'; render(); });
+  el('planMonth').addEventListener('click', function(){ plan='subscription'; render(); });
+  el('bkDate').addEventListener('change', function(){
+    F.fieldError(el('bkDate'), false);
+    renderSlots();
+  });
+
+  // Date bounds: today through six months out.
+  (function(){
+    var now = new Date();
+    var pad = function(n){ return (n<10?'0':'') + n; };
+    var iso = function(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+    el('bkDate').min = iso(now);
+    var max = new Date(now.getTime()); max.setMonth(max.getMonth()+6);
+    el('bkDate').max = iso(max);
+    if (prev && prev.date) el('bkDate').value = prev.date;
+    if (prev && prev.time) slot = prev.time;
+    ['first','last','email','phone','notes'].forEach(function(k){
+      var node = el('bk' + k.charAt(0).toUpperCase() + k.slice(1));
+      if (node && prev && prev[k]) node.value = prev[k];
+    });
+  })();
+
+  function validate(){
+    var ok = true;
+    if (!svcId) {
+      el('flAlert').textContent = F.t('svcChoose');
+      el('flAlert').classList.add('on');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      ok = false;
+    } else { el('flAlert').classList.remove('on'); }
+
+    if (!el('bkDate').value) { F.fieldError(el('bkDate'), true, F.t('required')); ok = false; }
+    if (!slot) { el('slotErr').textContent = F.t('pickSlot'); el('slotErr').classList.add('on'); ok = false; }
+    if (!el('bkFirst').value.trim()) { F.fieldError(el('bkFirst'), true, F.t('required')); ok = false; }
+    if (!el('bkLast').value.trim())  { F.fieldError(el('bkLast'),  true, F.t('required')); ok = false; }
+    var em = el('bkEmail').value.trim();
+    if (!em) { F.fieldError(el('bkEmail'), true, F.t('required')); ok = false; }
+    else if (!F.validEmail(em)) { F.fieldError(el('bkEmail'), true, F.t('invalidEmail')); ok = false; }
+    return ok;
+  }
+
+  ['bkFirst','bkLast','bkEmail'].forEach(function(id){
+    el(id).addEventListener('input', function(){ F.fieldError(el(id), false); });
+  });
+
+  el('bkContinue').addEventListener('click', function(){
+    if (!validate()) return;
+    var s = F.serviceById(svcId);
+    var price = plan === 'subscription' ? s.month : s.once;
+
+    F.setOrder({
+      serviceId: svcId, serviceName: s.name, plan: plan,
+      amount: price.toFixed(2),
+      date: el('bkDate').value, time: slot,
+      first: el('bkFirst').value.trim(), last: el('bkLast').value.trim(),
+      email: el('bkEmail').value.trim(), phone: el('bkPhone').value.trim(),
+      notes: el('bkNotes').value.trim(),
+      lang: F.lang()
+    });
+    location.href = '/checkout.html';
+  });
+
+  F.initLang(render);
+  render();
+})();
+</script>
+</body>
+</html>
