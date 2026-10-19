@@ -45,18 +45,32 @@
       'crep-wipes': 'price_1TQbDYLM3UVKKIQNGEPGy4pX',
       'starter-kit': 'price_1TQbEYLM3UVKKIQNwa5JTsNG'
 
-      // ── MISSING, must be created in Stripe ───────────────────────────────
-      // These eight are purchasable on the site but have no Stripe Price, so
-      // checkout cannot complete for them. Create a Price for each in Stripe
-      // and paste the id here (the id is also needed in index.html).
-      //   brush-soft        Soft Hog Bristle Brush        EUR  9.99
-      //   brush-medium      Medium Synthetic Brush        EUR  9.99
-      //   brush-stiff       Stiff Boar Bristle Brush      EUR  9.99
+      // ── WHEN GOING LIVE ─────────────────────────────────────────────────
+      // Live Prices are new objects in Stripe, so create one per product at
+      // the amount the site displays, then paste the live ids here and in
+      // index.html. The four test Prices marked * were made at old amounts
+      // (16.99 / 19.99 / 12.99 / 49.99) and must not be copied across.
+      //
+      //   jm-cleaner     Premium Shoe Cleaner (Lab Serum)   EUR 14.99 *
+      //   r8r-brush      3-Brush Cleaning Set               EUR 24.99
+      //   crep-spray     Ultimate Protector Spray           EUR 14.99
+      //   sl-kit         Premium Cleaning Kit               EUR 39.99
+      //   r8r-sol        WhiteOut Sole Revival              EUR 15.99 *
+      //   sl-cloth       Microfibre Cloth - Stone Grey      EUR  8.99
+      //   jm-repel       Ghost Guard Repellent              EUR 18.99
+      //   crep-wipes     QuickDose Wipes 12-Pack            EUR  9.99 *
+      //   starter-kit    Genesis Kit                        EUR 44.99 *
+      //
+      // These eight have no Stripe Price at all yet, so checkout refuses
+      // them with a clear message until they exist:
+      //   brush-soft        Soft Hog Bristle Brush        EUR 11.99
+      //   brush-medium      Medium Synthetic Brush        EUR 11.99
+      //   brush-stiff       Stiff Boar Bristle Brush      EUR 11.99
       //   brush-applicator  Sole Applicator Brush         EUR  7.99
-      //   brush-flat        Precision Flat Brush          EUR  8.99
-      //   brush-dauber      Polish Dauber                 EUR  6.99
-      //   sl-cloth-black    Microfibre Cloth — Jet Black  EUR  8.99
-      //   sl-cloth-red      Microfibre Cloth — Lab Red    EUR  8.99
+      //   brush-flat        Precision Flat Brush          EUR  9.99
+      //   brush-dauber      Polish Dauber                 EUR  5.99
+      //   sl-cloth-black    Microfibre Cloth - Jet Black  EUR  8.99
+      //   sl-cloth-red      Microfibre Cloth - Lab Red    EUR  8.99
     }
   };
 

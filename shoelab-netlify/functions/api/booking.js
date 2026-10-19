@@ -1,5 +1,6 @@
 import {
   json, preflight, clean, validEmail, currentUser, sendEmail, notifyAddress,
+  dropoffInstructions,
 } from '../_shared/util.js';
 
 export async function onRequestOptions() {
@@ -95,8 +96,7 @@ export async function onRequestPost(context) {
       '  When       ' + when + '\n' +
       '  Service    ' + (service || plan) + '\n' +
       '  To pay     ' + money + ' when you drop your shoes off\n\n' +
-      'Bring your pair to Wallerheerstraße, 28217 Bremen at that time. ' +
-      'We take cash and card in the studio.\n\n' +
+      dropoffInstructions(env) + '\n' +
       'Need to change anything? Just reply to this email or message us on ' +
       'WhatsApp at +49 177 2258878.\n\n' +
       'See you soon,\nShoeLab\n'

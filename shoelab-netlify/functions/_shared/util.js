@@ -178,6 +178,17 @@ export async function sendEmail(env, { to, subject, text, replyTo }) {
   }
 }
 
+// Where a booked customer brings their shoes. The studio runs from home, so
+// the full address lives only in the DROPOFF_ADDRESS secret and only ever
+// appears in the private confirmation sent to someone who has booked — the
+// public site shows just the street and postcode.
+export function dropoffInstructions(env) {
+  const addr = String(env.DROPOFF_ADDRESS || '').trim();
+  return addr
+    ? 'Drop-off address:\n  ' + addr.replace(/\s*\n\s*/g, '\n  ') + '\n'
+    : 'We will send you the exact drop-off address on WhatsApp before your appointment.\n';
+}
+
 export function notifyAddress(env) {
   return env.NOTIFY_EMAIL || 'Shoelab.de@gmail.com';
 }

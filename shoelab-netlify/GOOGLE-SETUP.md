@@ -11,31 +11,28 @@ Two halves, and the first one matters more.
 
 ---
 
-## ⚠️ Do this before anything else: pin down the address
+## Working from home: keeping the address private
 
-This is currently the biggest risk to the whole effort, and it blocks Google
-verification.
+The studio runs from home, so the public site shows only
+`Wallerheerstraße, 28217 Bremen` — street and postcode, no house number.
+That is a deliberate choice, and everything below is set up around it:
 
-**The address on the site has no house number**, and it is written two ways:
+- **Customers who book** get the full drop-off address privately, in their
+  confirmation email. It comes from the `DROPOFF_ADDRESS` secret (see
+  BOOKINGS-EMAIL.md) and never appears on the website. Until you set it, the
+  email tells them you will send the address on WhatsApp.
+- **Google** can show you without the address: set the profile up as a
+  service-area business (step 5). Google still asks for your real address to
+  verify you, but keeps it private.
 
-| Where | What it says |
-|---|---|
-| `index.html` (structured data, contact card) | `Wallerheerstraße, 28217 Bremen` |
-| `impressum.html`, `datenschutz.html`, `agb.html`, `widerruf.html` | `Wallerheerstraße, 28217 Bremen` |
-
-Two things to check against your lease or a utility bill:
-
-1. **The house number.** Google cannot place a map pin without one, and video
-   verification requires filming the building number. I have deliberately *not*
-   invented one — a fabricated address is a suspension trigger.
-2. **The spelling.** The street in 28217 Bremen-Walle may be **`Waller Heerstraße`**
-   (two words) rather than `Wallerheerstraße`. If it is two words, Google Maps may
-   not resolve the one-word version at all.
-
-Your German *Impressum* is also legally required to carry the complete address
-including the house number, so this needs fixing regardless of Google.
-
-**Send me the exact address and I will update all six files in one pass.**
+**One thing to check: the Impressum.** German law (§ 5 DDG) requires an
+address where you can be served legal documents, and a street without a house
+number does not meet that bar — incomplete Impressum details are a common
+reason for paid warning letters (*Abmahnungen*). Home-based businesses usually
+solve this with a business address service or virtual office
+(*Geschäftsadresse*, from roughly €10–30 a month), which then goes in the
+Impressum instead of the home address. Worth confirming with your IHK or a
+lawyer; I can put the new address in as soon as you have one.
 
 ---
 
@@ -72,18 +69,22 @@ the exact labels vary by country and change over time.
   `Lederreparaturservice` (Leather repair service) if offered.
 
 ### 5. Location type
-You take shoes in and hand them back at a fixed address during posted hours, so
-set it up as a **storefront with a visible address**. Only hide the address and
-switch to a service-area business if you work from somewhere you cannot receive
-customers — a hidden address will not rank in the Bremen map pack.
+Choose **service-area business** and answer *no* when asked whether customers
+visit your location, so the address is hidden. Then set the service area:
+Bremen, plus Delmenhorst, Oldenburg and the surrounding towns you'll take
+drop-offs from.
+
+The trade-off: a hidden-address profile appears in local results for that
+area, but without a pin on the map, so it ranks a little below storefronts
+right next to the searcher. Reviews, photos and posts matter more as a result.
 
 ### 6. Verification
-Google decides which methods you get; you cannot choose. For a German service
-business it is usually **video verification**: one continuous recording showing
-the street and building number, your signage, the inside of the studio, your
-equipment, and you using something that proves management (keys, till, booking
-system). Film it in daylight, do not stop the recording, and show the number on
-the building clearly. Allow up to five business days for review.
+Google decides which methods you get; you cannot choose. For a home-based
+service business it is usually **video verification**: one continuous
+recording showing your equipment, a job in progress, and something that proves
+you run the business (your booking system, branded materials, the tools of the
+trade). The address you enter for verification stays private. Film in good
+light and don't stop the recording. Allow up to five business days for review.
 
 ### 7. Fill in every field
 - **Description** (~750 characters) — German, no keyword stuffing. Suggested:
@@ -92,11 +93,11 @@ the building clearly. Allow up to five business days for review.
 ShoeLab ist das Pflegestudio für Sneaker, Leder- und Wildlederschuhe in
 Bremen-Walle. Vom schnellen Refresh bis zur kompletten Restauration reinigen,
 pflegen und retten wir jedes Paar — von Hand, mit professionellen Produkten und
-einem eigenen Verfahren für jedes Material. Bring deine Schuhe vorbei oder buche
-online einen Termin: Reinigung ab 18 €, Ergebnis meist innerhalb von 48 Stunden.
-Wir arbeiten mit Leder, Wildleder, Nubuk, Mesh, Strick und Canvas, entfernen
-Flecken, Vergilbungen und Knicke und schützen deine Schuhe anschließend gegen
-Wasser und Schmutz. Im Studio und online gibt es außerdem unsere eigenen
+einem eigenen Verfahren für jedes Material. Termine buchst du online, die
+Abgabe erfolgt nach Vereinbarung: Reinigung ab 18 €, Ergebnis meist innerhalb
+von 48 Stunden. Wir arbeiten mit Leder, Wildleder, Nubuk, Mesh, Strick und
+Canvas, entfernen Flecken, Vergilbungen und Knicke und schützen deine Schuhe
+anschließend gegen Wasser und Schmutz. Online gibt es außerdem unsere eigenen
 Pflegeprodukte und Bürsten. Wir sprechen Deutsch, Englisch, Polnisch, Russisch,
 Ukrainisch, Italienisch, Spanisch und Französisch.
 ```
@@ -138,8 +139,10 @@ searchers something current.
 
 - **Structured data**: a full `@graph` — `Organization`, `DryCleaningOrLaundry`
   (the correct LocalBusiness subtype), `WebSite`, `WebPage`, one `Service` per
-  treatment with both one-time and monthly `Offer` pricing, a `ReserveAction`
-  pointing at the booking page, and a `FAQPage` with six real questions.
+  treatment with both one-time and monthly `Offer` pricing, and a
+  `ReserveAction` pointing at the booking page. (An earlier `FAQPage` block was
+  removed: Google only accepts FAQ markup for questions printed on the page,
+  and two of its answers promised walk-ins.)
 - **German-first metadata**: the title and description now target
   *Sneaker Reinigung Bremen*, which is what customers actually type. They were
   English-only before.
