@@ -1,0 +1,9 @@
+
+# local test artefacts (screenshots from browser runs)
+dc-*.png
+f-*.png
+strip*.png
+strip.html
+contact-sheet.png
+checkout-*.png
+thanks-*.png
