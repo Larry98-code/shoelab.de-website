@@ -30,8 +30,15 @@ Secrets**, add:
 | `MAIL_FROM` | `ShoeLab <booking@shoelabonline.de>` | Strongly recommended |
 | `NOTIFY_EMAIL` | Where bookings land, e.g. `Shoelab.de@gmail.com` | Optional |
 | `STRIPE_WEBHOOK_SECRET` | From Stripe → Developers → Webhooks | For `[PAID]` |
+| `DROPOFF_ADDRESS` | Your full drop-off address, e.g. `Musterweg 12, 28217 Bremen` | Recommended |
 
 Redeploy after adding them — variables are read at deploy time.
+
+**About `DROPOFF_ADDRESS`:** you work from home, so the website only shows the
+street and postcode. Your full address goes in this secret instead, and it is
+printed only in the confirmation a customer receives after booking — never on
+the site, and not in your own copy. If you leave it unset, customers are told
+you'll send the address on WhatsApp before their appointment.
 
 **About `MAIL_FROM`:** without it, Resend sends from `onboarding@resend.dev`,
 which **only delivers to the address that owns the Resend account**. Customers

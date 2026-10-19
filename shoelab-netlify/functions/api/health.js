@@ -27,6 +27,7 @@ export async function onRequestGet(context) {
     bookingsGoTo: notifyAddress(env),
     customAddressSet: !!env.NOTIFY_EMAIL,
     stripeWebhookSecret: !!env.STRIPE_WEBHOOK_SECRET,
+    dropoffAddressSet: !!env.DROPOFF_ADDRESS,
     verdict: env.RESEND_API_KEY
       ? (env.MAIL_FROM
           ? '✅ Booking emails are configured.'

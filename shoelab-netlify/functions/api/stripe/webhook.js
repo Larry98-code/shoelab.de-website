@@ -1,4 +1,6 @@
-import { json, verifyStripeSignature, sendEmail, notifyAddress } from '../../_shared/util.js';
+import {
+  json, verifyStripeSignature, sendEmail, notifyAddress, dropoffInstructions,
+} from '../../_shared/util.js';
 
 // Stripe sends events here. Configure the endpoint URL + signing secret in the
 // Stripe dashboard (Developers -> Webhooks), and set STRIPE_WEBHOOK_SECRET.
@@ -125,7 +127,7 @@ async function notifyPaid(env, row, obj, eventType, fallbackEmail) {
         '  When       ' + when + '\n' +
         '  Service    ' + ((row && (row.service || row.plan)) || '—') + '\n' +
         '  Paid       ' + money + '\n\n' +
-        'Bring your pair to Wallerheerstraße, 28217 Bremen at that time. ' +
+        dropoffInstructions(env) + '\n' +
         'Most treatments are done within 48 hours.\n\n' +
         'Questions? Reply here or WhatsApp +49 177 2258878.\n\n' +
         'See you soon,\nShoeLab\n',
