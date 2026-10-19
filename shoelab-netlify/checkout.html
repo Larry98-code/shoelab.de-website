@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#080808"/>
+<title>Checkout — ShoeLab Bremen</title>
+<meta name="description" content="Securely complete your ShoeLab booking."/>
+<link rel="canonical" href="https://shoelabonline.de/checkout.html"/>
+<!-- A checkout page has no standalone search value and depends on session
+     state, so keep it out of the index but let link equity flow. -->
+<meta name="robots" content="noindex, follow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="stylesheet" href="/css/flow.css?v=1"/>
+</head>
+<body>
+
+<nav class="fl-nav">
+  <a href="/" class="fl-brand">
+    <img src="/img/shoelab-logo-96.png" alt="ShoeLab logo" width="36" height="36" decoding="async"/>
+    <span class="fl-brand-text">SHOE<span>LAB</span></span>
+  </a>
+  <div class="fl-nav-tools">
+    <a href="/booking.html" class="fl-back" data-t="editBooking">← Edit booking</a>
+    <div class="fl-lang">
+      <button class="fl-lang-btn" id="flLangBtn" aria-label="Language">🌐 <span id="flLangCur">EN</span> ▾</button>
+      <div class="fl-lang-menu" id="flLangMenu"></div>
+    </div>
+  </div>
+</nav>
+
+<main class="fl-main">
+  <header class="fl-head">
+    <p class="fl-eyebrow" data-t="cEyebrow">Step 2 of 3</p>
+    <h1 class="fl-title"><span data-t="cTitleA">Secure</span> <span class="red" data-t="cTitleB">Payment</span></h1>
+    <p class="fl-sub" data-t="cSub">Your slot is held while you pay. All payments are encrypted end to end.</p>
+  </header>
+
+  <div class="fl-steps">
+    <div class="fl-step done"><span class="fl-step-dot">✓</span><span class="fl-step-label" data-t="step1">Service</span></div>
+    <span class="fl-step-bar"></span>
+    <div class="fl-step active"><span class="fl-step-dot">2</span><span class="fl-step-label" data-t="step2">Payment</span></div>
+    <span class="fl-step-bar"></span>
+    <div class="fl-step"><span class="fl-step-dot">3</span><span class="fl-step-label" data-t="step3">Confirmed</span></div>
+  </div>
+
+  <div class="fl-alert" id="flAlert"></div>
+
+  <!-- shown when someone lands here without a booking in session -->
+  <section class="fl-card" id="emptyState" style="display:none;text-align:center;max-width:460px;margin:0 auto;">
+    <h2 data-t="noOrder">There is no booking in progress.</h2>
+    <p class="fl-card-note" style="margin-top:0.6rem;">Start from step one and we will bring you right back here.</p>
+    <a class="btn" href="/booking.html" data-t="startBooking">Start a booking</a>
+  </section>
+
+  <div class="fl-two" id="payWrap" style="display:none;">
+    <div>
+      <section class="fl-card" style="margin-bottom:1.2rem;">
+        <h2 data-t="method">Payment method</h2>
+        <p class="fl-card-note" data-t="redirectNote">You will be redirected to approve the payment, then brought straight back.</p>
+        <div class="pay-methods">
+          <div class="pay-m sel"><span class="pay-m-ico">💳</span><span class="pay-m-name" data-t="mCard">Card</span></div>
+          <div class="pay-m"><span class="pay-m-ico">🅿️</span><span class="pay-m-name" data-t="mPaypal">PayPal</span></div>
+          <div class="pay-m"><span class="pay-m-ico">🏦</span><span class="pay-m-name" data-t="mSepa">SEPA</span></div>
+          <div class="pay-m"><span class="pay-m-ico">🛍️</span><span class="pay-m-name" data-t="mKlarna">Klarna</span></div>
+        </div>
+        <p class="fl-card-note" id="methodNote" style="margin-bottom:0;" data-t="stripeNote">
+          You choose and enter your payment details on Stripe's secure page — ShoeLab never sees or stores your card number.
+        </p>
+      </section>
+
+      <section class="fl-card">
+        <h2 data-t="details">Your details</h2>
+        <div class="sum-line"><span data-t="first">First name</span><span id="coName">—</span></div>
+        <div class="sum-line"><span data-t="email">Email</span><span id="coEmail">—</span></div>
+        <div class="sum-line"><span data-t="phone">Phone / WhatsApp</span><span id="coPhone">—</span></div>
+        <div class="sum-line" id="coNotesRow" style="display:none;"><span data-t="notes">Notes</span><span id="coNotes">—</span></div>
+        <div class="btn-row">
+          <a class="btn btn-ghost btn-sm" href="/booking.html" data-t="editBooking">← Edit booking</a>
+        </div>
+      </section>
+    </div>
+
+    <aside class="fl-card sum">
+      <span class="sum-badge" data-t="step2">Payment</span>
+      <h2 data-t="summary">Your booking</h2>
+      <div class="sum-div"></div>
+      <div class="sum-line"><span data-t="sService">Service</span><span id="sumService">—</span></div>
+      <div class="sum-line"><span data-t="sPlan">Plan</span><span id="sumPlan">—</span></div>
+      <div class="sum-line"><span data-t="sWhen">When</span><span id="sumWhen">—</span></div>
+      <div class="sum-div"></div>
+      <div class="sum-total"><span data-t="sTotal">Total</span><b id="sumTotal">—</b></div>
+      <small id="sumPeriod" style="color:#888;font-size:0.72rem;display:block;margin-top:0.3rem;"></small>
+      <button class="btn" id="payBtn" style="margin-top:1.2rem;" data-t="payBtn">Pay securely</button>
+      <div class="pay-secure">🔒 <span data-t="secure">Secure checkout · SSL encrypted</span></div>
+    </aside>
+  </div>
+</main>
+
+<footer class="fl-foot">
+  <div>© 2026 ShoeLab · Wallerheerstraße, 28217 Bremen · <a href="tel:+491772258878">+49 177 2258878</a></div>
+  <div class="fl-foot-links">
+    <a href="/">Home</a><a href="/impressum.html">Impressum</a>
+    <a href="/datenschutz.html">Datenschutz</a><a href="/agb.html">AGB</a><a href="/widerruf.html">Widerruf</a>
+  </div>
+</footer>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script src="/js/sl-geo.js?v=1"></script>
+<script src="/js/sl-stripe.js?v=1"></script>
+<script src="/js/flow.js?v=1"></script>
+<script>
+(function(){
+  var F = window.SLFlow, S = window.SLStripe;
+  var el = function(id){ return document.getElementById(id); };
+  var order = F.getOrder();
+
+  if (!order || !order.serviceName) {
+    el('emptyState').style.display = 'block';
+    F.initLang(null);
+    return;
+  }
+  el('payWrap').style.display = '';
+
+  // Returning from a cancelled Stripe session.
+  try {
+    if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
+      el('flAlert').textContent = 'Payment was cancelled — your booking details are still here.';
+      el('flAlert').classList.add('on');
+    }
+  } catch(e){}
+
+  function render(){
+    el('sumService').textContent = order.serviceName;
+    el('sumPlan').textContent = order.plan === 'subscription' ? F.t('planMonth') : F.t('planOnce');
+    el('sumWhen').textContent = order.date + ' · ' + order.time;
+    el('sumTotal').textContent = F.money(order.amount);
+    el('sumPeriod').textContent = order.plan === 'subscription' ? F.t('billedMonthly') : '';
+    el('coName').textContent = (order.first + ' ' + order.last).trim();
+    el('coEmail').textContent = order.email;
+    el('coPhone').textContent = order.phone || '—';
+    if (order.notes) {
+      el('coNotesRow').style.display = '';
+      el('coNotes').textContent = order.notes;
+    }
+    el('payBtn').textContent = (order.plan === 'subscription' ? F.t('paySub') : F.t('payBtn'))
+      + ' · ' + F.money(order.amount);
+  }
+
+  function fail(msg){
+    el('flAlert').textContent = msg;
+    el('flAlert').classList.add('on');
+    el('payBtn').disabled = false;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  el('payBtn').addEventListener('click', function(){
+    el('payBtn').disabled = true;
+    el('payBtn').textContent = F.t('processing');
+    el('flAlert').classList.remove('on');
+
+    var isSub = order.plan === 'subscription';
+    var price = S.priceFor(isSub ? 'subscription' : 'onetime', order.serviceName);
+
+    if (!price) {
+      fail('We could not start the payment for this service. Please contact us on WhatsApp and we will take the booking directly.');
+      return;
+    }
+
+    // Record the booking BEFORE sending anyone to Stripe. If they abandon the
+    // payment the studio still has the request and can follow up, instead of
+    // the lead vanishing.
+    fetch('/api/booking', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName: order.first, lastName: order.last,
+        email: order.email, phone: order.phone,
+        type: isSub ? 'subscription' : 'onetime',
+        service: order.serviceName,
+        plan: isSub ? order.serviceName + ' (monthly)' : '',
+        amount: order.amount,
+        date: order.date, time: order.time, notes: order.notes
+      })
+    })
+    .then(function(r){ return r.json().catch(function(){ return {}; }); })
+    .catch(function(){ return {}; })
+    .then(function(res){
+      var ref = res && res.id ? ('booking_' + res.id) : ('booking_' + order.email);
+      try { order.bookingId = res && res.id ? res.id : null; F.setOrder(order); } catch(e){}
+
+      var base = location.origin;
+      var done = base + '/thank-you.html?payment=success'
+        + '&service=' + encodeURIComponent(order.serviceName)
+        + '&amount=' + encodeURIComponent(order.amount)
+        + '&sub=' + (isSub ? '1' : '0');
+
+      var stripe = Stripe(S.KEY);
+      return stripe.redirectToCheckout({
+        lineItems: [{ price: price, quantity: 1 }],
+        mode: isSub ? 'subscription' : 'payment',
+        successUrl: done,
+        cancelUrl: base + '/checkout.html?payment=cancelled',
+        customerEmail: order.email,
+        // Lets the Stripe webhook tie this payment back to the booking row.
+        clientReferenceId: ref
+      });
+    })
+    .then(function(r){
+      if (r && r.error) fail(r.error.message || 'Payment could not be started.');
+    })
+    .catch(function(){
+      fail('Payment could not be started. Your booking was saved — we will be in touch.');
+    });
+  });
+
+  F.initLang(render);
+  render();
+})();
+</script>
+</body>
+</html>

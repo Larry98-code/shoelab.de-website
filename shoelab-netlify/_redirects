@@ -1,0 +1,6 @@
+# Cloudflare Pages redirects
+# Clean URLs for the booking flow so /book and /checkout work as shareable links.
+/book            /booking.html     301
+/checkout        /checkout.html    301
+/brushes         /brushes.html     301
+/thanks          /thank-you.html   301
