@@ -96,6 +96,10 @@
       <small id="sumPeriod" style="color:#888;font-size:0.72rem;display:block;margin-top:0.3rem;"></small>
       <button class="btn" id="payBtn" style="margin-top:1.2rem;" data-t="payBtn">Pay securely</button>
       <div class="pay-secure">🔒 <span data-t="secure">Secure checkout · SSL encrypted</span></div>
+
+      <div class="co-or"><span data-t="orLabel">or</span></div>
+      <button class="btn btn-ghost" id="studioBtn" data-t="payStudio">Reserve — pay at the studio</button>
+      <p class="fl-card-note" style="margin:.6rem 0 0;text-align:center;" data-t="payStudioNote">We'll hold your slot. Pay when you drop your shoes off.</p>
     </aside>
   </div>
 </main>
@@ -148,63 +152,78 @@
     }
     el('payBtn').textContent = (order.plan === 'subscription' ? F.t('paySub') : F.t('payBtn'))
       + ' · ' + F.money(order.amount);
+    el('studioBtn').textContent = F.t('payStudio');
   }
 
+  var busy = false;
+
   function fail(msg){
+    busy = false;
     el('flAlert').textContent = msg;
     el('flAlert').classList.add('on');
     el('payBtn').disabled = false;
+    el('studioBtn').disabled = false;
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  el('payBtn').addEventListener('click', function(){
-    el('payBtn').disabled = true;
-    el('payBtn').textContent = F.t('processing');
-    el('flAlert').classList.remove('on');
+  var isSub = function(){ return order.plan === 'subscription'; };
 
-    var isSub = order.plan === 'subscription';
-    var price = S.priceFor(isSub ? 'subscription' : 'onetime', order.serviceName);
-
-    if (!price) {
-      fail('We could not start the payment for this service. Please contact us on WhatsApp and we will take the booking directly.');
-      return;
-    }
-
-    // Record the booking BEFORE sending anyone to Stripe. If they abandon the
-    // payment the studio still has the request and can follow up, instead of
-    // the lead vanishing.
-    fetch('/api/booking', {
+  // Record the booking BEFORE anything else. Whether they pay now or at the
+  // counter, the studio gets the appointment by email either way — a booking
+  // is never lost because someone closed the card form.
+  function saveBooking(payMode){
+    return fetch('/api/booking', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         firstName: order.first, lastName: order.last,
         email: order.email, phone: order.phone,
-        type: isSub ? 'subscription' : 'onetime',
+        type: isSub() ? 'subscription' : 'onetime',
         service: order.serviceName,
-        plan: isSub ? order.serviceName + ' (monthly)' : '',
+        plan: isSub() ? order.serviceName + ' (monthly)' : '',
         amount: order.amount,
-        date: order.date, time: order.time, notes: order.notes
+        date: order.date, time: order.time, notes: order.notes,
+        lang: F.lang(), payMode: payMode
       })
     })
     .then(function(r){ return r.json().catch(function(){ return {}; }); })
     .catch(function(){ return {}; })
     .then(function(res){
+      try { order.bookingId = (res && res.id) || null; F.setOrder(order); } catch(e){}
+      return res || {};
+    });
+  }
+
+  function doneUrl(extra){
+    return location.origin + '/thank-you.html?service=' + encodeURIComponent(order.serviceName)
+      + '&amount=' + encodeURIComponent(order.amount)
+      + '&sub=' + (isSub() ? '1' : '0') + extra;
+  }
+
+  // ── pay now, via Stripe ────────────────────────────────────────────────
+  el('payBtn').addEventListener('click', function(){
+    if (busy) return;
+    busy = true;
+    el('payBtn').disabled = true;
+    el('studioBtn').disabled = true;
+    el('payBtn').textContent = F.t('processing');
+    el('flAlert').classList.remove('on');
+
+    var price = S.priceFor(isSub() ? 'subscription' : 'onetime', order.serviceName);
+    if (!price) {
+      fail('We could not start the payment for this service. Reserve without paying below, or message us on WhatsApp.');
+      return;
+    }
+
+    saveBooking('online').then(function(res){
       var ref = res && res.id ? ('booking_' + res.id) : ('booking_' + order.email);
-      try { order.bookingId = res && res.id ? res.id : null; F.setOrder(order); } catch(e){}
-
-      var base = location.origin;
-      var done = base + '/thank-you.html?payment=success'
-        + '&service=' + encodeURIComponent(order.serviceName)
-        + '&amount=' + encodeURIComponent(order.amount)
-        + '&sub=' + (isSub ? '1' : '0');
-
       var stripe = Stripe(S.KEY);
       return stripe.redirectToCheckout({
         lineItems: [{ price: price, quantity: 1 }],
-        mode: isSub ? 'subscription' : 'payment',
-        successUrl: done,
-        cancelUrl: base + '/checkout.html?payment=cancelled',
+        mode: isSub() ? 'subscription' : 'payment',
+        successUrl: doneUrl('&payment=success'),
+        cancelUrl: location.origin + '/checkout.html?payment=cancelled',
         customerEmail: order.email,
         // Lets the Stripe webhook tie this payment back to the booking row.
         clientReferenceId: ref
@@ -215,6 +234,26 @@
     })
     .catch(function(){
       fail('Payment could not be started. Your booking was saved — we will be in touch.');
+    });
+  });
+
+  // ── reserve now, pay on drop-off ───────────────────────────────────────
+  el('studioBtn').addEventListener('click', function(){
+    if (busy) return;
+    busy = true;
+    el('studioBtn').disabled = true;
+    el('payBtn').disabled = true;
+    el('studioBtn').textContent = F.t('reserving');
+    el('flAlert').classList.remove('on');
+
+    saveBooking('studio').then(function(res){
+      if (res && res.ok) {
+        location.href = doneUrl('&mode=studio');
+      } else {
+        fail((res && res.error) || 'We could not save that booking. Please try again, or message us on WhatsApp.');
+      }
+    }).catch(function(){
+      fail('We could not save that booking. Please try again, or message us on WhatsApp.');
     });
   });
 

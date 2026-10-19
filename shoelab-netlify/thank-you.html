@@ -45,7 +45,7 @@
     <div class="done-ico">✓</div>
     <p class="fl-eyebrow" data-t="tEyebrow">Step 3 of 3</p>
     <h1 class="fl-title"><span data-t="tTitleA">You're</span> <span class="red" data-t="tTitleB">Booked</span></h1>
-    <p class="fl-sub" data-t="tSub">Your slot is confirmed. A confirmation is on its way to your inbox.</p>
+    <p class="fl-sub" data-t="tSub" id="doneSub">Your slot is confirmed. A confirmation is on its way to your inbox.</p>
 
     <div class="done-ref">
       <small style="display:block;font-size:0.6rem;letter-spacing:0.18em;color:#888;margin-bottom:0.25rem;" data-t="refLbl">Your reference</small>
@@ -97,6 +97,7 @@
   var service = q.get('service') || order.serviceName || '';
   var amount  = q.get('amount') || q.get('price') || order.amount || '';
   var isSub   = q.get('sub') === '1' || order.plan === 'subscription';
+  var studio  = q.get('mode') === 'studio';   // reserved, paying on drop-off
   var when    = (order.date && order.time) ? (order.date + ' · ' + order.time) : '';
 
   // Prefer the real booking row id; fall back to a readable derived code.
@@ -109,7 +110,12 @@
     el('doneService').textContent = service || '—';
     el('doneWhen').textContent = when || '—';
     el('doneAmount').textContent = amount ? F.money(amount) : '—';
-    el('donePeriod').textContent = isSub ? F.t('billedMonthly') : '';
+    el('donePeriod').textContent = studio ? F.t('payAtStudioLbl')
+                                 : isSub  ? F.t('billedMonthly') : '';
+    // applyI18n() repaints [data-t] nodes on every language change, so the
+    // studio wording has to be re-applied after it, not instead of it.
+    var sub = el('doneSub');
+    if (sub && studio) sub.textContent = F.t('tUnpaidSub');
     if (!service && !when) el('doneSummary').style.display = 'none';
   }
 

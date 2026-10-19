@@ -2,6 +2,8 @@
 // GET /api/health  →  human-readable JSON: is the key valid, which models
 // respond, and the exact Anthropic error if not. Costs ~1 token per model.
 
+import { sendEmail, notifyAddress } from '../_shared/util.js';
+
 const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
 
 export async function onRequestGet(context) {
@@ -14,6 +16,40 @@ export async function onRequestGet(context) {
     db: !!env.DB,
     models: [],
   };
+
+  // ── booking email ───────────────────────────────────────────────────────
+  // sendEmail() quietly does nothing without a key, so a studio can lose
+  // every appointment and never see an error. Say so plainly here.
+  out.email = {
+    resendKeyConfigured: !!env.RESEND_API_KEY,
+    keyPrefix: env.RESEND_API_KEY ? env.RESEND_API_KEY.slice(0, 8) + '…' : null,
+    from: env.MAIL_FROM || 'ShoeLab <onboarding@resend.dev>  (default — only delivers to the Resend account owner)',
+    bookingsGoTo: notifyAddress(env),
+    customAddressSet: !!env.NOTIFY_EMAIL,
+    stripeWebhookSecret: !!env.STRIPE_WEBHOOK_SECRET,
+    verdict: env.RESEND_API_KEY
+      ? (env.MAIL_FROM
+          ? '✅ Booking emails are configured.'
+          : '⚠️ Emails will send, but MAIL_FROM is unset so Resend uses onboarding@resend.dev, which only delivers to the address that owns the Resend account. Verify your domain and set MAIL_FROM to e.g. "ShoeLab <booking@shoelabonline.de>".')
+      : '❌ RESEND_API_KEY is not set — NO booking emails are being sent. Add it under Settings → Variables and Secrets, then redeploy.',
+  };
+
+  // GET /api/health?testmail=1 sends one real email, only ever to the
+  // studio's own notify address — never to an address from the query string.
+  const url = new URL(context.request.url);
+  if (url.searchParams.get('testmail')) {
+    const to = notifyAddress(env);
+    const r = await sendEmail(env, {
+      to,
+      subject: '[TEST] ShoeLab booking email check',
+      text: 'This is a test from /api/health?testmail=1.\n\n' +
+            'If you are reading it, booking notifications will reach ' + to + '.\n',
+    });
+    out.email.testSend = { to, result: r };
+    out.email.testVerdict = r && r.ok
+      ? '✅ Resend accepted the message. Check ' + to + ' (and the spam folder).'
+      : '❌ Not sent: ' + JSON.stringify(r);
+  }
 
   if (env.ANTHROPIC_API_KEY) {
     for (const model of MODELS) {
