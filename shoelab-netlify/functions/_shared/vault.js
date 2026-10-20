@@ -253,6 +253,19 @@ export async function createOrder(env, listing, buyerId, price, source) {
   return orderId;
 }
 
+// Payouts are made by hand for now (see VAULT.md): every way an order can
+// end up delivered puts a payout on the studio's list.
+export async function payoutDue(env, o, how) {
+  const seller = await userById(env, o.seller_id);
+  const l = await env.DB.prepare('SELECT brand, model FROM mk_listings WHERE id = ?').bind(o.listing_id).first();
+  await mailStudio(env, 'PAYOUT due: order #' + o.id + ' — ' + euro(o.payout),
+    'Order #' + o.id + (l ? ' (' + listingTitle(l) + ')' : '') + ' is delivered (' + how + ').\n\n' +
+    'Pay ' + euro(o.payout) + ' to ' + (seller ? seller.name + ' <' + seller.email + '>' : 'seller #' + o.seller_id) + '.\n' +
+    'Sale price ' + euro(o.item_price) + ', commission ' + euro(o.commission) +
+    (o.tier === 'photo' ? ', postage refund ' + euro(o.ship_fee) : '') + '.',
+    seller ? seller.email : undefined);
+}
+
 // What the seller has to do once an order is paid.
 export function shipInstructions(env, order, buyer) {
   if (order.tier === 'lab') {
@@ -343,6 +356,7 @@ export async function housekeeping(env, force) {
     const seller = await userById(env, o.seller_id);
     if (seller) await mail(env, seller.email, 'Delivered — payout on its way',
       'Order #' + o.id + ' counts as delivered (two weeks without a problem report). Your payout of ' + euro(o.payout) + ' is being released.');
+    await payoutDue(env, o, 'automatically, 14 days after shipping');
   }
 }
 

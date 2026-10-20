@@ -9,7 +9,7 @@ import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
   siteUrl, isSpecialist, shortName, maskName, fees, ensureSchema, logEvent, userById,
   listingTitle, mail, mailStudio, createOrder, markPaid, shipInstructions, housekeeping,
-  settleAuction,
+  settleAuction, payoutDue,
 } from '../../_shared/vault.js';
 
 // Errors carry a stable code next to the English message, so the pages can
@@ -216,17 +216,35 @@ async function reputation(env, sellerId) {
   };
 }
 
-// ── GET photo ──────────────────────────────────────────────────────────────
+// ── photos ─────────────────────────────────────────────────────────────────
+// Photos live in D1 as base64 by default. Bind an R2 bucket as VAULT_PHOTOS
+// and new photos go there instead (the row then holds "r2:<key>"), which
+// keeps the database small once the Vault has a few hundred listings.
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+async function storePhoto(env, listingId, idx, p) {
+  if (!env.VAULT_PHOTOS) return p.data;
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(6)), (x) => x.toString(16).padStart(2, '0')).join('');
+  const key = 'vault/' + listingId + '/' + idx + '-' + rand + '.' + p.mime.split('/')[1];
+  await env.VAULT_PHOTOS.put(key, b64ToBytes(p.data), { httpMetadata: { contentType: p.mime } });
+  return 'r2:' + key;
+}
+
 async function getPhoto({ request, env }) {
   const id = intParam(new URL(request.url).searchParams.get('id'));
   const p = id && await env.DB.prepare('SELECT mime, data FROM mk_photos WHERE id = ?').bind(id).first();
   if (!p) return new Response('Not found', { status: 404 });
-  const bin = atob(p.data);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new Response(bytes, {
-    headers: { 'Content-Type': p.mime, 'Cache-Control': 'public, max-age=31536000, immutable' },
-  });
+  const headers = { 'Content-Type': p.mime, 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' };
+  if (String(p.data).slice(0, 3) === 'r2:') {
+    const obj = env.VAULT_PHOTOS && await env.VAULT_PHOTOS.get(p.data.slice(3));
+    if (!obj) return new Response('Not found', { status: 404 });
+    return new Response(obj.body, { headers });
+  }
+  return new Response(b64ToBytes(p.data), { headers });
 }
 
 // How a pair is sold: an auction (start price, length, optional Buy Now) or a
@@ -290,9 +308,11 @@ async function createListing({ request, env }) {
   ).bind(me.id, brand, model, size, b.cond, description, format, b.tier, start, buyNow, acceptOffers, minOffer,
     duration, format === 'auction' ? start : buyNow, at, at).run();
   const id = res.meta.last_row_id;
+  const stored = [];
+  for (let i = 0; i < parsed.length; i++) stored.push(await storePhoto(env, id, i, parsed[i]));
   await env.DB.batch(parsed.map((p, i) => env.DB.prepare(
     'INSERT INTO mk_photos (listing_id, idx, kind, mime, data, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(id, i, p.kind, p.mime, p.data, at)));
+  ).bind(id, i, p.kind, p.mime, stored[i], at)));
   await logEvent(env, { listingId: id, kind: 'submitted' });
 
   const title = listingTitle({ brand, model });
@@ -663,6 +683,7 @@ async function receivedOrder({ request, env }) {
   const seller = await userById(env, o.seller_id);
   if (seller) await mail(env, seller.email, 'Delivered — payout on its way',
     'The buyer confirmed delivery of order #' + o.id + '. Your payout of ' + euro(o.payout) + ' is being released.');
+  await payoutDue(env, o, 'the buyer confirmed delivery');
   return json({ ok: true });
 }
 
@@ -885,6 +906,7 @@ async function lab({ request, env }) {
         'Our specialist closed the report on order #' + o.id + '. Your payout of ' + euro(o.payout) + ' is being released.' + (note ? '\n\nNote: ' + note : ''));
       if (buyer) await mail(env, buyer.email, 'Your report on order #' + o.id + ' is closed',
         'Our specialist reviewed your report and closed it.' + (note ? '\n\n' + note : '') + '\n\nQuestions? Just reply to this email.');
+      await payoutDue(env, o, 'problem report closed in the seller\'s favour');
       break;
     case 'refund':
       if (!note) fail(400, 'Record why the buyer is refunded', 'note_needed');

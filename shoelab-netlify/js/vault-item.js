@@ -275,7 +275,7 @@
   }
 
   function payHtml() {
-    if (L.status !== 'live' && L.status !== 'review') return '';
+    if (L.status !== 'live' || isOwner()) return '';
     var base = L.format === 'fixed' ? L.buyNow : L.price;
     var o = { itemPrice: base, authFee: L.fees.auth, shipFee: L.fees.shipping, total: base + L.fees.auth + L.fees.shipping, tier: L.tier };
     return '<div class="v-card-box"><h3 class="v-h3" style="margin-bottom:0.6rem;">' + esc(t(L.format === 'auction' ? 'payIfWinNow' : 'youPay')) + '</h3>' +
@@ -547,7 +547,9 @@
       return;
     }
     var url = w.location.origin + '/vault-item.html?id=' + L.id;
-    var can = $('vCanonical'); if (can) can.href = url;
+    var can = $('vCanonical');
+    if (!can) { can = d.createElement('link'); can.rel = 'canonical'; can.id = 'vCanonical'; d.head.appendChild(can); }
+    can.href = url;
     var desc = d.querySelector('meta[name=description]');
     if (desc) desc.setAttribute('content', L.title + ', EU ' + L.size + ' — ' + t(L.tier === 'lab' ? 'tierLab' : 'tierPhoto') + ', ' + money(L.price) + '. ShoeLab Vault.');
     if (['live', 'sold', 'ended'].indexOf(L.status) === -1) return;
