@@ -37,9 +37,19 @@ export async function onRequestPost(context) {
     const vaultRef = (obj.metadata && obj.metadata.vault_order) ||
       (/^vault_(\d+)$/.exec(String(obj.client_reference_id || '')) || [])[1];
     if (vaultRef) {
-      if (env.DB && PAID_EVENTS.indexOf(event.type) !== -1) {
+      // Sellers get told to ship on this, so only a signed event from Stripe
+      // for the full amount of that very order counts. Without the signing
+      // secret anyone could post a fake event, so then nothing is marked.
+      if (env.DB && env.STRIPE_WEBHOOK_SECRET && PAID_EVENTS.indexOf(event.type) !== -1) {
         await ensureSchema(env);
-        await markPaid(env, parseInt(vaultRef, 10), 'stripe');
+        const id = parseInt(vaultRef, 10);
+        const order = await env.DB.prepare('SELECT total FROM mk_orders WHERE id = ?').bind(id).first();
+        const amount = obj.amount_total != null ? obj.amount_total
+          : obj.amount_received != null ? obj.amount_received : obj.amount_paid;
+        const settled = event.type !== 'checkout.session.completed' || !obj.payment_status || obj.payment_status === 'paid';
+        if (order && amount === order.total && String(obj.currency || '').toLowerCase() === 'eur' && settled) {
+          await markPaid(env, id, 'stripe');
+        }
       }
       return json({ received: true }, 200);
     }

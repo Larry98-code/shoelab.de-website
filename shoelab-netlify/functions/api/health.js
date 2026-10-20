@@ -50,7 +50,9 @@ export async function onRequestGet(context) {
       : !env.SESSION_SECRET && !env.ANTHROPIC_API_KEY
       ? '❌ SESSION_SECRET is not set — the Vault stays closed until it is.'
       : env.STRIPE_SECRET_KEY
-        ? '✅ The Vault is live with card payments.'
+        ? (env.STRIPE_WEBHOOK_SECRET
+            ? '✅ The Vault is live with card payments.'
+            : '⚠️ Card payments are on, but STRIPE_WEBHOOK_SECRET is missing, so Vault orders paid by card are not marked paid automatically. Add the webhook signing secret.')
         : '✅ The Vault is live. Buyers reserve pairs and ShoeLab emails payment details by hand until STRIPE_SECRET_KEY is set.',
   };
 
