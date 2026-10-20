@@ -206,6 +206,8 @@ a{color:inherit;text-decoration:none;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Security</button>
       <button class="nav-item" data-tab="payments">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Payments</button>
+      <a class="nav-item" href="/vault-me.html" style="text-decoration:none;color:#d4af37;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="12" cy="12" r="3.6"/><path d="M12 8.4v-1M12 16.6v-1M15.6 12h1M7.4 12h1"/></svg> ShoeLab Vault</a>
     </nav>
     <button class="side-logout" id="logoutLink">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -346,10 +348,10 @@ a{color:inherit;text-decoration:none;}
   }
 
   // tabs
-  document.querySelectorAll('.nav-item').forEach(function(t){
+  document.querySelectorAll('.nav-item[data-tab]').forEach(function(t){
     t.addEventListener('click', function(){
       var k=t.getAttribute('data-tab');
-      document.querySelectorAll('.nav-item').forEach(function(x){ x.classList.toggle('active', x===t); });
+      document.querySelectorAll('.nav-item[data-tab]').forEach(function(x){ x.classList.toggle('active', x===t); });
       document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active', p.getAttribute('data-panel')===k); });
     });
   });

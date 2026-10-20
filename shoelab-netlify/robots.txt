@@ -6,6 +6,9 @@ Disallow: /checkout.html
 Disallow: /thank-you.html
 Disallow: /reset.html
 Disallow: /api/
+# The Vault dashboard and the specialist console live behind a sign-in.
+Disallow: /vault-me
+Disallow: /vault-lab
 
 # Let crawlers fetch the assets they need to render the page properly.
 Allow: /css/

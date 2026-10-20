@@ -1,0 +1,80 @@
+/* ShoeLab Vault — the homepage teaser between Reviews and Shop, and the
+   gold "Vault" link in the header. The dial echoes the Vault's own hero. */
+
+.nav-links a.nav-vault{color:#d4af37;}
+.nav-links a.nav-vault:hover{color:#f3d77a !important;}
+.mob-menu a.mob-vault{color:#d4af37;}
+
+#vault-teaser{
+  position:relative;overflow:hidden;background:#080808;
+  border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);
+}
+#vault-teaser::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(640px 420px at 22% 50%,rgba(212,175,55,0.13),transparent 70%),
+    radial-gradient(520px 360px at 92% 10%,rgba(204,17,17,0.10),transparent 65%);
+}
+.vt-in{position:relative;max-width:1240px;margin:0 auto;display:grid;grid-template-columns:0.95fr 1.05fr;gap:4rem;align-items:center;}
+.vt-art{position:relative;aspect-ratio:1;max-width:460px;width:100%;justify-self:center;}
+.vt-dial{position:absolute;inset:0;border-radius:50%;animation:vt-turn 120s linear infinite;
+  background:radial-gradient(circle closest-side,rgba(212,175,55,0.08),rgba(212,175,55,0.02) 62%,transparent 72%);}
+.vt-dial::before,.vt-dial::after{content:'';position:absolute;inset:0;border-radius:50%;}
+.vt-dial::before{
+  background:
+    repeating-conic-gradient(from -0.8deg,rgba(243,215,122,0.95) 0 1.6deg,transparent 1.6deg 30deg),
+    repeating-conic-gradient(from -0.35deg,rgba(212,175,55,0.5) 0 0.7deg,transparent 0.7deg 6deg);
+  -webkit-mask:radial-gradient(circle closest-side,transparent 0 88%,#000 88.5% 97%,transparent 97.5%);
+          mask:radial-gradient(circle closest-side,transparent 0 88%,#000 88.5% 97%,transparent 97.5%);
+}
+.vt-dial::after{
+  background:repeating-conic-gradient(from -0.15deg,rgba(212,175,55,0.32) 0 0.3deg,transparent 0.3deg 2deg);
+  -webkit-mask:radial-gradient(circle closest-side,transparent 0 81.5%,#000 82% 85.5%,transparent 86%);
+          mask:radial-gradient(circle closest-side,transparent 0 81.5%,#000 82% 85.5%,transparent 86%);
+}
+.vt-ring{position:absolute;inset:0.6%;border-radius:50%;border:1px solid rgba(212,175,55,0.3);}
+.vt-notch{position:absolute;top:-1.5%;left:50%;width:0;height:0;margin-left:-7px;border:7px solid transparent;border-top:11px solid #f3d77a;filter:drop-shadow(0 0 6px rgba(212,175,55,0.7));}
+@keyframes vt-turn{to{transform:rotate(360deg);}}
+.vt-art img{
+  position:absolute;left:5%;right:5%;top:22%;width:90%;height:56%;object-fit:contain;
+  transform:rotate(-7deg);filter:drop-shadow(0 30px 32px rgba(0,0,0,0.75)) drop-shadow(0 0 26px rgba(212,175,55,0.12));
+}
+.vt-stamp{
+  position:absolute;right:2%;bottom:10%;display:inline-flex;align-items:center;gap:0.35rem;
+  font-family:'Inter',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  color:#1a1405;padding:0.38rem 0.7rem 0.38rem 0.55rem;border-radius:999px;
+  background:linear-gradient(135deg,#f6e27a 0%,#d4af37 38%,#a8841f 62%,#f3d77a 100%);box-shadow:0 8px 24px rgba(212,175,55,0.3);
+}
+.vt-stamp svg{width:13px;height:13px;}
+#vault-teaser .sec-label{color:#d4af37;}
+#vault-teaser .sec-label::before{background:#d4af37;}
+#vault-teaser .sec-title .gold{
+  background:linear-gradient(135deg,#f6e27a 0%,#d4af37 38%,#a8841f 62%,#f3d77a 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.vt-sub{font-size:0.86rem;line-height:1.85;color:#9a9a9a;max-width:520px;}
+.vt-list{list-style:none;margin:1.8rem 0 2.2rem;padding:0;display:flex;flex-direction:column;gap:0.95rem;}
+.vt-list li{display:flex;gap:0.9rem;align-items:flex-start;font-size:0.82rem;line-height:1.6;color:#bdbdbd;}
+.vt-list li i{
+  flex-shrink:0;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;margin-top:0.1rem;
+  background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.4);color:#d4af37;font-style:normal;
+}
+.vt-list li i svg{width:16px;height:16px;}
+.vt-list b{display:block;color:#fff;font-weight:600;font-size:0.84rem;letter-spacing:0.02em;}
+.vt-cta{display:flex;gap:1rem;flex-wrap:wrap;}
+.vt-cta .btn-gold{
+  display:inline-flex;align-items:center;justify-content:center;padding:0.9rem 2rem;
+  font-family:'Bebas Neue','Arial Black',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;
+  color:#1a1405 !important;text-decoration:none !important;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#f6e27a 0%,#d4af37 38%,#a8841f 62%,#f3d77a 100%);transition:filter .25s,transform .25s;
+}
+.vt-cta .btn-gold:hover{filter:brightness(1.08);transform:translateY(-2px);}
+@media(max-width:900px){
+  .vt-in{grid-template-columns:1fr;gap:2.2rem;}
+  .vt-art{max-width:320px;}
+}
+@media(max-width:560px){
+  .vt-art{max-width:260px;}
+  .vt-cta .btn-gold,.vt-cta .btn-outline{flex:1;min-width:0;}
+}
+@media(prefers-reduced-motion:reduce){ .vt-dial{animation:none;} }

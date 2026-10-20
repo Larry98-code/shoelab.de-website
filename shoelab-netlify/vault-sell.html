@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#080808"/>
+<title>Sell Your Sneakers — ShoeLab Vault</title>
+<meta name="description" content="Sell your sneakers in the ShoeLab Vault. Listing is free: start an auction or set a price, and a ShoeLab specialist verifies every pair."/>
+<link rel="canonical" href="https://shoelabonline.de/vault-sell.html"/>
+<meta name="robots" content="index, follow"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="ShoeLab.de"/>
+<meta property="og:title" content="Sell Your Sneakers — ShoeLab Vault"/>
+<meta property="og:description" content="Listing is free. Start an auction or set a price — every pair verified by a ShoeLab specialist."/>
+<meta property="og:url" content="https://shoelabonline.de/vault-sell.html"/>
+<meta property="og:image" content="https://shoelabonline.de/og-image.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="stylesheet" href="/css/vault.css?v=1"/>
+<script>document.documentElement.classList.add('v-wait');setTimeout(function(){document.documentElement.classList.remove('v-wait');},2500);</script>
+</head>
+<body>
+
+<header class="v-nav" id="vNav"></header>
+
+<main class="v-main">
+  <header style="margin-bottom:1.8rem;">
+    <p class="v-eyebrow" data-t="sellEyebrow">Sell in the Vault</p>
+    <h1 class="v-h1"><span data-t="sellTitleA">List your</span> <span class="gold" data-t="sellTitleB">pair</span></h1>
+    <p class="v-lead" style="margin-top:0.7rem;" data-t="sellLead">Five short steps. A ShoeLab specialist reviews every listing, usually within one working day. Listing is free — you only pay when it sells.</p>
+  </header>
+
+  <div id="sWrap">
+    <div class="v-sell">
+      <div>
+        <section class="v-sec" id="secPair" aria-labelledby="secPairT">
+          <div class="v-sec-head"><span class="v-sec-num">1</span><div><h2 id="secPairT" data-t="secPairT">The pair</h2><p data-t="secPairP">Tell buyers exactly what they are getting.</p></div></div>
+          <div class="v-row">
+            <div class="v-field">
+              <label class="v-label" for="sBrand" data-t="fBrand">Brand</label>
+              <input class="v-input" id="sBrand" list="sBrands" maxlength="40" autocomplete="off" placeholder="Nike"/>
+              <datalist id="sBrands"></datalist>
+              <div class="v-err" role="alert"></div>
+            </div>
+            <div class="v-field">
+              <label class="v-label" for="sSize" data-t="fSize">Size (EU)</label>
+              <select class="v-select" id="sSize"></select>
+              <div class="v-err" role="alert"></div>
+            </div>
+          </div>
+          <div class="v-field">
+            <label class="v-label" for="sModel" data-t="modelLabel">Model and colourway</label>
+            <input class="v-input" id="sModel" maxlength="90" autocomplete="off" data-t-ph="modelPh" placeholder="e.g. Air Jordan 1 Low “Panda”"/>
+            <div class="v-err" role="alert"></div>
+          </div>
+          <div class="v-field">
+            <span class="v-label" id="sCondL" data-t="fCond">Condition</span>
+            <div class="v-choices" id="sCond" role="radiogroup" aria-labelledby="sCondL"></div>
+            <div class="v-err" role="alert"></div>
+          </div>
+          <div class="v-field" style="margin-bottom:0;">
+            <label class="v-label" for="sDesc"><span data-t="description">Description</span><small data-t="optional">optional</small></label>
+            <textarea class="v-textarea" id="sDesc" maxlength="2000" rows="4" data-t-ph="descPh" placeholder="Flaws, how often worn, what is included (box, extra laces, receipt)…"></textarea>
+            <small class="v-note" id="sDescN" style="display:block;text-align:right;margin-top:0.3rem;">0 / 2000</small>
+          </div>
+        </section>
+
+        <section class="v-sec" id="secTier" aria-labelledby="secTierT">
+          <div class="v-sec-head"><span class="v-sec-num">2</span><div><h2 id="secTierT" data-t="secTierT">Authentication</h2><p data-t="secTierP">How should our specialists verify it?</p></div></div>
+          <div class="v-choices" id="sTier" role="radiogroup" aria-labelledby="secTierT" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));"></div>
+        </section>
+
+        <section class="v-sec" id="secPhotos" aria-labelledby="secPhotosT">
+          <div class="v-sec-head"><span class="v-sec-num">3</span><div><h2 id="secPhotosT" data-t="secPhotosT">Photos</h2><p id="sPhotosP"></p></div></div>
+          <div class="v-photos" id="sPhotos"></div>
+          <input type="file" id="sFile" accept="image/jpeg,image/png,image/webp,image/*" multiple hidden/>
+          <div class="v-err" id="sPhotoErr" role="alert"></div>
+          <div class="v-tips">
+            <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/></svg><span data-t="tip1">Daylight, no flash. Shadows hide details.</span></div>
+            <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M20.5 16l-5-5-8.5 8.5"/></svg><span data-t="tip2">A plain, light background. Fill the frame with the shoe.</span></div>
+            <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.3-4.3"/></svg><span data-t="tip3">Tags and labels sharp enough to read every line.</span></div>
+          </div>
+        </section>
+
+        <section class="v-sec" id="secPrice" aria-labelledby="secPriceT">
+          <div class="v-sec-head"><span class="v-sec-num">4</span><div><h2 id="secPriceT" data-t="secPriceT">Price and format</h2><p data-t="secPriceP">Let buyers bid, or name your price.</p></div></div>
+          <div class="v-seg" id="sFormat" role="tablist" style="margin-bottom:1.2rem;">
+            <button type="button" data-f="auction" role="tab" data-t="fAuction1">Auction</button>
+            <button type="button" data-f="fixed" role="tab" data-t="fFixed">Buy now</button>
+          </div>
+          <div data-for="auction">
+            <div class="v-row">
+              <div class="v-field">
+                <label class="v-label" for="sStart" data-t="startPrice">Start price</label>
+                <div class="v-money"><input class="v-input" id="sStart" inputmode="decimal" autocomplete="off" placeholder="60"/></div>
+                <div class="v-err" role="alert"></div>
+              </div>
+              <div class="v-field">
+                <label class="v-label" for="sDur" data-t="duration">Duration</label>
+                <select class="v-select" id="sDur"></select>
+              </div>
+            </div>
+            <div class="v-field" style="margin-bottom:0.3rem;">
+              <label class="v-label" for="sBinA"><span data-t="binOptional">Buy Now price</span><small data-t="optional">optional</small></label>
+              <div class="v-money"><input class="v-input" id="sBinA" inputmode="decimal" autocomplete="off"/></div>
+              <div class="v-err" role="alert"></div>
+            </div>
+            <p class="v-note" data-t="binHelp">Lets a buyer end the auction straight away — until the first bid comes in.</p>
+          </div>
+          <div data-for="fixed" hidden>
+            <div class="v-field">
+              <label class="v-label" for="sPrice" data-t="price">Price</label>
+              <div class="v-money"><input class="v-input" id="sPrice" inputmode="decimal" autocomplete="off" placeholder="120"/></div>
+              <div class="v-err" role="alert"></div>
+            </div>
+            <label class="v-switch" style="margin:0.4rem 0 1rem;">
+              <span><b style="font-weight:500;display:block;" data-t="acceptOffers">Accept offers</b><small class="v-note" data-t="acceptOffersHelp">Buyers can propose a price; you accept, decline or counter.</small></span>
+              <input type="checkbox" id="sOffers"/><span class="knob"></span>
+            </label>
+            <div class="v-field" id="sMinWrap" hidden>
+              <label class="v-label" for="sMin"><span data-t="minOffer">Decline offers below</span><small data-t="optional">optional</small></label>
+              <div class="v-money"><input class="v-input" id="sMin" inputmode="decimal" autocomplete="off"/></div>
+              <div class="v-err" role="alert"></div>
+              <p class="v-note" style="margin-top:0.35rem;" data-t="minOfferHelp">Offers under this amount are declined automatically. Buyers never see it.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="v-sec" id="secConfirm" aria-labelledby="secConfirmT">
+          <div class="v-sec-head"><span class="v-sec-num">5</span><div><h2 id="secConfirmT" data-t="secConfirmT">Confirm</h2><p data-t="secConfirmP">Two promises that keep the Vault honest.</p></div></div>
+          <label class="v-check" style="margin-bottom:0.8rem;"><input type="checkbox" id="sOwn"/><span data-t="promiseOwn">I own this pair, it is authentic, and the photos show this exact pair.</span></label>
+          <label class="v-check"><input type="checkbox" id="sBind"/><span data-t="promiseShip">A sale is binding. I will ship within three working days of the buyer's payment.</span></label>
+          <div class="v-err" id="sConfirmErr" role="alert"></div>
+        </section>
+      </div>
+
+      <aside class="v-aside">
+        <div class="v-card-box">
+          <h2 class="v-h3" data-t="yourListing">Your listing</h2>
+          <ul class="v-checklist" id="sCheck"></ul>
+          <div id="sPayout"></div>
+          <button type="button" class="v-btn gold block" id="sSubmit" style="margin-top:1.1rem;" data-t="submitReview">Submit for review</button>
+          <div class="v-msg" id="sMsg" role="alert"></div>
+          <p class="v-note" style="margin-top:0.8rem;" data-t="sellFreeNote">Listing is free. Our commission is only taken when your pair sells.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<footer class="v-foot" id="vFoot"></footer>
+<nav class="v-tabbar" id="vTabbar"></nav>
+
+<script src="/js/sl-geo.js?v=1" defer></script>
+<script src="/js/vault-i18n/en.js?v=1" defer></script>
+<script src="/js/vault-core.js?v=1" defer></script>
+<script src="/js/vault-sell.js?v=1" defer></script>
+</body>
+</html>
