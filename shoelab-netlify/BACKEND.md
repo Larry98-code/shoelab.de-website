@@ -53,7 +53,7 @@ Dashboard → **Settings → Environment variables** (mark secrets as *Encrypted
 | `ANTHROPIC_API_KEY` | yes | Wesley AI (already set) |
 | `SESSION_SECRET` | yes | Long random string — signs session cookies |
 | `RESEND_API_KEY` | for emails | Enables confirmation + password-reset emails (resend.com) |
-| `MAIL_FROM` | optional | e.g. `ShoeLab <hi@shoelabonline.de>` (verify the domain in Resend) |
+| `MAIL_FROM` | optional | e.g. `ShoeLab <info@mail.shoelabonline.de>` (must be on the domain verified in Resend) |
 | `NOTIFY_EMAIL` | optional | Where studio notifications go (default `Shoelab.de@gmail.com`) |
 | `STRIPE_SECRET_KEY` | for portal | `sk_live_…` — enables the Customer Portal button |
 | `STRIPE_WEBHOOK_SECRET` | for webhook | `whsec_…` from Stripe → Developers → Webhooks |
