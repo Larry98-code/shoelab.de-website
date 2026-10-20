@@ -12,7 +12,7 @@ import {
   VAULT, nowIso, euro, listingTitle, userById, tell, tellStudio, connectOn, sellerRow, firstName,
 } from './vault.js';
 
-const MODEL = 'claude-opus-5-5';
+export const MODEL = 'claude-opus-5-5';
 const LIMITS = { member: 40, guest: 15, tickets: 5 };
 
 function knowledge(env) {

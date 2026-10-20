@@ -318,6 +318,7 @@
     var nr = (r.pos || 0) + (r.neu || 0) + (r.neg || 0);
     right += '<div class="v-card-box"' + (L.format === 'auction' ? ' style="margin-top:1rem;"' : '') + '><h2 class="v-h3" style="margin-bottom:0.8rem;">' + esc(t('seller')) + '</h2>' +
       '<div class="v-seller"><span class="v-avatar">' + esc(S.initials(sl.name)) + '</span><div><b>' + esc(sl.name || '—') + '</b>' +
+      (sl.verified ? ' <span class="v-chip ok v-verified" title="' + esc(t('verifiedSellerTip')) + '">' + S.ico('shield', 'inl') + ' ' + esc(t('verifiedSeller')) + '</span>' : '') +
       '<small>' + esc(sl.since ? t('memberSince', { date: S.fmtDate(sl.since) }) : '') + ' · ' + esc(S.tn('sales', sl.sales || 0)) + '</small>' +
       '<small style="display:block;">' + (nr ? S.ico('star', 'inl') + ' ' + esc(t('positive', { pct: r.score == null ? '—' : r.score, n: S.num(nr) })) : esc(t('noRatings'))) + '</small></div></div>' +
       ((sl.feedback || []).length ? '<ul class="v-hist" style="margin-top:0.8rem;">' + sl.feedback.map(function (f) {
@@ -493,7 +494,7 @@
     var bar = $('vSticky'), box = d.querySelector('.v-pricebox');
     if (!bar || !box) return;
     var live = L.status === 'live' && !isOwner();
-    if (!live) { bar.innerHTML = ''; bar.classList.remove('on'); return; }
+    if (!live) { bar.innerHTML = ''; bar.classList.remove('on'); d.body.classList.remove('v-sticky-on'); return; }
     var auction = L.format === 'auction';
     bar.innerHTML = '<div class="p"><small>' + esc(t(auction ? (L.bids ? 'currentBid' : 'startingBid') : 'price')) + '</small><b>' + money(L.price) + '</b>' +
       (auction && L.endsAt ? ' <span class="v-note" data-ends="' + esc(L.endsAt) + '"><span class="cd-t"></span></span>' : '') + '</div>' +
@@ -508,6 +509,7 @@
       stickyObs = new IntersectionObserver(function (es) {
         var hidden = !es[0].isIntersecting && es[0].boundingClientRect.top < 0;
         bar.classList.toggle('on', hidden);
+        d.body.classList.toggle('v-sticky-on', hidden);   // the help button moves up out of its way
         bar.setAttribute('aria-hidden', hidden ? 'false' : 'true');
       });
       stickyObs.observe(box);

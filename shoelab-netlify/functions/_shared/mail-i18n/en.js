@@ -35,6 +35,7 @@ export default {
     paidNextPhoto: 'The seller now posts the pair to you. You will get the tracking number by email.',
     shipLab: 'Post the pair to ShoeLab for authentication — not to the buyer. Put a note with the order number #{order} inside the box, then enter the tracking number in your Vault dashboard.',
     shipPhoto: 'Post the pair straight to the buyer, then enter the tracking number in your Vault dashboard:',
+    labAddressLater: 'We will email you the address of the ShoeLab lab within one working day.',
     payoutAfterLab: 'You receive {payout} once the pair has passed our in-lab check and reached the buyer.',
     payoutAfterDelivery: 'You receive {payout} once the buyer has the pair.',
     ratePos: 'positive', rateNeu: 'neutral', rateNeg: 'negative',
@@ -294,6 +295,10 @@ export default {
     s: '[VAULT] PROBLEM reported on order #{order}: {title}',
     b: ['A buyer reported a problem. The payout is on hold until you release it or refund the buyer.', '%rows', 'The buyer says:', '%message'],
     c: 'Open the lab console',
+  },
+  sLabAddress: {
+    s: '[VAULT] Send the lab address: order #{order}',
+    b: ['Order #{order} ({title}) is paid and the seller has to post it to the lab. DROPOFF_ADDRESS is not set, so the seller was told the address follows by email. Please send it to them.', '%rows'],
   },
   sPayoutDue: {
     s: '[VAULT] PAYOUT due: order #{order} — {payout}',

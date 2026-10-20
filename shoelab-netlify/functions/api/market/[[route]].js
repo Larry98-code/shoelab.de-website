@@ -638,7 +638,10 @@ async function orderView(env, o, me, spec) {
     itemPrice: o.item_price, authFee: o.auth_fee, shipFee: o.ship_fee, total: o.total,
     trackingIn: o.tracking_in, trackingOut: o.tracking_out,
     createdAt: o.created_at, updatedAt: o.updated_at,
-    events: (ev.results || []).map((e) => ({ kind: e.kind, note: e.note, at: e.created_at })),
+    // payouts are between the seller and ShoeLab; Stripe references and
+    // error texts are for the specialists
+    events: (ev.results || []).filter((e) => spec || asSeller || e.kind.indexOf('payout_') !== 0)
+      .map((e) => ({ kind: e.kind, note: spec || !/^(payout|refund)_/.test(e.kind) ? e.note : null, at: e.created_at })),
     role: asSeller ? 'seller' : asBuyer ? 'buyer' : 'lab',
   };
   const fb = await env.DB.prepare('SELECT rating, comment FROM mk_feedback WHERE order_id = ?').bind(o.id).first();

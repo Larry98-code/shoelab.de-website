@@ -38,6 +38,7 @@
   </header>
 
   <div id="sWrap">
+    <div id="sGate"></div>
     <div class="v-sell">
       <div>
         <section class="v-sec" id="secPair" aria-labelledby="secPairT">
@@ -136,7 +137,8 @@
         <section class="v-sec" id="secConfirm" aria-labelledby="secConfirmT">
           <div class="v-sec-head"><span class="v-sec-num">5</span><div><h2 id="secConfirmT" data-t="secConfirmT">Confirm</h2><p data-t="secConfirmP">Two promises that keep the Vault honest.</p></div></div>
           <label class="v-check" style="margin-bottom:0.8rem;"><input type="checkbox" id="sOwn"/><span data-t="promiseOwn">I own this pair, it is authentic, and the photos show this exact pair.</span></label>
-          <label class="v-check"><input type="checkbox" id="sBind"/><span data-t="promiseShip">A sale is binding. I will ship within three working days of the buyer's payment.</span></label>
+          <label class="v-check" style="margin-bottom:0.8rem;"><input type="checkbox" id="sBind"/><span data-t="promiseShip">A sale is binding. I will ship within three working days of the buyer's payment.</span></label>
+          <label class="v-check"><input type="checkbox" id="sTerms"/><span><span data-t="promiseTerms">I have read and accept the</span> <a href="/vault-terms.html" target="_blank" rel="noopener" class="v-link-btn" data-t="termsLink">ShoeLab Vault terms</a>.</span></label>
           <div class="v-err" id="sConfirmErr" role="alert"></div>
         </section>
       </div>
@@ -162,5 +164,6 @@
 <script src="/js/vault-i18n/en.js?v=1" defer></script>
 <script src="/js/vault-core.js?v=1" defer></script>
 <script src="/js/vault-sell.js?v=1" defer></script>
+<script src="/js/vault-help.js?v=1" defer></script>
 </body>
 </html>

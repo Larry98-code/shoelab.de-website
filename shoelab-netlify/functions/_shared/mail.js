@@ -96,9 +96,10 @@ export function renderMail(lang, key, params, opts) {
           (i === pairs.length - 1 && (rows[i][0] === 'total' || rows[i][0] === 'payout') ? 'font-weight:700;' : '') + '">' + esc(b) + '</td></tr>').join('') +
         '</table>');
     } else if (item === '%message') {
-      quote(params.message);
+      quote(value(params.message, lang, words, params, 0));
     } else if (item === '%address') {
-      if (params.address) quote(params.address);
+      // an address, or a shared sentence ({k}) when there is none yet
+      if (params.address) quote(value(params.address, lang, words, params, 0));
     } else if (item === '%transcript') {
       const tr = params.transcript || [];
       if (tr.length) quote(tr.map((m) => (m.role === 'user' ? '» ' : 'Wesley: ') + m.text).join('\n\n'));

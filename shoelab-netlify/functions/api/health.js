@@ -4,8 +4,11 @@
 
 import { notifyAddress } from '../_shared/util.js';
 import { sendStudio } from '../_shared/mail.js';
+import { connectOn } from '../_shared/vault.js';
+import { MODEL as SUPPORT_MODEL } from '../_shared/support.js';
 
-const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
+// the site chat's fallback chain, then the model behind Vault support
+const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5', SUPPORT_MODEL];
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -40,11 +43,22 @@ export async function onRequestGet(context) {
   // Specialist addresses can be private, so only their number is shown.
   const specialists = String(env.VAULT_SPECIALISTS || '').split(',').map((x) => x.trim()).filter(Boolean);
   out.sessionSecret = env.SESSION_SECRET ? 'set' : env.ANTHROPIC_API_KEY ? 'not set — borrowing ANTHROPIC_API_KEY (set SESSION_SECRET)' : '❌ not set — sign-ins are not safe';
+  const connect = connectOn(env);
   out.vault = {
     database: !!env.DB,
     specialists: specialists.length || 1,
     specialistsFrom: specialists.length ? 'VAULT_SPECIALISTS' : 'the studio notify address (default)',
     onlinePayments: !!env.STRIPE_SECRET_KEY,
+    // where the buyer's money waits, and how the seller is paid
+    payouts: connect
+      ? 'Stripe Connect: the money waits in Stripe and goes to the seller’s verified Stripe account on delivery; refunds go back to the card'
+      : env.STRIPE_SECRET_KEY
+        ? 'by hand from the emails (set VAULT_STRIPE_CONNECT=on to pay sellers through Stripe)'
+        : 'by hand from the emails',
+    photoStorage: env.VAULT_PHOTOS ? 'R2 bucket (VAULT_PHOTOS)' : 'the database (bind an R2 bucket as VAULT_PHOTOS for room to grow)',
+    support: env.ANTHROPIC_API_KEY ? 'Wesley answers and hands over to a specialist when needed' : 'no ANTHROPIC_API_KEY: the help button opens the specialist form',
+    labAddress: env.DROPOFF_ADDRESS ? 'set (sent privately to sellers of Lab Verified pairs)' : 'not set: sellers of Lab Verified pairs are told the address follows by email',
+    emailLanguage: 'each member’s own language, with links to the other seven',
     siteUrl: env.SITE_URL || 'https://shoelabonline.de (default)',
     verdict: !env.DB
       ? '❌ No D1 database bound as DB — the Vault cannot run.'
@@ -52,7 +66,7 @@ export async function onRequestGet(context) {
       ? '❌ SESSION_SECRET is not set — the Vault stays closed until it is.'
       : env.STRIPE_SECRET_KEY
         ? (env.STRIPE_WEBHOOK_SECRET
-            ? '✅ The Vault is live with card payments.'
+            ? (connect ? '✅ The Vault is live with card payments and Stripe payouts to sellers.' : '✅ The Vault is live with card payments.')
             : '⚠️ Card payments are on, but STRIPE_WEBHOOK_SECRET is missing, so Vault orders paid by card are not marked paid automatically. Add the webhook signing secret.')
         : '✅ The Vault is live. Buyers reserve pairs and ShoeLab emails payment details by hand until STRIPE_SECRET_KEY is set.',
   };

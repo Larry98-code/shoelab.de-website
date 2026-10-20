@@ -318,8 +318,14 @@ export async function markPaid(env, orderId, how, paymentIntent) {
   await tell(env, seller, 'paidShip', {
     title, order: o.id, url: orderUrl(o.id),
     howToShip: { k: dest.lab ? 'shipLab' : 'shipPhoto' },
-    address: dest.address || { k: 'dropoffLater' },
+    address: dest.address || { k: 'labAddressLater' },
   });
+  // no lab address on file: the studio sends it by hand
+  if (dest.lab && !dest.address) {
+    await tellStudio(env, 'sLabAddress', {
+      order: o.id, title, rows: [['seller', seller ? seller.name + ' <' + seller.email + '>' : String(o.seller_id)]],
+    }, seller ? seller.email : undefined);
+  }
   await tell(env, buyer, 'paymentReceived', {
     title, amount: { m: o.total }, url: orderUrl(o.id),
     next: { k: o.tier === 'lab' ? 'paidNextLab' : 'paidNextPhoto' },
