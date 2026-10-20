@@ -1,6 +1,7 @@
 import {
-  json, preflight, clean, validEmail, sendEmail, notifyAddress,
+  json, preflight, clean, validEmail,
 } from '../_shared/util.js';
+import { sendStudio } from '../_shared/mail.js';
 
 export async function onRequestOptions() {
   return preflight();
@@ -30,12 +31,10 @@ export async function onRequestPost(context) {
     ).bind(name, email, phone, message).run();
   }
 
-  await sendEmail(env, {
-    to: notifyAddress(env),
-    subject: `Contact form — ${name}`,
-    text: `From: ${name} <${email}>\nPhone: ${phone}\n\n${message}`,
-    replyTo: email,
-  });
+  await sendStudio(env, 'sContact', {
+    customer: name, message,
+    rows: [['name', name], ['email', email], ['phone', phone || '—']],
+  }, email, false);
 
   return json({ ok: true }, 200);
 }

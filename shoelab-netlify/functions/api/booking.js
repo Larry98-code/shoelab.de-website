@@ -1,7 +1,6 @@
-import {
-  json, preflight, clean, validEmail, currentUser, sendEmail, notifyAddress,
-  dropoffInstructions,
-} from '../_shared/util.js';
+import { json, preflight, clean, validEmail, currentUser } from '../_shared/util.js';
+import { pickLang, requestLang, ensureCore } from '../_shared/core.js';
+import { sendMail, sendStudio, LANG_NAMES } from '../_shared/mail.js';
 
 export async function onRequestOptions() {
   return preflight();
@@ -30,7 +29,8 @@ export async function onRequestPost(context) {
   const date = clean(body.date, 20);
   const time = clean(body.time, 40);
   const notes = clean(body.notes, 1000);
-  const lang = clean(body.lang, 5) || 'en';
+  // the language the booking page was in, else the browser's own setting
+  const lang = pickLang(body.lang) || requestLang(request);
 
   const payMode = clean(body.payMode, 10) === 'studio' ? 'studio' : 'online';
   const status = payMode === 'studio' ? 'unpaid' : 'pending';
@@ -44,79 +44,39 @@ export async function onRequestPost(context) {
 
   let bookingId = null;
   if (env.DB) {
+    await ensureCore(env);
     const user = await currentUser(request, env);
     const res = await env.DB.prepare(
       `INSERT INTO bookings
-       (user_id, first_name, last_name, email, phone, type, service, plan, amount, date, time_slot, notes, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       (user_id, first_name, last_name, email, phone, type, service, plan, amount, date, time_slot, notes, status, lang)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       user ? user.id : null, first, last, email, phone, type, service, plan,
-      amount, date, time, notes, status
+      amount, date, time, notes, status, lang
     ).run();
     bookingId = res.meta.last_row_id;
   }
 
   const ref = bookingId ? 'SL-' + String(bookingId).padStart(5, '0') : '(no id)';
-  const when = date + ' at ' + time;
-  const money = amount ? '€' + amount : 'n/a';
-  const payLine = payMode === 'studio'
-    ? 'PAY AT THE STUDIO  — nothing has been charged yet'
-    : 'ONLINE  — sent to Stripe; a second email confirms when it clears';
+  const cents = Math.round(parseFloat(amount) * 100);
+  const money = Number.isFinite(cents) && cents > 0 ? { m: cents } : 'n/a';
+  const base = { ref, date: { d: date }, time, when: { k: 'whenAt' }, service: service || plan || '—' };
 
-  // ── to the studio ───────────────────────────────────────────────────────
-  const tag = payMode === 'studio' ? '[UNPAID]' : '[AWAITING PAYMENT]';
-  const studioText =
-    tag + ' New booking — ' + ref + '\n' +
-    '======================================\n\n' +
-    'WHEN     ' + when + '\n' +
-    'SERVICE  ' + (service || plan || '—') + '\n' +
-    'PLAN     ' + (type === 'subscription' ? 'Monthly subscription' : 'One-time') + '\n' +
-    'AMOUNT   ' + money + '\n' +
-    'PAYMENT  ' + payLine + '\n\n' +
-    'CUSTOMER\n' +
-    '  Name   ' + first + ' ' + last + '\n' +
-    '  Email  ' + email + '\n' +
-    '  Phone  ' + (phone || '—') + '\n' +
-    '  Lang   ' + lang + '\n\n' +
-    'NOTES\n  ' + (notes || '—') + '\n\n' +
-    '--\nReply to this email to reach the customer directly.\n';
+  // ── to the studio, in the studio's language ─────────────────────────────
+  await sendStudio(env, 'sBookingNew', Object.assign({}, base, {
+    tag: payMode === 'studio' ? '[UNPAID]' : '[AWAITING PAYMENT]', customer: first + ' ' + last, message: notes,
+    rows: [['when', { k: 'whenAt' }], ['service', service || plan || '—'], ['plan', { k: type === 'subscription' ? 'monthly' : 'oneTime' }],
+      ['amount', money], ['payment', { k: payMode === 'studio' ? 'atStudio' : 'online' }],
+      ['name', first + ' ' + last], ['email', email], ['phone', phone || '—'], ['language', LANG_NAMES[lang] || lang]],
+  }), email, false);
 
-  await sendEmail(env, {
-    to: notifyAddress(env),
-    subject: tag + ' ' + first + ' ' + last + ' — ' + when + ' — ' + (service || plan || 'Booking'),
-    text: studioText,
-    replyTo: email,
-  });
-
-  // ── to the customer ─────────────────────────────────────────────────────
-  const customerText = payMode === 'studio'
-    ? 'Hi ' + first + ',\n\n' +
-      'Your slot at ShoeLab is reserved.\n\n' +
-      '  Reference  ' + ref + '\n' +
-      '  When       ' + when + '\n' +
-      '  Service    ' + (service || plan) + '\n' +
-      '  To pay     ' + money + ' when you drop your shoes off\n\n' +
-      dropoffInstructions(env) + '\n' +
-      'Need to change anything? Just reply to this email or message us on ' +
-      'WhatsApp at +49 177 2258878.\n\n' +
-      'See you soon,\nShoeLab\n'
-    : 'Hi ' + first + ',\n\n' +
-      'Thanks for booking with ShoeLab. We have your request:\n\n' +
-      '  Reference  ' + ref + '\n' +
-      '  When       ' + when + '\n' +
-      '  Service    ' + (service || plan) + '\n' +
-      '  Amount     ' + money + '\n\n' +
-      'You will get a separate confirmation once your payment clears. If you ' +
-      'closed the payment page before finishing, reply to this email and we ' +
-      'will hold the slot for you anyway.\n\n' +
-      'ShoeLab · Wallerheerstraße, 28217 Bremen · +49 177 2258878\n';
-
-  await sendEmail(env, {
-    to: email,
-    subject: payMode === 'studio'
-      ? 'Your ShoeLab booking is reserved — ' + ref
-      : 'Your ShoeLab booking request — ' + ref,
-    text: customerText,
+  // ── to the customer, in theirs ──────────────────────────────────────────
+  await sendMail(env, {
+    to: email, lang, key: payMode === 'studio' ? 'bookingReserved' : 'bookingRequested',
+    params: Object.assign({}, base, {
+      name: first, dropoff: String(env.DROPOFF_ADDRESS || '').trim(),
+      rows: [['ref', ref], ['when', { k: 'whenAt' }], ['service', service || plan || '—'], [payMode === 'studio' ? 'toPay' : 'amount', money]],
+    }),
   });
 
   return json({ ok: true, id: bookingId, ref: ref, status: status }, 200);

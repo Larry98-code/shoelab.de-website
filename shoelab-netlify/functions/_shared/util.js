@@ -1,5 +1,6 @@
 // Shared helpers for ShoeLab.de Cloudflare Pages Functions.
 // Underscore-prefixed directory → excluded from routing, importable by routes.
+import { ensureCore, requestLang } from './core.js';
 
 export function cors(origin) {
   return {
@@ -138,23 +139,33 @@ export function setCookie(name, value, maxAgeSec) {
   return parts.join('; ');
 }
 
+// The signed-in member, or null. Also remembers the language they are using,
+// so emails written to them later (by someone else's action) match it.
 export async function currentUser(request, env) {
   const token = readCookie(request, 'shoelab_session');
   if (!token) return null;
   const payload = await verifySession(token, sessionSecret(env));
   if (!payload || !payload.uid || !env.DB) return null;
   try {
-    const row = await env.DB.prepare('SELECT id, name, email, created_at FROM users WHERE id = ?')
-      .bind(payload.uid)
-      .first();
-    return row || null;
+    await ensureCore(env);
+    const row = await env.DB.prepare(
+      'SELECT id, name, email, created_at, lang, email_verified_at FROM users WHERE id = ?'
+    ).bind(payload.uid).first();
+    if (!row) return null;
+    const lang = requestLang(request);
+    if (row.lang !== lang) {
+      await env.DB.prepare('UPDATE users SET lang = ? WHERE id = ?').bind(lang, row.id).run();
+      row.lang = lang;
+    }
+    row.verified = !!row.email_verified_at;
+    return row;
   } catch (e) {
     return null;
   }
 }
 
 // ---- transactional email via Resend (best-effort) -------------------------
-export async function sendEmail(env, { to, subject, text, replyTo }) {
+export async function sendEmail(env, { to, subject, text, html, replyTo }) {
   if (!env.RESEND_API_KEY) return { skipped: 'no RESEND_API_KEY' };
   const from = env.MAIL_FROM || 'ShoeLab <onboarding@resend.dev>';
   try {
@@ -169,6 +180,7 @@ export async function sendEmail(env, { to, subject, text, replyTo }) {
         to: Array.isArray(to) ? to : [to],
         subject,
         text,
+        ...(html ? { html } : {}),
         // customers who hit reply reach the studio inbox, not the sending domain
         reply_to: replyTo || env.REPLY_TO || notifyAddress(env),
       }),
@@ -203,14 +215,23 @@ export function stripeForm(obj) {
     .join('&');
 }
 
-export async function stripeApi(env, path, body) {
+// opts.idem sets an Idempotency-Key, so a retried call (a payout, a refund)
+// can never happen twice.
+export async function stripeApi(env, path, body, opts) {
+  const headers = {
+    Authorization: 'Bearer ' + env.STRIPE_SECRET_KEY,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+  if (opts && opts.idem) headers['Idempotency-Key'] = opts.idem;
   const res = await fetch('https://api.stripe.com/v1/' + path, {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + env.STRIPE_SECRET_KEY,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: stripeForm(body || {}),
+    method: 'POST', headers, body: stripeForm(body || {}),
+  });
+  return res.json();
+}
+
+export async function stripeGet(env, path) {
+  const res = await fetch('https://api.stripe.com/v1/' + path, {
+    headers: { Authorization: 'Bearer ' + env.STRIPE_SECRET_KEY },
   });
   return res.json();
 }

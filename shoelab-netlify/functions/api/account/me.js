@@ -8,6 +8,7 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const user = await currentUser(request, env);
   if (!user) return json({ user: null }, 200);
+  const verified = !!user.verified;
 
   // Try to return the full profile; fall back if columns aren't migrated yet.
   let full = { id: user.id, name: user.name, email: user.email };
@@ -18,5 +19,5 @@ export async function onRequestGet(context) {
     if (row) full = row;
   } catch (e) { /* pre-migration: minimal profile */ }
 
-  return json({ user: full }, 200);
+  return json({ user: Object.assign(full, { verified }) }, 200);
 }

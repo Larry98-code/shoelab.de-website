@@ -1,14 +1,17 @@
-// ShoeLab Vault — shared marketplace core: rules, schema, settlement, mail.
+// ShoeLab Vault — shared marketplace core: rules, schema, settlement, money,
+// and the emails each step sends.
 //
 // Money is always integer cents. Times are ISO-8601 UTC strings, which sort
 // correctly as text, so "ends_at <= ?" comparisons work in SQL directly.
 
-import { sendEmail, notifyAddress, dropoffInstructions } from './util.js';
+import { notifyAddress, stripeApi, stripeGet } from './util.js';
+import { siteUrl, ensureCore, addMissingColumns } from './core.js';
+import { sendMail, sendStudio } from './mail.js';
 
 // ── rules ───────────────────────────────────────────────────────────────────
-// Starting values — every fee is a placeholder to be tuned once the Vault has
-// real traffic. The seller's commission comes off their sale price; the buyer
-// pays the authentication fee for the tier the seller chose, plus shipping.
+// The fees and limits of the marketplace — change them here any time. The
+// seller's commission comes off their sale price; the buyer pays the
+// authentication fee for the tier the seller chose, plus shipping.
 export const VAULT = {
   commission: 0.08,
   fees: { photo: 490, lab: 1290 },
@@ -22,6 +25,7 @@ export const VAULT = {
   autoDeliverMs: 14 * 24 * 3600 * 1000,
   maxPhotos: 8,
   maxPhotoBytes: 750 * 1024,
+  maxThumbBytes: 120 * 1024,
 };
 
 export const CONDITIONS = ['new', 'like_new', 'good', 'fair'];
@@ -50,9 +54,7 @@ export function euro(c) {
   return '€' + (Math.round(c) / 100).toFixed(2);
 }
 
-export function siteUrl(env) {
-  return (env.SITE_URL || 'https://shoelabonline.de').replace(/\/$/, '');
-}
+export { siteUrl };
 
 export function isSpecialist(env, user) {
   if (!user || !user.email) return false;
@@ -170,12 +172,43 @@ const SCHEMA = [
     rating INTEGER NOT NULL, comment TEXT, created_at TEXT NOT NULL
   )`,
   'CREATE INDEX IF NOT EXISTS mk_fb_seller ON mk_feedback(seller_id)',
+  // a seller's Stripe Connect account: identity check and bank details live
+  // at Stripe; we keep the account id and the last known state
+  `CREATE TABLE IF NOT EXISTS mk_sellers (
+    user_id INTEGER PRIMARY KEY, stripe_account TEXT NOT NULL,
+    details_submitted INTEGER NOT NULL DEFAULT 0, payouts_enabled INTEGER NOT NULL DEFAULT 0,
+    due INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT
+  )`,
+  // support: a conversation handed from Wesley (or a form) to a specialist
+  `CREATE TABLE IF NOT EXISTS mk_tickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, email TEXT NOT NULL, lang TEXT,
+    topic TEXT, summary TEXT NOT NULL, transcript TEXT, page TEXT,
+    status TEXT NOT NULL DEFAULT 'open', created_at TEXT NOT NULL, updated_at TEXT
+  )`,
+  'CREATE INDEX IF NOT EXISTS mk_t_status ON mk_tickets(status, id)',
+  `CREATE TABLE IF NOT EXISTS mk_ticket_msgs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, ticket_id INTEGER NOT NULL, sender TEXT NOT NULL,
+    body TEXT NOT NULL, created_at TEXT NOT NULL
+  )`,
+  'CREATE INDEX IF NOT EXISTS mk_tm_ticket ON mk_ticket_msgs(ticket_id, id)',
+  // daily message counts that keep the support assistant from being abused
+  `CREATE TABLE IF NOT EXISTS support_usage (
+    k TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (k, day)
+  )`,
+];
+// columns added after the first release
+const LATER = [
+  ['mk_photos', 'thumb', 'TEXT'],
+  ['mk_orders', 'stripe_pi', 'TEXT'], ['mk_orders', 'payout_status', 'TEXT'],
+  ['mk_orders', 'payout_ref', 'TEXT'], ['mk_orders', 'payout_at', 'TEXT'], ['mk_orders', 'refund_ref', 'TEXT'],
 ];
 
 let schemaReady = false;
 export async function ensureSchema(env) {
   if (schemaReady) return;
+  await ensureCore(env);
   await env.DB.batch(SCHEMA.map((sql) => env.DB.prepare(sql)));
+  await addMissingColumns(env, LATER);
   schemaReady = true;
 }
 
@@ -187,9 +220,11 @@ export async function logEvent(env, { orderId = null, listingId = null, kind, no
 
 export async function userById(env, id) {
   if (!id) return null;
-  return env.DB.prepare('SELECT id, name, email, phone, address, city, postal, country FROM users WHERE id = ?')
+  return env.DB.prepare('SELECT id, name, email, phone, address, city, postal, country, lang, email_verified_at FROM users WHERE id = ?')
     .bind(id).first();
 }
+
+export function firstName(name) { return String(name || '').trim().split(/\s+/)[0] || ''; }
 
 // "Jordan" + "Air Jordan 1 Low" reads "Air Jordan 1 Low", not "Jordan Air Jordan 1 Low"
 export function listingTitle(l) {
@@ -197,19 +232,21 @@ export function listingTitle(l) {
   return brand && model.toLowerCase().indexOf(brand.toLowerCase()) !== -1 ? model : (brand + ' ' + model).trim();
 }
 
-// ── mail ────────────────────────────────────────────────────────────────────
-function footer(env) {
-  return '\n\n--\nShoeLab Vault · authenticated sneaker resale\n' + siteUrl(env) + '/vault.html\n';
+// ── emails ──────────────────────────────────────────────────────────────────
+// Every email goes out in the recipient's own language (users.lang), built
+// from the templates in mail-i18n/. The studio gets its copies in its own.
+export async function tell(env, user, key, params) {
+  if (!user || !user.email) return;
+  await sendMail(env, {
+    to: user.email, lang: user.lang, key, vault: true,
+    params: Object.assign({ name: firstName(user.name) }, params || {}),
+  });
 }
-
-export async function mail(env, to, subject, body) {
-  if (!to) return;
-  await sendEmail(env, { to, subject: '[Vault] ' + subject, text: body + footer(env) });
+export async function tellStudio(env, key, params, replyTo) {
+  await sendStudio(env, key, params || {}, replyTo, true);
 }
-
-export async function mailStudio(env, subject, body, replyTo) {
-  await sendEmail(env, { to: notifyAddress(env), subject: '[VAULT] ' + subject, text: body + footer(env), replyTo });
-}
+const orderUrl = (id) => '/vault-me.html#order-' + id;
+const LAB = '/vault-lab.html';
 
 // ── orders ──────────────────────────────────────────────────────────────────
 // One place turns a finished sale (auction win, buy now, accepted offer) into
@@ -234,72 +271,194 @@ export async function createOrder(env, listing, buyerId, price, source) {
   const buyer = await userById(env, buyerId);
   const seller = await userById(env, listing.seller_id);
   const title = listingTitle(listing);
-  const how = source === 'auction' ? 'won the auction for' : source === 'offer' ? 'had your offer accepted on' : 'bought';
-  if (buyer) await mail(env, buyer.email, 'You ' + how + ' ' + title,
-    'Hi ' + (buyer.name || '') + ',\n\nYou ' + how + ' ' + title + ' (EU ' + listing.size + ').\n\n' +
-    '  Item            ' + euro(price) + '\n' +
-    '  Authentication  ' + euro(f.authFee) + (listing.tier === 'lab' ? '  (in-lab check by our specialists)' : '  (photo check)') + '\n' +
-    '  Shipping        ' + euro(f.shipFee) + '\n' +
-    '  Total           ' + euro(f.total) + '\n\n' +
-    'Complete payment within 72 hours to secure the pair:\n' + siteUrl(env) + '/vault-me.html#order-' + orderId);
-  if (seller) await mail(env, seller.email, 'Sold: ' + title,
-    'Hi ' + (seller.name || '') + ',\n\nYour ' + title + ' sold for ' + euro(price) + '.\n' +
-    'You will receive ' + euro(f.payout) + ' after the ' + (listing.tier === 'lab' ? 'in-lab authentication' : 'delivery') + '.\n\n' +
-    'We will email you shipping instructions as soon as the buyer has paid. Nothing to post yet.');
-  await mailStudio(env, 'Sale #' + orderId + ': ' + title + ' for ' + euro(price),
-    'Source: ' + source + '\nTier: ' + listing.tier + '\nBuyer: ' + (buyer ? buyer.email : buyerId) +
-    '\nSeller: ' + (seller ? seller.email : listing.seller_id) + '\nTotal charged: ' + euro(f.total) +
-    '\nSeller payout: ' + euro(f.payout));
+  const tierWord = { k: listing.tier === 'lab' ? 'tierLab' : 'tierPhoto' };
+  await tell(env, buyer, source === 'auction' ? 'wonAuction' : source === 'offer' ? 'offerAccepted' : 'boughtNow', {
+    title, size: listing.size, url: orderUrl(orderId),
+    rows: [['item', { m: price }], ['auth', { m: f.authFee }], ['tier', tierWord], ['ship', { m: f.shipFee }], ['total', { m: f.total }]],
+  });
+  await tell(env, seller, 'sold', {
+    title, price: { m: price }, payout: { m: f.payout },
+    payoutLine: { k: listing.tier === 'lab' ? 'payoutAfterLab' : 'payoutAfterDelivery' },
+  });
+  await tellStudio(env, 'sSale', {
+    order: orderId, title, price: { m: price },
+    rows: [['format', { k: source === 'auction' ? 'auction' : 'fixed' }], ['tier', tierWord],
+      ['buyer', buyer ? buyer.email : String(buyerId)], ['seller', seller ? seller.email : String(listing.seller_id)],
+      ['total', { m: f.total }], ['payout', { m: f.payout }]],
+  });
   return orderId;
 }
 
-// Payouts are made by hand for now (see VAULT.md): every way an order can
-// end up delivered puts a payout on the studio's list.
-export async function payoutDue(env, o, how) {
-  const seller = await userById(env, o.seller_id);
-  const l = await env.DB.prepare('SELECT brand, model FROM mk_listings WHERE id = ?').bind(o.listing_id).first();
-  await mailStudio(env, 'PAYOUT due: order #' + o.id + ' — ' + euro(o.payout),
-    'Order #' + o.id + (l ? ' (' + listingTitle(l) + ')' : '') + ' is delivered (' + how + ').\n\n' +
-    'Pay ' + euro(o.payout) + ' to ' + (seller ? seller.name + ' <' + seller.email + '>' : 'seller #' + o.seller_id) + '.\n' +
-    'Sale price ' + euro(o.item_price) + ', commission ' + euro(o.commission) +
-    (o.tier === 'photo' ? ', postage refund ' + euro(o.ship_fee) : '') + '.',
-    seller ? seller.email : undefined);
-}
-
-// What the seller has to do once an order is paid.
-export function shipInstructions(env, order, buyer) {
+// Where the seller posts a paid pair: to the buyer, or (Lab Verified) to the
+// lab, whose full address only ever travels in private.
+export function shipTo(env, order) {
   if (order.tier === 'lab') {
-    return 'Post the pair to ShoeLab for authentication — not to the buyer.\n' +
-      dropoffInstructions(env) + '\nAdd the order number #' + order.id + ' inside the box, then enter the tracking number in your Vault dashboard.';
+    const lab = String(env.DROPOFF_ADDRESS || '').trim();
+    return { lab: true, address: lab ? lab.replace(/\s*,\s*/g, '\n') : null };
   }
-  const addr = [order.ship_name, order.ship_line1, order.ship_line2,
-    [order.ship_postal, order.ship_city].filter(Boolean).join(' '), order.ship_country].filter(Boolean).join('\n  ');
-  return 'Post the pair straight to the buyer:\n  ' + (addr || (buyer ? buyer.name : 'see dashboard')) +
-    '\n\nThen enter the tracking number in your Vault dashboard.';
+  const lines = [order.ship_name, order.ship_line1, order.ship_line2,
+    [order.ship_postal, order.ship_city].filter(Boolean).join(' '), order.ship_country === 'DE' ? 'Deutschland' : order.ship_country]
+    .filter(Boolean);
+  return { lab: false, address: lines.join('\n') || null };
 }
 
-export async function markPaid(env, orderId, how) {
+export async function markPaid(env, orderId, how, paymentIntent) {
   const at = nowIso();
   const res = await env.DB.prepare(
-    "UPDATE mk_orders SET status = 'paid', pay_mode = COALESCE(pay_mode, ?), updated_at = ? WHERE id = ? AND status = 'awaiting_payment'"
-  ).bind(how, at, orderId).run();
+    "UPDATE mk_orders SET status = 'paid', pay_mode = COALESCE(pay_mode, ?), stripe_pi = COALESCE(?, stripe_pi), updated_at = ? WHERE id = ? AND status = 'awaiting_payment'"
+  ).bind(how, paymentIntent || null, at, orderId).run();
   if (!res.meta || !res.meta.changes) return false;
   await logEvent(env, { orderId, kind: 'paid', note: how });
   const o = await env.DB.prepare('SELECT * FROM mk_orders WHERE id = ?').bind(orderId).first();
   const l = await env.DB.prepare('SELECT * FROM mk_listings WHERE id = ?').bind(o.listing_id).first();
   const buyer = await userById(env, o.buyer_id);
   const seller = await userById(env, o.seller_id);
-  const title = l ? listingTitle(l) : 'your item';
-  if (seller) await mail(env, seller.email, 'Paid — please ship ' + title,
-    'Hi ' + (seller.name || '') + ',\n\nThe buyer has paid for ' + title + ' (order #' + o.id + ').\n\n' +
-    shipInstructions(env, o, buyer) + '\n\n' + siteUrl(env) + '/vault-me.html#order-' + o.id);
-  if (buyer) await mail(env, buyer.email, 'Payment received for ' + title,
-    'Hi ' + (buyer.name || '') + ',\n\nThanks — we have your payment of ' + euro(o.total) + ' for ' + title + '.\n' +
-    (o.tier === 'lab'
-      ? 'The seller now posts the pair to our lab. A specialist authenticates it before it travels on to you.'
-      : 'The seller now posts the pair to you. You will get the tracking number by email.') +
-    '\n\nFollow it here: ' + siteUrl(env) + '/vault-me.html#order-' + o.id);
+  const title = l ? listingTitle(l) : '#' + o.id;
+  const dest = shipTo(env, o);
+  await tell(env, seller, 'paidShip', {
+    title, order: o.id, url: orderUrl(o.id),
+    howToShip: { k: dest.lab ? 'shipLab' : 'shipPhoto' },
+    address: dest.address || { k: 'dropoffLater' },
+  });
+  await tell(env, buyer, 'paymentReceived', {
+    title, amount: { m: o.total }, url: orderUrl(o.id),
+    next: { k: o.tier === 'lab' ? 'paidNextLab' : 'paidNextPhoto' },
+  });
   return true;
+}
+
+// ── money: payouts and refunds ──────────────────────────────────────────────
+// With Stripe Connect switched on, the buyer's money waits in Stripe until the
+// pair is delivered, then goes to the seller's own Stripe account; refunds go
+// straight back to the card. Without it, both are done by hand from emails.
+export function connectOn(env) {
+  return !!env.STRIPE_SECRET_KEY && /^(on|1|true|yes)$/i.test(String(env.VAULT_STRIPE_CONNECT || '').trim());
+}
+
+export async function sellerRow(env, userId) {
+  return env.DB.prepare('SELECT * FROM mk_sellers WHERE user_id = ?').bind(userId).first();
+}
+
+// Asks Stripe where the seller's verification stands and stores the answer.
+export async function refreshSeller(env, userId) {
+  const row = await sellerRow(env, userId);
+  if (!row || !env.STRIPE_SECRET_KEY) return row;
+  const a = await stripeGet(env, 'accounts/' + encodeURIComponent(row.stripe_account));
+  if (!a || a.error) return row;
+  const due = ((a.requirements && a.requirements.currently_due) || []).length;
+  await env.DB.prepare('UPDATE mk_sellers SET details_submitted = ?, payouts_enabled = ?, due = ?, updated_at = ? WHERE user_id = ?')
+    .bind(a.details_submitted ? 1 : 0, a.payouts_enabled ? 1 : 0, due, nowIso(), userId).run();
+  return Object.assign({}, row, { details_submitted: a.details_submitted ? 1 : 0, payouts_enabled: a.payouts_enabled ? 1 : 0, due });
+}
+
+// Every way an order becomes delivered ends here: the seller hears about it
+// and the payout follows.
+export async function orderDelivered(env, o, how) {
+  const seller = await userById(env, o.seller_id);
+  const l = await env.DB.prepare('SELECT brand, model FROM mk_listings WHERE id = ?').bind(o.listing_id).first();
+  const title = l ? listingTitle(l) : '#' + o.id;
+  if (how !== 'released') {
+    await tell(env, seller, how === 'auto' ? 'deliveredAuto' : 'delivered', { order: o.id, title, payout: { m: o.payout } });
+  }
+  await releasePayout(env, o, how);
+}
+
+const HOW = { buyer: 'the buyer confirmed delivery', auto: 'automatically, 14 days after shipping', released: 'problem report closed in the seller\'s favour', retry: 'payout retried' };
+
+export async function releasePayout(env, o, how) {
+  const seller = await userById(env, o.seller_id);
+  const l = await env.DB.prepare('SELECT brand, model FROM mk_listings WHERE id = ?').bind(o.listing_id).first();
+  const title = l ? listingTitle(l) : '#' + o.id;
+  if (!connectOn(env) || !o.stripe_pi) {
+    await env.DB.prepare("UPDATE mk_orders SET payout_status = 'manual' WHERE id = ? AND payout_status IS NULL").bind(o.id).run();
+    await tellStudio(env, 'sPayoutDue', {
+      order: o.id, title, payout: { m: o.payout }, how: HOW[how] || how,
+      rows: [['seller', seller ? seller.name + ' <' + seller.email + '>' : String(o.seller_id)],
+        ['item', { m: o.item_price }], ['commission', { m: o.commission }],
+        o.tier === 'photo' ? ['postage', { m: o.ship_fee }] : null, ['payout', { m: o.payout }]].filter(Boolean),
+    }, seller ? seller.email : undefined);
+    return 'manual';
+  }
+  let acct = await refreshSeller(env, o.seller_id);
+  if (!acct || !acct.payouts_enabled) {
+    const r = await env.DB.prepare(
+      "UPDATE mk_orders SET payout_status = 'waiting' WHERE id = ? AND (payout_status IS NULL OR payout_status = 'failed')"
+    ).bind(o.id).run();
+    if (r.meta.changes) {
+      await logEvent(env, { orderId: o.id, kind: 'payout_waiting' });
+      await tell(env, seller, 'payoutSetupNeeded', { order: o.id, title, payout: { m: o.payout }, url: '/vault-me.html#payouts' });
+    }
+    return 'waiting';
+  }
+  // claim the payout first, so two requests can never both send it
+  const claim = await env.DB.prepare(
+    "UPDATE mk_orders SET payout_status = 'sending' WHERE id = ? AND (payout_status IS NULL OR payout_status IN ('waiting','failed'))"
+  ).bind(o.id).run();
+  if (!claim.meta.changes) return 'busy';
+  let err = null, tr = null;
+  try {
+    const pi = await stripeGet(env, 'payment_intents/' + encodeURIComponent(o.stripe_pi));
+    const charge = pi && (typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge && pi.latest_charge.id);
+    if (!charge) err = (pi && pi.error && pi.error.message) || 'No charge found for this payment';
+    else {
+      tr = await stripeApi(env, 'transfers', {
+        amount: o.payout, currency: 'eur', destination: acct.stripe_account, source_transaction: charge,
+        transfer_group: 'vault_' + o.id, description: 'ShoeLab Vault order #' + o.id, 'metadata[vault_order]': String(o.id),
+      }, { idem: 'vault-payout-' + o.id });
+      if (!tr || !tr.id) err = (tr && tr.error && tr.error.message) || 'Stripe did not accept the transfer';
+    }
+  } catch (e) { err = String(e).slice(0, 200); }
+  if (err) {
+    await env.DB.prepare("UPDATE mk_orders SET payout_status = 'failed' WHERE id = ?").bind(o.id).run();
+    await logEvent(env, { orderId: o.id, kind: 'payout_failed', note: err });
+    await tellStudio(env, 'sPayoutFailed', { order: o.id, title, message: err });
+    return 'failed';
+  }
+  await env.DB.prepare("UPDATE mk_orders SET payout_status = 'sent', payout_ref = ?, payout_at = ? WHERE id = ?")
+    .bind(tr.id, nowIso(), o.id).run();
+  await logEvent(env, { orderId: o.id, kind: 'payout_sent', note: tr.id });
+  await tell(env, seller, 'payoutSent', { order: o.id, title, payout: { m: o.payout }, url: '/vault-me.html#payouts' });
+  return 'sent';
+}
+
+// Payouts that waited for the seller to finish verifying go out once they have.
+export async function releaseWaiting(env, sellerId) {
+  const rows = await env.DB.prepare(
+    "SELECT * FROM mk_orders WHERE seller_id = ? AND status = 'delivered' AND payout_status IN ('waiting','failed') LIMIT 20"
+  ).bind(sellerId).all();
+  let sent = 0;
+  for (const o of rows.results || []) if (await releasePayout(env, o, 'retry') === 'sent') sent++;
+  return sent;
+}
+
+// The buyer gets everything back: by Stripe when they paid by card,
+// otherwise the studio is asked to transfer it.
+export async function refundOrder(env, o, opts) {
+  opts = opts || {};
+  const buyer = await userById(env, o.buyer_id);
+  const l = await env.DB.prepare('SELECT brand, model FROM mk_listings WHERE id = ?').bind(o.listing_id).first();
+  const title = l ? listingTitle(l) : '#' + o.id;
+  const p = { order: o.id, title, amount: { m: o.total }, message: opts.note || '' };
+  if (o.stripe_pi && env.STRIPE_SECRET_KEY) {
+    const r = await stripeApi(env, 'refunds', {
+      payment_intent: o.stripe_pi, amount: o.total, 'metadata[vault_order]': String(o.id),
+    }, { idem: 'vault-refund-' + o.id });
+    if (r && r.id) {
+      await env.DB.prepare('UPDATE mk_orders SET refund_ref = ? WHERE id = ?').bind(r.id, o.id).run();
+      await logEvent(env, { orderId: o.id, kind: 'refund_sent', note: r.id });
+      if (opts.tellBuyer !== false) await tell(env, buyer, 'refundIssued', p);
+      await tellStudio(env, 'sRefunded', p);
+      return 'stripe';
+    }
+    const err = (r && r.error && r.error.message) || 'Stripe did not accept the refund';
+    await logEvent(env, { orderId: o.id, kind: 'refund_failed', note: err });
+    await tellStudio(env, 'sRefundFailed', Object.assign({}, p, { message: err }));
+    if (opts.tellBuyer !== false) await tell(env, buyer, 'refundManual', p);
+    return 'failed';
+  }
+  await tellStudio(env, 'sRefund', Object.assign({}, p, { buyerEmail: buyer ? buyer.email : String(o.buyer_id) }));
+  if (opts.tellBuyer !== false) await tell(env, buyer, 'refundManual', p);
+  return 'manual';
 }
 
 // ── housekeeping ────────────────────────────────────────────────────────────
@@ -307,7 +466,7 @@ export async function markPaid(env, orderId, how) {
 // expiry, unpaid orders) runs lazily on incoming requests, at most every 20s
 // per isolate. Every state change is a conditional UPDATE, so two isolates
 // racing on the same row cannot both act on it.
-let lastSweep = 0;
+let lastSweep = 0, lastTidy = 0;
 export async function housekeeping(env, force) {
   if (!force && Date.now() - lastSweep < 20000) return;
   lastSweep = Date.now();
@@ -337,9 +496,10 @@ export async function housekeeping(env, force) {
     await env.DB.prepare("UPDATE mk_listings SET status = 'ended', updated_at = ? WHERE id = ? AND status = 'sold'")
       .bind(at, o.listing_id).run();
     await logEvent(env, { orderId: o.id, kind: 'cancelled', note: 'unpaid after 72h' });
-    const seller = await userById(env, o.seller_id);
-    if (seller) await mail(env, seller.email, 'Sale cancelled — buyer did not pay',
-      'The buyer did not pay within 72 hours, so order #' + o.id + ' was cancelled. You can list the pair again any time.');
+    const l = await env.DB.prepare('SELECT brand, model FROM mk_listings WHERE id = ?').bind(o.listing_id).first();
+    await tell(env, await userById(env, o.seller_id), 'unpaidCancelled', {
+      order: o.id, title: l ? listingTitle(l) : '#' + o.id, url: '/vault-me.html#selling',
+    });
   }
 
   // delivered by default once a parcel has been out for two weeks
@@ -353,10 +513,16 @@ export async function housekeeping(env, force) {
     ).bind(at, o.id).run();
     if (!r.meta.changes) continue;
     await logEvent(env, { orderId: o.id, kind: 'delivered', note: 'automatically after 14 days' });
-    const seller = await userById(env, o.seller_id);
-    if (seller) await mail(env, seller.email, 'Delivered — payout on its way',
-      'Order #' + o.id + ' counts as delivered (two weeks without a problem report). Your payout of ' + euro(o.payout) + ' is being released.');
-    await payoutDue(env, o, 'automatically, 14 days after shipping');
+    await orderDelivered(env, o, 'auto');
+  }
+
+  // once a day: forget old stored emails, used links and support counters
+  if (Date.now() - lastTidy > 86400000) {
+    lastTidy = Date.now();
+    const half = new Date(Date.now() - 180 * 86400000).toISOString();
+    await env.DB.prepare('DELETE FROM mail_log WHERE created_at < ?').bind(half).run();
+    await env.DB.prepare('DELETE FROM email_tokens WHERE expires_at < ?').bind(at).run();
+    await env.DB.prepare('DELETE FROM support_usage WHERE day < ?').bind(at.slice(0, 10)).run();
   }
 }
 
@@ -372,9 +538,11 @@ export async function settleAuction(env, l) {
       "UPDATE mk_listings SET status = 'ended', updated_at = ? WHERE id = ? AND status = 'live'"
     ).bind(at, l.id).run();
     if (r.meta.changes) {
-      const seller = await userById(env, l.seller_id);
-      if (seller) await mail(env, seller.email, 'Your auction ended without bids',
-        listingTitle(l) + ' did not receive any bids. You can list it again with a lower start price or as Buy Now.');
+      await tell(env, await userById(env, l.seller_id), 'auctionNoBids', {
+        title: listingTitle(l), url: '/vault-item.html?id=' + l.id,
+      });
     }
   }
 }
+
+export { LAB };

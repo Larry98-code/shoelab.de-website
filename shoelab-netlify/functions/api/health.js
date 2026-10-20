@@ -2,7 +2,8 @@
 // GET /api/health  →  human-readable JSON: is the key valid, which models
 // respond, and the exact Anthropic error if not. Costs ~1 token per model.
 
-import { sendEmail, notifyAddress } from '../_shared/util.js';
+import { notifyAddress } from '../_shared/util.js';
+import { sendStudio } from '../_shared/mail.js';
 
 const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
 
@@ -61,12 +62,7 @@ export async function onRequestGet(context) {
   const url = new URL(context.request.url);
   if (url.searchParams.get('testmail')) {
     const to = notifyAddress(env);
-    const r = await sendEmail(env, {
-      to,
-      subject: '[TEST] ShoeLab booking email check',
-      text: 'This is a test from /api/health?testmail=1.\n\n' +
-            'If you are reading it, booking notifications will reach ' + to + '.\n',
-    });
+    const r = await sendStudio(env, 'sTest', { to }, undefined, false);
     out.email.testSend = { to, result: r };
     out.email.testVerdict = r && r.ok
       ? '✅ Resend accepted the message. Check ' + to + ' (and the spam folder).'
