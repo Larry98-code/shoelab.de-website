@@ -35,6 +35,22 @@ export async function onRequestGet(context) {
       : '❌ RESEND_API_KEY is not set — NO booking emails are being sent. Add it under Settings → Variables and Secrets, then redeploy.',
   };
 
+  // ── the Vault (resale marketplace) ──────────────────────────────────────
+  // Specialist addresses can be private, so only their number is shown.
+  const specialists = String(env.VAULT_SPECIALISTS || '').split(',').map((x) => x.trim()).filter(Boolean);
+  out.vault = {
+    database: !!env.DB,
+    specialists: specialists.length || 1,
+    specialistsFrom: specialists.length ? 'VAULT_SPECIALISTS' : 'the studio notify address (default)',
+    onlinePayments: !!env.STRIPE_SECRET_KEY,
+    siteUrl: env.SITE_URL || 'https://shoelabonline.de (default)',
+    verdict: !env.DB
+      ? '❌ No D1 database bound as DB — the Vault cannot run.'
+      : env.STRIPE_SECRET_KEY
+        ? '✅ The Vault is live with card payments.'
+        : '✅ The Vault is live. Buyers reserve pairs and ShoeLab emails payment details by hand until STRIPE_SECRET_KEY is set.',
+  };
+
   // GET /api/health?testmail=1 sends one real email, only ever to the
   // studio's own notify address — never to an address from the query string.
   const url = new URL(context.request.url);

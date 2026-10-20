@@ -1,6 +1,7 @@
 import {
   json, verifyStripeSignature, sendEmail, notifyAddress, dropoffInstructions,
 } from '../../_shared/util.js';
+import { ensureSchema, markPaid } from '../../_shared/vault.js';
 
 // Stripe sends events here. Configure the endpoint URL + signing secret in the
 // Stripe dashboard (Developers -> Webhooks), and set STRIPE_WEBHOOK_SECRET.
@@ -29,6 +30,19 @@ export async function onRequestPost(context) {
     const email = (obj.customer_email ||
                    (obj.customer_details && obj.customer_details.email) || '').toLowerCase();
     const customerId = obj.customer || null;
+
+    // Vault orders are matched by their own id and handled entirely here.
+    // Returning early matters: the booking fallback below would otherwise mark
+    // this customer's latest unpaid booking as paid too.
+    const vaultRef = (obj.metadata && obj.metadata.vault_order) ||
+      (/^vault_(\d+)$/.exec(String(obj.client_reference_id || '')) || [])[1];
+    if (vaultRef) {
+      if (env.DB && PAID_EVENTS.indexOf(event.type) !== -1) {
+        await ensureSchema(env);
+        await markPaid(env, parseInt(vaultRef, 10), 'stripe');
+      }
+      return json({ received: true }, 200);
+    }
 
     // checkout.html sends clientReferenceId as 'booking_<row id>', which beats
     // guessing by email when somebody books twice in a day.

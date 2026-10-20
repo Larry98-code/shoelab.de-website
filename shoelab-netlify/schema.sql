@@ -55,3 +55,8 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 CREATE INDEX IF NOT EXISTS idx_bookings_email ON bookings(email);
 CREATE INDEX IF NOT EXISTS idx_reviews_approved ON reviews(approved);
+
+-- ShoeLab Vault (resale marketplace): the mk_* tables — listings, photos,
+-- bids, offers, watchlist, orders, events and feedback — are created by
+-- functions/_shared/vault.js (ensureSchema) on the first Vault request, so a
+-- fresh database needs no manual step. See VAULT.md.

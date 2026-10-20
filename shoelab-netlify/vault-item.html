@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#080808"/>
+<title>ShoeLab Vault — Authenticated Sneaker Resale</title>
+<meta name="description" content="An authenticated pair in the ShoeLab Vault. Bid, make an offer or buy now — every pair is checked by a ShoeLab specialist."/>
+<meta name="robots" content="index, follow, max-image-preview:large"/>
+<meta property="og:type" content="product"/>
+<meta property="og:site_name" content="ShoeLab.de"/>
+<meta property="og:title" content="ShoeLab Vault"/>
+<meta property="og:description" content="Authenticated sneaker resale. Every pair checked by a ShoeLab specialist."/>
+<meta property="og:image" content="https://shoelabonline.de/img/og-vault.jpg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://shoelabonline.de/img/og-vault.jpg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+<link rel="stylesheet" href="/css/vault.css?v=1"/>
+<script>document.documentElement.classList.add('v-wait');setTimeout(function(){document.documentElement.classList.remove('v-wait');},2500);</script>
+</head>
+<body>
+
+<header class="v-nav" id="vNav"></header>
+
+<main class="v-main">
+  <nav class="v-crumb" id="vCrumb" aria-label="Breadcrumb">
+    <a href="/vault.html">ShoeLab Vault</a>
+  </nav>
+  <div id="vPreview"></div>
+  <div id="vItem">
+    <div class="v-item" aria-busy="true">
+      <div><div class="v-skel" style="aspect-ratio:1/0.82;border-radius:22px;"></div></div>
+      <div class="v-buy">
+        <div class="v-skel" style="height:14px;width:30%;"></div>
+        <div class="v-skel" style="height:40px;width:85%;"></div>
+        <div class="v-skel" style="height:220px;border-radius:18px;"></div>
+        <div class="v-skel" style="height:120px;border-radius:18px;"></div>
+      </div>
+    </div>
+  </div>
+  <section class="v-section" id="vMoreLike" hidden>
+    <div class="v-section-head"><h2 class="v-h2" data-t="moreLike">More like this</h2></div>
+    <div class="v-grid" id="vMoreGrid"></div>
+  </section>
+</main>
+
+<div class="v-sticky-buy" id="vSticky" aria-hidden="true"></div>
+<div class="v-lightbox" id="vLightbox" role="dialog" aria-modal="true" aria-label="Photo">
+  <img alt=""/>
+  <button type="button" data-t-aria="close" aria-label="Close">✕</button>
+</div>
+
+<footer class="v-foot" id="vFoot"></footer>
+<nav class="v-tabbar" id="vTabbar"></nav>
+
+<script src="/js/sl-geo.js?v=1" defer></script>
+<script src="/js/vault-i18n/en.js?v=1" defer></script>
+<script src="/js/vault-core.js?v=1" defer></script>
+<script src="/js/vault-item.js?v=1" defer></script>
+</body>
+</html>
