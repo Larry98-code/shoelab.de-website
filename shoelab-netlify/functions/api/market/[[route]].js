@@ -4,7 +4,7 @@
 //   POST listings | bid | buy | offer | offer/respond | watch | listing/cancel
 //        listing/relist | order/pay | order/ship | order/received | order/problem
 //        order/feedback | review | lab
-import { json, preflight, clean, currentUser, stripeApi } from '../../_shared/util.js';
+import { json, preflight, clean, currentUser, stripeApi, sessionSecret } from '../../_shared/util.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
   siteUrl, isSpecialist, shortName, maskName, fees, ensureSchema, logEvent, userById,
@@ -950,6 +950,11 @@ export async function onRequest(context) {
   const { request, env, params } = context;
   if (request.method === 'OPTIONS') return preflight();
   if (!env.DB) return json({ error: 'The Vault needs its database (DB binding).' }, 503);
+  // Sign-ins are signed with this secret; with the built-in fallback anyone
+  // could forge one, so money never moves until a real secret is set.
+  if (sessionSecret(env) === 'shoelab-dev-secret-change-me') {
+    return json({ error: 'The Vault is not switched on yet (SESSION_SECRET missing).', code: 'offline' }, 503);
+  }
   const parts = Array.isArray(params.route) ? params.route : [params.route];
   const route = parts.filter(Boolean).join('/');
   const handler = ROUTES[request.method + ' ' + route];

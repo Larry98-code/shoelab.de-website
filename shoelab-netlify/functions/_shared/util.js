@@ -169,7 +169,8 @@ export async function sendEmail(env, { to, subject, text, replyTo }) {
         to: Array.isArray(to) ? to : [to],
         subject,
         text,
-        ...(replyTo ? { reply_to: replyTo } : {}),
+        // customers who hit reply reach the studio inbox, not the sending domain
+        reply_to: replyTo || env.REPLY_TO || notifyAddress(env),
       }),
     });
     return { ok: r.ok };

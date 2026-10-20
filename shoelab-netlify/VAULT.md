@@ -72,7 +72,8 @@ In Cloudflare Pages → your project → **Settings → Variables and Secrets**:
 | Variable | What it does | Required |
 |---|---|---|
 | `VAULT_SPECIALISTS` | Comma-separated emails allowed into the lab console, e.g. `shoelab.de@gmail.com,lena@…`. Each person signs up for a normal ShoeLab account with that email. Defaults to `NOTIFY_EMAIL`. | Recommended |
-| `RESEND_API_KEY`, `MAIL_FROM`, `NOTIFY_EMAIL` | The same email setup as bookings (see BOOKINGS-EMAIL.md) | **Yes** |
+| `SESSION_SECRET` | A long random string that signs sign-ins. The Vault stays closed without it (or without `ANTHROPIC_API_KEY`, which it borrows meanwhile). | **Yes** |
+| `RESEND_API_KEY`, `MAIL_FROM`, `NOTIFY_EMAIL` | The same email setup as bookings (see BOOKINGS-EMAIL.md). `MAIL_FROM` must end in `@mail.shoelabonline.de`. | **Yes** |
 | `DROPOFF_ADDRESS` | Where Lab Verified sellers post their pairs — sent only by email | **Yes** for Lab Verified |
 | `STRIPE_SECRET_KEY` | Turns on card payments through Stripe Checkout | Optional |
 | `STRIPE_WEBHOOK_SECRET` | Marks Vault orders paid automatically (same webhook as bookings) | With Stripe |

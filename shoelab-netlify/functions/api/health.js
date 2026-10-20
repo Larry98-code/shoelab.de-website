@@ -31,13 +31,14 @@ export async function onRequestGet(context) {
     verdict: env.RESEND_API_KEY
       ? (env.MAIL_FROM
           ? '✅ Booking emails are configured.'
-          : '⚠️ Emails will send, but MAIL_FROM is unset so Resend uses onboarding@resend.dev, which only delivers to the address that owns the Resend account. Verify your domain and set MAIL_FROM to e.g. "ShoeLab <booking@shoelabonline.de>".')
+          : '⚠️ Emails will send, but MAIL_FROM is unset so Resend uses onboarding@resend.dev, which only delivers to the address that owns the Resend account. Set MAIL_FROM to an address on the domain verified in Resend, e.g. "ShoeLab <info@mail.shoelabonline.de>".')
       : '❌ RESEND_API_KEY is not set — NO booking emails are being sent. Add it under Settings → Variables and Secrets, then redeploy.',
   };
 
   // ── the Vault (resale marketplace) ──────────────────────────────────────
   // Specialist addresses can be private, so only their number is shown.
   const specialists = String(env.VAULT_SPECIALISTS || '').split(',').map((x) => x.trim()).filter(Boolean);
+  out.sessionSecret = env.SESSION_SECRET ? 'set' : env.ANTHROPIC_API_KEY ? 'not set — borrowing ANTHROPIC_API_KEY (set SESSION_SECRET)' : '❌ not set — sign-ins are not safe';
   out.vault = {
     database: !!env.DB,
     specialists: specialists.length || 1,
@@ -46,6 +47,8 @@ export async function onRequestGet(context) {
     siteUrl: env.SITE_URL || 'https://shoelabonline.de (default)',
     verdict: !env.DB
       ? '❌ No D1 database bound as DB — the Vault cannot run.'
+      : !env.SESSION_SECRET && !env.ANTHROPIC_API_KEY
+      ? '❌ SESSION_SECRET is not set — the Vault stays closed until it is.'
       : env.STRIPE_SECRET_KEY
         ? '✅ The Vault is live with card payments.'
         : '✅ The Vault is live. Buyers reserve pairs and ShoeLab emails payment details by hand until STRIPE_SECRET_KEY is set.',

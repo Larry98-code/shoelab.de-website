@@ -27,7 +27,7 @@ Secrets**, add:
 | Variable | Value | Required |
 |---|---|---|
 | `RESEND_API_KEY` | From [resend.com](https://resend.com) → API Keys | **Yes** |
-| `MAIL_FROM` | `ShoeLab <booking@shoelabonline.de>` | Strongly recommended |
+| `MAIL_FROM` | `ShoeLab <info@mail.shoelabonline.de>` — must end in your verified Resend domain | Strongly recommended |
 | `NOTIFY_EMAIL` | Where bookings land, e.g. `Shoelab.de@gmail.com` | Optional |
 | `STRIPE_WEBHOOK_SECRET` | From Stripe → Developers → Webhooks | For `[PAID]` |
 | `DROPOFF_ADDRESS` | Your full drop-off address, e.g. `Musterweg 12, 28217 Bremen` | Recommended |
@@ -42,8 +42,13 @@ you'll send the address on WhatsApp before their appointment.
 
 **About `MAIL_FROM`:** without it, Resend sends from `onboarding@resend.dev`,
 which **only delivers to the address that owns the Resend account**. Customers
-get nothing. To fix it, add `shoelabonline.de` under Resend → Domains, add the
-DNS records it gives you, and set `MAIL_FROM` to an address on that domain.
+get nothing. The domain verified in Resend is `mail.shoelabonline.de`, so the
+address must end in exactly that — e.g. `ShoeLab <info@mail.shoelabonline.de>`.
+An address on the bare `shoelabonline.de` is refused by Resend.
+
+Replies: every email carries your `NOTIFY_EMAIL` (or Shoelab.de@gmail.com) as
+its reply-to address, so when a customer hits reply it lands in your inbox.
+Set `REPLY_TO` only if replies should go somewhere else.
 
 ## Check it works
 
