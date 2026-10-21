@@ -165,8 +165,25 @@ export async function currentUser(request, env) {
 }
 
 // ---- transactional email via Resend (best-effort) -------------------------
+// A send that does not go through is written down (and logged), so a missing
+// or wrong key shows up in /api/health and the lab console instead of
+// failing silently. Never lets the record itself break the request.
+async function mailFailed(env, to, subject, reason) {
+  try { console.error('Email not sent (' + reason + '): ' + subject); } catch (e) { /* no console */ }
+  if (!env.DB) return;
+  try {
+    await ensureCore(env);
+    await env.DB.prepare('INSERT INTO mail_failures (recipient, subject, reason, created_at) VALUES (?, ?, ?, ?)')
+      .bind(String([].concat(to || []).join(', ')).slice(0, 300), String(subject || '').slice(0, 200),
+        String(reason).slice(0, 300), new Date().toISOString()).run();
+  } catch (e) { /* the send already failed; nothing more to do */ }
+}
+
 export async function sendEmail(env, { to, subject, text, html, replyTo }) {
-  if (!env.RESEND_API_KEY) return { skipped: 'no RESEND_API_KEY' };
+  if (!env.RESEND_API_KEY) {
+    await mailFailed(env, to, subject, 'RESEND_API_KEY is not set');
+    return { skipped: 'no RESEND_API_KEY' };
+  }
   const from = env.MAIL_FROM || 'ShoeLab <onboarding@resend.dev>';
   try {
     const r = await fetch('https://api.resend.com/emails', {
@@ -185,8 +202,13 @@ export async function sendEmail(env, { to, subject, text, html, replyTo }) {
         reply_to: replyTo || env.REPLY_TO || notifyAddress(env),
       }),
     });
-    return { ok: r.ok };
+    if (r.ok) return { ok: true };
+    const body = await r.json().catch(() => ({}));
+    const reason = 'Resend ' + r.status + (body && (body.message || body.name) ? ': ' + (body.message || body.name) : '');
+    await mailFailed(env, to, subject, reason);
+    return { ok: false, error: reason };
   } catch (e) {
+    await mailFailed(env, to, subject, 'network: ' + String(e).slice(0, 200));
     return { error: String(e) };
   }
 }

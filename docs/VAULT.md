@@ -113,6 +113,10 @@ the bottom of each email are links to read it in the other seven languages.
 Confirmation and password emails are never stored; others are kept 180 days
 for those links.
 
+If an email cannot be sent (no key, a wrong key, Resend refusing it), the
+site records it: `/api/health` shows the latest reasons and the lab console
+shows a red warning until it works again. Records are kept 30 days.
+
 Studio emails start with `[VAULT]` (or `[PAID]`, `[TEST]` for bookings and
 checks) and come in the studio's language: `STUDIO_LANG` if set, otherwise the
 language of the account with the `NOTIFY_EMAIL` address.

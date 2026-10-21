@@ -398,6 +398,8 @@
   storageR2Hint: 'Щоб мати запас місця, підключіть бакет R2 як VAULT_PHOTOS. Як це зробити, описано у VAULT.md.',
   storageLeft: 'У базі даних ще {n} фото.', storageMove: 'Перенести їх у R2', storageMoving: 'Переносимо… залишилося {n}',
   storageDone: 'Тепер усі фото в R2.',
+  mailFailT: 'Листи не надсилаються.', mailFailP: 'Не надіслано за останні 7 днів: {n}. Останній ({when}): {reason}',
+  mailFailHint: 'Перевірте RESEND_API_KEY і MAIL_FROM у Cloudflare (Settings → Variables and Secrets, Production), потім перезапустіть останнє розгортання.',
 
   /* errors (codes come from the server) */
   e_generic: 'Щось пішло не так. Спробуйте ще раз.', e_network: 'Немає з’єднання. Перевірте інтернет і спробуйте ще раз.',

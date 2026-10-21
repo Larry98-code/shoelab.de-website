@@ -54,6 +54,13 @@ const TABLES = [
     template TEXT NOT NULL, params TEXT NOT NULL, lang TEXT NOT NULL, created_at TEXT NOT NULL
   )`,
   'CREATE INDEX IF NOT EXISTS mail_log_created ON mail_log(created_at)',
+  // emails that did not go out (no key, a wrong key, Resend refusing), so a
+  // broken setup shows in /api/health and the lab console, not nowhere
+  `CREATE TABLE IF NOT EXISTS mail_failures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, recipient TEXT, subject TEXT,
+    reason TEXT NOT NULL, created_at TEXT NOT NULL
+  )`,
+  'CREATE INDEX IF NOT EXISTS mail_failures_created ON mail_failures(created_at)',
 ];
 
 export async function addMissingColumns(env, columns) {

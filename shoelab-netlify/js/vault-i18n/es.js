@@ -398,6 +398,8 @@
   storageR2Hint: 'Vincula un bucket de R2 como VAULT_PHOTOS para tener margen de crecimiento. VAULT.md explica cómo hacerlo.',
   storageLeft: 'Todavía quedan {n} fotos en la base de datos.', storageMove: 'Moverlas a R2', storageMoving: 'Moviendo… quedan {n}',
   storageDone: 'Todas las fotos están ya en R2.',
+  mailFailT: 'Los correos no se están enviando.', mailFailP: 'Fallidos en los últimos 7 días: {n}. El último ({when}): {reason}',
+  mailFailHint: 'Revisa RESEND_API_KEY y MAIL_FROM en Cloudflare (Settings → Variables and Secrets, Production) y vuelve a lanzar el último despliegue.',
 
   /* errors (codes come from the server) */
   e_generic: 'Algo ha fallado. Inténtalo de nuevo.', e_network: 'Sin conexión. Comprueba tu conexión a internet e inténtalo de nuevo.',

@@ -401,6 +401,8 @@
   storageR2Hint: 'Bind an R2 bucket as VAULT_PHOTOS for room to grow. VAULT.md explains how.',
   storageLeft: '{n} photos are still in the database.', storageMove: 'Move them to R2', storageMoving: 'Moving… {n} left',
   storageDone: 'All photos are in R2 now.',
+  mailFailT: 'Emails are not being sent.', mailFailP: 'Failed in the last 7 days: {n}. Latest ({when}): {reason}',
+  mailFailHint: 'Check RESEND_API_KEY and MAIL_FROM in Cloudflare (Settings → Variables and Secrets, Production), then retry the latest deployment.',
 
   /* errors (codes come from the server) */
   e_generic: 'Something went wrong. Please try again.', e_network: 'No connection. Check your internet and try again.',

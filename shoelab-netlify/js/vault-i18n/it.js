@@ -398,6 +398,8 @@
   storageR2Hint: 'Collega un bucket R2 come VAULT_PHOTOS per avere più spazio a disposizione. VAULT.md spiega come fare.',
   storageLeft: 'Ci sono ancora {n} foto nel database.', storageMove: 'Spostale su R2', storageMoving: 'Spostamento in corso… ne restano {n}',
   storageDone: 'Ora tutte le foto sono su R2.',
+  mailFailT: 'Le email non vengono inviate.', mailFailP: 'Non inviate negli ultimi 7 giorni: {n}. Ultima ({when}): {reason}',
+  mailFailHint: 'Controlla RESEND_API_KEY e MAIL_FROM in Cloudflare (Settings → Variables and Secrets, Production), poi riavvia l’ultimo deployment.',
 
   /* errors (codes come from the server) */
   e_generic: 'Qualcosa è andato storto. Riprova.', e_network: 'Nessuna connessione. Controlla internet e riprova.',

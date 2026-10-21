@@ -206,7 +206,12 @@
     var tb = function (k, label, n) {
       return '<button type="button" role="tab" data-tab="' + k + '" class="' + (tab === k ? 'on' : '') + '" aria-selected="' + (tab === k ? 'true' : 'false') + '">' + esc(label) + (n ? '<span class="n">' + n + '</span>' : '') + '</button>';
     };
+    var mf = s.mail_failures && s.mail_failure_last;
     $('labBody').innerHTML =
+      // emails that did not go out this week: hard to miss until it is fixed
+      (mf ? '<div class="v-state bad" role="alert" style="margin-bottom:1.2rem;">' + S.ico('alert') + '<div><b>' + esc(t('mailFailT')) + '</b> ' +
+        esc(t('mailFailP', { n: S.num(s.mail_failures), when: S.fmtShort(s.mail_failure_last.created_at), reason: s.mail_failure_last.reason })) +
+        '<br><small>' + esc(t('mailFailHint')) + '</small></div></div>' : '') +
       '<div class="v-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">' +
         stat(t('statReview'), S.num(s.review || 0)) + stat(t('statLive'), S.num(s.live || 0)) +
         stat(t('statOpen'), S.num(s.open_orders || 0)) + stat(t('statDisputes'), S.num(s.disputes || 0)) +

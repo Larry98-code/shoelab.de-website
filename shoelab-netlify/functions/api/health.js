@@ -3,6 +3,7 @@
 // respond, and the exact Anthropic error if not. Costs ~1 token per model.
 
 import { notifyAddress } from '../_shared/util.js';
+import { ensureCore } from '../_shared/core.js';
 import { sendStudio } from '../_shared/mail.js';
 import { connectOn } from '../_shared/vault.js';
 import { MODEL as SUPPORT_MODEL } from '../_shared/support.js';
@@ -38,6 +39,24 @@ export async function onRequestGet(context) {
           : '⚠️ Emails will send, but MAIL_FROM is unset so Resend uses onboarding@resend.dev, which only delivers to the address that owns the Resend account. Set MAIL_FROM to an address on the domain verified in Resend, e.g. "ShoeLab <info@mail.shoelabonline.de>".')
       : '❌ RESEND_API_KEY is not set — NO booking emails are being sent. Add it under Settings → Variables and Secrets, then redeploy.',
   };
+
+  // Emails that did not go out in the last 7 days. This page is public, so
+  // it shows when and why, never who they were for.
+  if (env.DB) {
+    try {
+      await ensureCore(env);
+      const since = new Date(Date.now() - 7 * 86400000).toISOString();
+      const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM mail_failures WHERE created_at > ?').bind(since).first();
+      const latest = await env.DB.prepare('SELECT reason, created_at FROM mail_failures WHERE created_at > ? ORDER BY id DESC LIMIT 3').bind(since).all();
+      out.email.failedLast7Days = (n && n.n) || 0;
+      out.email.latestFailures = (latest.results || []).map((f) => ({ at: f.created_at, reason: f.reason }));
+      if (out.email.failedLast7Days && env.RESEND_API_KEY) {
+        const f = out.email.latestFailures[0];
+        out.email.verdict = '⚠️ ' + out.email.failedLast7Days + ' email(s) could not be sent in the last 7 days. Latest (' + f.at + '): ' + f.reason +
+          '. Check RESEND_API_KEY and MAIL_FROM under Settings → Variables and Secrets (Production), then retry the deployment.';
+      }
+    } catch (e) { /* the rest of the report still stands */ }
+  }
 
   // ── the Vault (resale marketplace) ──────────────────────────────────────
   // Specialist addresses can be private, so only their number is shown.

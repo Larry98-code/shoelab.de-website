@@ -910,6 +910,12 @@ async function getQueue({ request, env }) {
   }
   stats.r2 = !!env.VAULT_PHOTOS;
   stats.connect = connectOn(env);
+  // emails that did not go out this week: the console warns until it is fixed
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  const mf = await env.DB.prepare('SELECT COUNT(*) AS n FROM mail_failures WHERE created_at > ?').bind(weekAgo).first();
+  stats.mail_failures = (mf && mf.n) || 0;
+  stats.mail_failure_last = stats.mail_failures
+    ? await env.DB.prepare('SELECT reason, created_at FROM mail_failures ORDER BY id DESC LIMIT 1').first() : null;
   return json({ review: items, orders, stats, tickets: await ticketsForQueue(env) }, 200, { 'Cache-Control': 'no-store' });
 }
 

@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '2';   // bump together with the ?v= of the translation files
+  var V = '3';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },

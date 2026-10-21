@@ -546,6 +546,7 @@ export async function housekeeping(env, force) {
     lastTidy = Date.now();
     const half = new Date(Date.now() - 180 * 86400000).toISOString();
     await env.DB.prepare('DELETE FROM mail_log WHERE created_at < ?').bind(half).run();
+    await env.DB.prepare('DELETE FROM mail_failures WHERE created_at < ?').bind(new Date(Date.now() - 30 * 86400000).toISOString()).run();
     await env.DB.prepare('DELETE FROM email_tokens WHERE expires_at < ?').bind(at).run();
     await env.DB.prepare('DELETE FROM support_usage WHERE day < ?').bind(at.slice(0, 10)).run();
     // support requests are kept for two years after they were last answered or closed
