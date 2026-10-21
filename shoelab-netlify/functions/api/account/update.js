@@ -25,8 +25,7 @@ export async function onRequestPost(context) {
       'UPDATE users SET name=?, phone=?, address=?, city=?, postal=?, country=? WHERE id=?'
     ).bind(name, phone, address, city, postal, country, user.id).run();
   } catch (e) {
-    // columns missing → migration not yet applied
-    return json({ error: 'Profile fields not migrated yet. Run migrate-accounts.sql in the D1 console.' }, 500);
+    return json({ error: 'Your profile could not be saved. Please try again.' }, 500);
   }
 
   return json({ ok: true, user: { id: user.id, name, email: user.email, phone, address, city, postal, country } }, 200);

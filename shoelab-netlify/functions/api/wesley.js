@@ -1,6 +1,6 @@
 // ShoeLab — Wesley AI Proxy
 // Cloudflare Pages Function  ·  route: /api/wesley
-// Mirrors the Netlify function; keeps the Anthropic API key server-side.
+// Keeps the Anthropic API key server-side.
 //
 // Tries the strongest available model first and falls back automatically,
 // so Wesley keeps answering even if the account lacks access to a newer

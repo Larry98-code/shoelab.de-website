@@ -153,8 +153,6 @@ In Cloudflare Pages → your project → **Settings → Variables and Secrets**:
 
 After changing variables, **retry the latest deployment** so they take effect.
 `/api/health` has a `vault` section that says what is on and what is missing.
-The Vault runs on Cloudflare Pages; the Netlify mirror shows the pages but
-has no Vault backend.
 
 ## Set up Stripe payouts (Stripe Connect)
 

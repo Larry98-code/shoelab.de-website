@@ -36,9 +36,11 @@ in plain text.
 ```bash
 cd shoelab-netlify
 npx wrangler d1 create shoelab           # copy the printed database_id
-npx wrangler d1 execute shoelab --file=./schema.sql --remote
+npx wrangler d1 execute shoelab --file=../docs/schema.sql --remote
 ```
-Paste the `database_id` into `wrangler.jsonc`.
+Paste the `database_id` into `shoelab-netlify/wrangler.jsonc`. (Already done:
+the live database is bound there, and the tables also create themselves on the
+first request.)
 
 ### 2. Bind D1 to the Pages project
 Dashboard → your Pages project → **Settings → Functions → D1 database bindings**
@@ -72,8 +74,9 @@ Dashboard → **Settings → Environment variables** (mark secrets as *Encrypted
    Checkout Sessions so the webhook can mark the right order paid.
 
 ### Account profile migration
-After deploying, run **`migrate-accounts.sql`** once in the D1 Console to add the
-profile/address + `stripe_customer_id` columns to existing databases.
+Not needed any more: missing columns are added automatically on the first
+request (`functions/_shared/core.js`). `docs/migrate-accounts.sql` is kept for
+reference.
 
 Generate a session secret:
 ```bash
