@@ -981,10 +981,7 @@
         photo: '/img/showcase/nb1080.webp', descKey: 'pvDesc3' },
       { id: 4, brand: 'New Balance', model: 'Fresh Foam X 880', size: '41.5', cond: 'good', format: 'auction', tier: 'photo',
         price: 5500, startPrice: 5500, buyNow: 9500, bids: 0, endsAt: iso(3 * 24 * H + 5 * H), acceptOffers: false, watchers: 3,
-        photo: '/img/showcase/nb880.webp', descKey: 'pvDesc4' },
-      { id: 5, brand: 'Nike', model: 'Pegasus 41', size: '42.5', cond: 'new', format: 'fixed', tier: 'photo',
-        price: 7500, buyNow: 7500, bids: 0, endsAt: null, acceptOffers: false, watchers: 9,
-        photo: '/img/showcase/pegasus-white.webp', descKey: 'pvDesc5' }
+        photo: '/img/showcase/nb880.webp', descKey: 'pvDesc4' }
     ].map(function (x) {
       x.preview = true; x.cut = true; x.status = 'live'; x.title = titleOf(x.brand, x.model);
       return x;

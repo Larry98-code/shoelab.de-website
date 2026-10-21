@@ -217,8 +217,7 @@
   function hero() {
     var box = $('vHeroShoe');
     if (!box || (w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-    var srcs = ['/img/showcase/jordan1.webp', '/img/showcase/nb9060-black.webp', '/img/showcase/pegasus-white.webp',
-      '/img/showcase/nb1080.webp', '/img/showcase/nb880.webp'];
+    var srcs = ['/img/showcase/jordan1.webp', '/img/showcase/nb9060-black.webp', '/img/showcase/nb1080.webp', '/img/showcase/nb880.webp'];
     srcs.slice(1).forEach(function (s) {
       var im = new Image(); im.src = s; im.alt = ''; im.decoding = 'async';
       box.appendChild(im);

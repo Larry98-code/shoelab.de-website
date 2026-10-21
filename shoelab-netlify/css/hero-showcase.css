@@ -87,15 +87,23 @@
   background:radial-gradient(closest-side, color-mix(in srgb, var(--hs-c1) 38%, transparent), transparent 72%);
   filter:blur(18px);opacity:.75;pointer-events:none;
 }
+/* One pair on stage at a time: the outgoing pair turns away and is gone
+   before the next one turns in. The slot is not a preserve-3d context —
+   Safari ignores opacity inside one and would leave the old pair standing
+   behind the new one — and a parked pair is hidden outright (visibility). */
 .hs-shoe{
   position:absolute;left:50%;top:47%;width:92%;
-  translate:-50% -50%;transform-style:preserve-3d;
-  transition:transform 1s cubic-bezier(.65,0,.25,1), opacity .8s ease, filter .8s ease;
-  will-change:transform,opacity,filter;
+  translate:-50% -50%;perspective:1300px;
+  transition:transform .8s cubic-bezier(.2,.8,.2,1) .34s, opacity .55s ease .34s, visibility 0s linear .34s;
+  will-change:transform,opacity;
 }
-.hs-shoe.enter{transform:rotateY(62deg) translateZ(-260px) scale(.86);opacity:0;filter:blur(10px);}
-.hs-shoe.leave{transform:rotateY(-62deg) translateZ(-260px) scale(.86);opacity:0;filter:blur(10px);}
-.hs-tilt{transform-style:preserve-3d;transition:transform .35s ease-out;}
+.hs-shoe.enter,.hs-shoe.leave{
+  opacity:0;visibility:hidden;
+  transition:transform .42s cubic-bezier(.65,0,.35,1), opacity .3s ease, visibility 0s linear .3s;
+}
+.hs-shoe.enter{transform:rotateY(38deg) translateX(7%) scale(.9);}
+.hs-shoe.leave{transform:rotateY(-38deg) translateX(-7%) scale(.9);}
+.hs-tilt{transition:transform .35s ease-out;}
 .hs-float{animation:hsFloat 6.5s ease-in-out infinite;}
 @keyframes hsFloat{
   0%,100%{transform:translateY(0) rotate(-1.2deg);}
@@ -171,6 +179,7 @@
 }
 @media(prefers-reduced-motion:reduce){
   .hs-aurora i,.hs-float{animation:none;}
-  .hs-shoe,.hs-word{transition:opacity .3s ease;}
-  .hs-shoe.enter,.hs-shoe.leave{transform:none;filter:none;}
+  .hs-word{transition:opacity .3s ease;}
+  .hs-shoe{transition:opacity .3s ease .3s, visibility 0s linear .3s;}
+  .hs-shoe.enter,.hs-shoe.leave{transform:none;transition:opacity .3s ease, visibility 0s linear .3s;}
 }

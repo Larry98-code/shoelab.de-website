@@ -1,7 +1,7 @@
 /* ShoeLab — hero sneaker showcase.
  *
- * The pairs turn through on a turntable: one rotates away as the next
- * rotates in, the colour fields behind the hero re-tint to each pair, and
+ * The pairs turn through one at a time: one turns away and is gone before
+ * the next turns in, the colour fields behind the hero re-tint to each pair, and
  * the order is shuffled every visit. The progress bar is the timer — its CSS
  * fill animation running out is what advances the slide, so pausing the
  * animation pauses everything, mid-progress, with no clock to keep in sync.
@@ -18,8 +18,6 @@
   var SHOES = [
     { id: 'jordan1',      img: '/img/showcase/jordan1.webp',       brand: 'Jordan',      model: 'Air Jordan 1 Low', ed: 'Panda', word: 'AJ1',
       c: ['#ff2a2a', '#3c0a16', '#d8dbea'], mat: ['leather'] },
-    { id: 'pegasus-white',img: '/img/showcase/pegasus-white.webp', brand: 'Nike',        model: 'Pegasus',          word: 'PEGASUS',
-      c: ['#ff3355', '#103765', '#7fd3ff'], mat: ['mesh', 'foam'] },
     { id: 'nb1080',       img: '/img/showcase/nb1080.webp',        brand: 'New Balance', model: 'Fresh Foam X 1080', word: '1080',
       c: ['#b28cff', '#1b2858', '#ffcfa3'], mat: ['knit', 'foam'] },
     { id: 'nb9060-black', img: '/img/showcase/nb9060-black.webp',  brand: 'New Balance', model: '9060', edKey: 'black', word: '9060',
@@ -38,16 +36,6 @@
       it: "L'icona del basket del 1985, in versione low. La pelle si piega sulla punta — le ridiamo forma.",
       es: 'El icono de la cancha de 1985, en versión low. La piel se marca en la puntera — le devolvemos la forma.',
       fr: "L'icône des parquets de 1985, en version basse. Le cuir se plisse à l'avant — on lui rend sa forme."
-    },
-    'pegasus-white': {
-      en: "Nike's everyday runner since 1983 — Air Zoom cushioning under an engineered-mesh upper.",
-      de: 'Nikes Alltagsläufer seit 1983 — Air-Zoom-Dämpfung unter einem Engineered-Mesh-Obermaterial.',
-      pl: 'Codzienny biegacz Nike od 1983 roku — amortyzacja Air Zoom pod siatkową cholewką.',
-      ru: 'Повседневные беговые Nike с 1983 года — амортизация Air Zoom под сетчатым верхом.',
-      uk: 'Повсякденні бігові Nike з 1983 року — амортизація Air Zoom під сітчастим верхом.',
-      it: 'La runner quotidiana di Nike dal 1983 — ammortizzazione Air Zoom sotto una tomaia in mesh.',
-      es: 'La zapatilla diaria de Nike desde 1983 — amortiguación Air Zoom bajo una parte superior de malla.',
-      fr: 'La running du quotidien de Nike depuis 1983 — amorti Air Zoom sous une tige en mesh.'
     },
     'nb1080': {
       en: "New Balance's plush flagship. White Fresh Foam X yellows with time — we bring the white back.",
