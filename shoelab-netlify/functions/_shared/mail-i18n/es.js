@@ -13,7 +13,7 @@ export default {
     // table labels
     ref: 'Referencia', when: 'Fecha y hora', service: 'Servicio', plan: 'Plan', amount: 'Importe', toPay: 'A pagar en el estudio', paid: 'Pagado',
     item: 'Artículo', auth: 'Autenticación', ship: 'Envío', total: 'Total', commission: 'Comisión de ShoeLab',
-    postage: 'Reembolso del envío', payout: 'Tu cobro', order: 'Pedido', tracking: 'N.º de seguimiento', size: 'Talla', price: 'Precio',
+    postage: 'Reembolso del envío', payout: 'Cobro del vendedor', order: 'Pedido', tracking: 'N.º de seguimiento', size: 'Talla', price: 'Precio',
     tier: 'Verificación', format: 'Formato', seller: 'Vendedor', buyer: 'Comprador', email: 'Correo electrónico', phone: 'Teléfono',
     name: 'Nombre', notes: 'Notas', language: 'Idioma', payment: 'Pago', status: 'Estado', category: 'Tema',
     oneTime: 'Pago único', monthly: 'Suscripción mensual', atStudio: 'En el estudio (aún no se ha cobrado nada)', online: 'Online con Stripe',
@@ -29,6 +29,9 @@ export default {
     shipLab: 'Envía el par a ShoeLab para su autenticación, no al comprador. Incluye dentro de la caja una nota con el número de pedido {order} y, después, introduce el número de seguimiento en tu panel del Vault.',
     shipPhoto: 'Envía el par directamente al comprador y, después, introduce el número de seguimiento en tu panel del Vault. Esta es la dirección de envío:',
     labAddressLater: 'Te enviaremos por correo la dirección del lab de ShoeLab en un plazo de un día laborable.',
+    // how an order came to count as delivered (studio payout emails)
+    howBuyer: 'el comprador confirmó la entrega', howAuto: 'automáticamente, 14 días después del envío',
+    howReleased: 'incidencia cerrada a favor del vendedor', howRetry: 'cobro reintentado',
     payoutAfterLab: 'Recibirás {payout} cuando el par haya superado nuestra inspección en el lab y haya llegado al comprador.',
     payoutAfterDelivery: 'Recibirás {payout} cuando el comprador tenga el par.',
     ratePos: 'positiva', rateNeu: 'neutral', rateNeg: 'negativa',

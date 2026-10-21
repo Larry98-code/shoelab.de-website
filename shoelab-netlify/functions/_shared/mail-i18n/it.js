@@ -12,7 +12,7 @@ export default {
     // table labels
     ref: 'Riferimento', when: 'Quando', service: 'Servizio', plan: 'Piano', amount: 'Importo', toPay: 'Da pagare in studio', paid: 'Pagato',
     item: 'Articolo', auth: 'Autenticazione', ship: 'Spedizione', total: 'Totale', commission: 'Commissione ShoeLab',
-    postage: 'Rimborso spese postali', payout: 'Il tuo accredito', order: 'Ordine', tracking: 'Tracciamento', size: 'Taglia', price: 'Prezzo',
+    postage: 'Rimborso spese postali', payout: 'Accredito al venditore', order: 'Ordine', tracking: 'Tracciamento', size: 'Taglia', price: 'Prezzo',
     tier: 'Verifica', format: 'Formato', seller: 'Venditore', buyer: 'Acquirente', email: 'Email', phone: 'Telefono',
     name: 'Nome', notes: 'Note', language: 'Lingua', payment: 'Pagamento', status: 'Stato', category: 'Argomento',
     oneTime: 'Una tantum', monthly: 'Abbonamento mensile', atStudio: 'In studio — ancora nessun addebito', online: 'Online con Stripe',
@@ -28,6 +28,9 @@ export default {
     shipLab: 'Spedisci il paio a ShoeLab per l’autenticazione — non all’acquirente. Metti nella scatola un biglietto con il numero d’ordine #{order}, poi inserisci il numero di tracciamento nel tuo Vault.',
     shipPhoto: 'Spedisci il paio direttamente all’acquirente, poi inserisci il numero di tracciamento nel tuo Vault. Ecco l’indirizzo:',
     labAddressLater: 'Ti invieremo via email l’indirizzo del lab ShoeLab entro un giorno lavorativo.',
+    // how an order came to count as delivered (studio payout emails)
+    howBuyer: 'l’acquirente ha confermato la consegna', howAuto: 'automaticamente, 14 giorni dopo la spedizione',
+    howReleased: 'segnalazione chiusa a favore del venditore', howRetry: 'accredito ritentato',
     payoutAfterLab: 'Riceverai {payout} quando il paio avrà superato il controllo nel nostro lab e sarà arrivato all’acquirente.',
     payoutAfterDelivery: 'Riceverai {payout} quando l’acquirente avrà ricevuto il paio.',
     ratePos: 'positivo', rateNeu: 'neutro', rateNeg: 'negativo',

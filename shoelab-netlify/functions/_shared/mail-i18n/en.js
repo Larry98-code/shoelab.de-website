@@ -20,7 +20,7 @@ export default {
     // table labels
     ref: 'Reference', when: 'When', service: 'Service', plan: 'Plan', amount: 'Amount', toPay: 'To pay at the studio', paid: 'Paid',
     item: 'Item', auth: 'Authentication', ship: 'Shipping', total: 'Total', commission: 'ShoeLab commission',
-    postage: 'Postage refund', payout: 'Your payout', order: 'Order', tracking: 'Tracking', size: 'Size', price: 'Price',
+    postage: 'Postage refund', payout: 'Seller payout', order: 'Order', tracking: 'Tracking', size: 'Size', price: 'Price',
     tier: 'Verification', format: 'Format', seller: 'Seller', buyer: 'Buyer', email: 'Email', phone: 'Phone',
     name: 'Name', notes: 'Notes', language: 'Language', payment: 'Payment', status: 'Status', category: 'Topic',
     oneTime: 'One-time', monthly: 'Monthly subscription', atStudio: 'At the studio — nothing charged yet', online: 'Online with Stripe',
@@ -36,6 +36,9 @@ export default {
     shipLab: 'Post the pair to ShoeLab for authentication — not to the buyer. Put a note with the order number #{order} inside the box, then enter the tracking number in your Vault dashboard.',
     shipPhoto: 'Post the pair straight to the buyer, then enter the tracking number in your Vault dashboard:',
     labAddressLater: 'We will email you the address of the ShoeLab lab within one working day.',
+    // how an order came to count as delivered (studio payout emails)
+    howBuyer: 'the buyer confirmed delivery', howAuto: 'automatically, 14 days after shipping',
+    howReleased: 'problem report closed in the seller’s favour', howRetry: 'payout retried',
     payoutAfterLab: 'You receive {payout} once the pair has passed our in-lab check and reached the buyer.',
     payoutAfterDelivery: 'You receive {payout} once the buyer has the pair.',
     ratePos: 'positive', rateNeu: 'neutral', rateNeg: 'negative',

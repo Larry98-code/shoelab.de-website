@@ -743,7 +743,7 @@ svg.inl{width:13px;height:13px;vertical-align:-2px;color:var(--gold);}
 .v-faq > div{padding:0 1.2rem 1.15rem;color:var(--muted2);font-size:0.86rem;line-height:1.65;max-width:760px;}
 
 /* ── footer ──────────────────────────────────────────── */
-.v-foot{border-top:1px solid var(--border);padding:2rem 1.5rem;color:var(--muted);font-size:0.76rem;line-height:1.7;}
+.v-foot{border-top:1px solid var(--border);padding:2rem 1.5rem 5.5rem;color:var(--muted);font-size:0.76rem;line-height:1.7;}   /* room under the last line for the help button */
 .v-foot-in{max-width:1240px;margin:0 auto;display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;}
 .v-foot b{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:1.05rem;letter-spacing:0.08em;color:#fff;}
 .v-foot-links{display:flex;gap:1rem;flex-wrap:wrap;}
@@ -818,7 +818,7 @@ svg.inl{width:13px;height:13px;vertical-align:-2px;color:var(--gold);}
 .v-help-human{background:none;border:none;color:var(--gold-hi);font-size:0.74rem;padding:0.2rem 0.9rem 0.75rem;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px;}
 @media(max-width:760px){
   .v-help{right:0.8rem;bottom:calc(var(--tab-h) + var(--safe-b) + 0.8rem);}
-  .v-help-fab span:not(.v-help-av){display:none;}
+  .v-help-lbl{display:none;}
   .v-help-fab{padding:0.4rem;}
   body.v-sticky-on .v-help{bottom:calc(var(--tab-h) + var(--safe-b) + 5.2rem);}
   .v-help.open{left:0;right:0;bottom:0;top:0;}

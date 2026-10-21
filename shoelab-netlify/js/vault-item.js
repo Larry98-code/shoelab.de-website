@@ -363,7 +363,7 @@
     if (mine && c <= L.viewer.myMax) return bidErr(t('e_max_already', { amount: money(L.viewer.myMax, true) }));
     if (!mine && c < L.minNext) return bidErr(t('e_bid_low', { amount: money(L.minNext, true) }));
     bidErr('');
-    S.requireAuth('authBid').then(function (u) {
+    S.requireVerified('authBid').then(function (u) {
       if (!u) return;
       var m = S.modal({
         title: t(mine ? 'confirmRaiseT' : 'confirmBidT'),
@@ -416,7 +416,7 @@
     }).then(afterPay);
   }
   function onOffer() {
-    S.requireAuth('authOffer').then(function (u) {
+    S.requireVerified('authOffer').then(function (u) {
       if (!u) return;
       var m = S.modal({
         title: t('offerT'),

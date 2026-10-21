@@ -359,7 +359,7 @@
     }
     if (tab === 'selling') {
       var listings = s.listings.filter(function (l) { return l.status !== 'relisted'; });
-      if (!listings.length && !s.orders.length) return (data.connect && !(data.seller && data.seller.payouts) ? payoutsHtml() : '') + emptyBig('tag', 'emptySellingT', 'emptySelling', '/vault-sell.html', 'sellPair');
+      if (!listings.length && !s.orders.length) return payoutsHtml() + emptyBig('tag', 'emptySellingT', 'emptySelling', '/vault-sell.html', 'sellPair');
       return payoutsHtml() + group('offers', t('offersToAnswer'), t('offersSub'), s.offers.length ? s.offers.map(offerReceivedHtml).join('') : emptyNote(t('noOffersIn'))) +
         (s.orders.length ? group('sellOrders', t('sales'), '', s.orders.map(orderHtml).join('')) : '') +
         group('listings', t('yourListings'), '', listings.map(listingRowHtml).join(''));

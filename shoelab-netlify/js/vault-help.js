@@ -44,7 +44,7 @@
 
   function relabel() {
     if (!root) return;
-    root.querySelector('.v-help-fab span').textContent = t('helpFab');
+    root.querySelector('.v-help-lbl').textContent = t('helpFab');
     root.querySelector('.v-help-fab').setAttribute('aria-label', t('helpOpen'));
     root.querySelector('.v-help-head b').textContent = t('helpTitle');
     root.querySelector('.v-help-head small').textContent = t(online() ? 'helpSub' : 'helpSubOffline');
@@ -134,7 +134,7 @@
     root = d.createElement('div');
     root.className = 'v-help';
     root.innerHTML =
-      '<button type="button" class="v-help-fab" aria-expanded="false"><span class="v-help-av" aria-hidden="true">W</span><span></span></button>' +
+      '<button type="button" class="v-help-fab" aria-expanded="false"><span class="v-help-av" aria-hidden="true">W</span><span class="v-help-lbl"></span></button>' +
       '<section class="v-help-panel" role="dialog" aria-modal="false" aria-labelledby="vHelpTitle">' +
         '<header class="v-help-head"><span class="v-help-av" aria-hidden="true">W</span><div><b id="vHelpTitle"></b><small></small></div>' +
           '<button type="button" class="v-help-x">✕</button></header>' +

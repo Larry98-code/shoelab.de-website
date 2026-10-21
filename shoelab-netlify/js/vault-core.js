@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '1';   // bump together with the ?v= of the translation files
+  var V = '2';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },
@@ -262,6 +262,20 @@
   function requireAuth(reasonKey) {
     if (me) return Promise.resolve(me);
     return new Promise(function (resolve) { openAuth(reasonKey, resolve); });
+  }
+  // Bidding, buying, offers and selling also need a confirmed email address.
+  // Ask before a form is filled in, not after; the member may have confirmed
+  // in another tab since this page loaded, so check with the server first.
+  function requireVerified(reasonKey) {
+    return requireAuth(reasonKey).then(function (u) {
+      if (!u || u.verified !== false) return u;
+      return loadConfig().then(function () {
+        renderVerifyBar();
+        if (me && me.verified !== false) return me;
+        if (me) verifyPrompt();
+        return null;
+      });
+    });
   }
 
   function openAuth(reasonKey, done) {
@@ -709,6 +723,10 @@
       '<button type="button" class="v-btn xs gold" id="vVerifyResend">' + esc(t('verifyResend')) + '</button>';
     d.getElementById('vVerifyResend').onclick = function () { resendVerification(this); };
   }
+  // Confirmed in another tab: the bar goes as soon as this one is looked at.
+  d.addEventListener('visibilitychange', function () {
+    if (!d.hidden && me && me.verified === false) loadConfig().then(renderVerifyBar);
+  });
   // Back from a confirmation link (?verified=1 / 0) or from Stripe.
   function arrivedFromEmail() {
     var v = qs('verified');
@@ -835,7 +853,7 @@
   // Resolves { redirect } when Stripe opens, { manual } when ShoeLab will
   // email payment details, { unpaid } if closed after the order exists, or null.
   function payFlow(o) {
-    return requireAuth('authBuy').then(function (u) {
+    return requireVerified('authBuy').then(function (u) {
       if (!u) return null;
       return api('/api/account/me').then(function (pr) {
         var p = (pr.ok && pr.data && pr.data.user) || {};
@@ -980,7 +998,7 @@
     titleOf: titleOf, ico: ico,
     api: api, market: market, errText: errText,
     me: function () { return me; }, config: function () { return config; }, reloadConfig: loadConfig,
-    requireAuth: requireAuth, signOut: signOut, verifyPrompt: verifyPrompt, resendVerification: resendVerification,
+    requireAuth: requireAuth, requireVerified: requireVerified, signOut: signOut, verifyPrompt: verifyPrompt, resendVerification: resendVerification,
     sellerPrompt: sellerPrompt, payoutsSetup: payoutsSetup,
     busy: busy, toast: toast, modal: modal, confirm: confirmBox,
     tierBadge: tierBadge, condLabel: condLabel, countdownHtml: countdownHtml, photoHtml: photoHtml,

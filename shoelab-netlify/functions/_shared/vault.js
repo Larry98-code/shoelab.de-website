@@ -369,7 +369,8 @@ export async function orderDelivered(env, o, how) {
   await releasePayout(env, o, how);
 }
 
-const HOW = { buyer: 'the buyer confirmed delivery', auto: 'automatically, 14 days after shipping', released: 'problem report closed in the seller\'s favour', retry: 'payout retried' };
+// how an order came to count as delivered, as shared email words
+const HOW = { buyer: 'howBuyer', auto: 'howAuto', released: 'howReleased', retry: 'howRetry' };
 
 export async function releasePayout(env, o, how) {
   const seller = await userById(env, o.seller_id);
@@ -378,7 +379,7 @@ export async function releasePayout(env, o, how) {
   if (!connectOn(env) || !o.stripe_pi) {
     await env.DB.prepare("UPDATE mk_orders SET payout_status = 'manual' WHERE id = ? AND payout_status IS NULL").bind(o.id).run();
     await tellStudio(env, 'sPayoutDue', {
-      order: o.id, title, payout: { m: o.payout }, how: HOW[how] || how,
+      order: o.id, title, payout: { m: o.payout }, how: HOW[how] ? { k: HOW[how] } : how,
       rows: [['seller', seller ? seller.name + ' <' + seller.email + '>' : String(o.seller_id)],
         ['item', { m: o.item_price }], ['commission', { m: o.commission }],
         o.tier === 'photo' ? ['postage', { m: o.ship_fee }] : null, ['payout', { m: o.payout }]].filter(Boolean),
@@ -403,15 +404,26 @@ export async function releasePayout(env, o, how) {
   if (!claim.meta.changes) return 'busy';
   let err = null, tr = null;
   try {
-    const pi = await stripeGet(env, 'payment_intents/' + encodeURIComponent(o.stripe_pi));
-    const charge = pi && (typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge && pi.latest_charge.id);
-    if (!charge) err = (pi && pi.error && pi.error.message) || 'No charge found for this payment';
-    else {
-      tr = await stripeApi(env, 'transfers', {
-        amount: o.payout, currency: 'eur', destination: acct.stripe_account, source_transaction: charge,
-        transfer_group: 'vault_' + o.id, description: 'ShoeLab Vault order #' + o.id, 'metadata[vault_order]': String(o.id),
-      }, { idem: 'vault-payout-' + o.id });
-      if (!tr || !tr.id) err = (tr && tr.error && tr.error.message) || 'Stripe did not accept the transfer';
+    // Stripe keeps the answer to a request for 24 hours under its idempotency
+    // key, errors included, so every attempt gets its own key. Before trying
+    // again, ask whether an earlier attempt went through after all (a reply
+    // lost on the way back), so a retry can never pay twice.
+    const tries = await env.DB.prepare("SELECT COUNT(*) AS n FROM mk_events WHERE order_id = ? AND kind = 'payout_failed'").bind(o.id).first();
+    if (tries && tries.n) {
+      const prior = await stripeGet(env, 'transfers?transfer_group=' + encodeURIComponent('vault_' + o.id) + '&limit=10');
+      tr = ((prior && prior.data) || []).find((x) => x.destination === acct.stripe_account && !x.reversed) || null;
+    }
+    if (!tr) {
+      const pi = await stripeGet(env, 'payment_intents/' + encodeURIComponent(o.stripe_pi));
+      const charge = pi && (typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge && pi.latest_charge.id);
+      if (!charge) err = (pi && pi.error && pi.error.message) || 'No charge found for this payment';
+      else {
+        tr = await stripeApi(env, 'transfers', {
+          amount: o.payout, currency: 'eur', destination: acct.stripe_account, source_transaction: charge,
+          transfer_group: 'vault_' + o.id, description: 'ShoeLab Vault order #' + o.id, 'metadata[vault_order]': String(o.id),
+        }, { idem: 'vault-payout-' + o.id + '-' + ((tries && tries.n) || 0) });
+        if (!tr || !tr.id) err = (tr && tr.error && tr.error.message) || 'Stripe did not accept the transfer';
+      }
     }
   } catch (e) { err = String(e).slice(0, 200); }
   if (err) {
@@ -428,9 +440,12 @@ export async function releasePayout(env, o, how) {
 }
 
 // Payouts that waited for the seller to finish verifying go out once they have.
+// A transfer Stripe refused is left to a specialist's "Retry payout": the
+// reason needs a look, and retrying on every visit would email the studio
+// each time.
 export async function releaseWaiting(env, sellerId) {
   const rows = await env.DB.prepare(
-    "SELECT * FROM mk_orders WHERE seller_id = ? AND status = 'delivered' AND payout_status IN ('waiting','failed') LIMIT 20"
+    "SELECT * FROM mk_orders WHERE seller_id = ? AND status = 'delivered' AND payout_status = 'waiting' LIMIT 20"
   ).bind(sellerId).all();
   let sent = 0;
   for (const o of rows.results || []) if (await releasePayout(env, o, 'retry') === 'sent') sent++;

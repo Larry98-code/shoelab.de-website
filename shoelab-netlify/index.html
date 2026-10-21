@@ -2369,7 +2369,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
 
 </style>
 <script src="https://js.stripe.com/v3/"></script>
-<script src="/js/sl-geo.js?v=1"></script>
+<script src="/js/sl-geo.js?v=2"></script>
 <script src="/js/deconstruct.js?v=2" defer></script>
 <script src="/js/hero-showcase.js?v=4" defer></script>
 </head>
@@ -6176,7 +6176,7 @@ const _origHandleUserMessage = handleUserMessage;
             if(res.ok && res.d && res.d.user){
               setStoredUser(res.d.user);
               // a new account confirms its email address before it can trade in the Vault
-              var fresh = which==='signup' && res.d.verified===false;
+              var fresh = which==='signup' && res.d.user.verified===false;
               if(msg){ msg.style.color=''; msg.textContent='✓ '+(fresh ? (t(lang,'acc.checkInbox')||'').replace('{email}', email) : (t(lang,'acc.welcome')||'Welcome')+', '+(res.d.user.name||email).split(' ')[0]+'!'); }
               refreshAccountUI(); setTimeout(closeModals, fresh ? 4500 : 1000);
             } else {

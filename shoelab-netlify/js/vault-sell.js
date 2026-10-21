@@ -291,7 +291,7 @@
     msg.textContent = ''; msg.className = 'v-msg';
     if (Object.keys(st.busy).length) { msg.textContent = t('photosBusy'); msg.className = 'v-msg bad'; return; }
     if (!validate()) { msg.textContent = t('e_fix'); msg.className = 'v-msg bad'; return; }
-    S.requireAuth('authSell').then(function (u) {
+    S.requireVerified('authSell').then(function (u) {
       if (!u) return;
       var o = terms(), btn = $('sSubmit');
       var body = {

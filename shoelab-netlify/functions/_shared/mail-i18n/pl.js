@@ -29,6 +29,9 @@ export default {
     shipLab: 'Wyślij parę do ShoeLab na weryfikację — nie do kupującego. Włóż do pudełka kartkę z dopiskiem „zamówienie nr {order}”, a potem wpisz numer przesyłki w zakładce Mój Vault.',
     shipPhoto: 'Wyślij parę bezpośrednio do kupującego, a potem wpisz numer przesyłki w zakładce Mój Vault. Adres kupującego:',
     labAddressLater: 'Adres laboratorium ShoeLab wyślemy Ci e-mailem w ciągu jednego dnia roboczego.',
+    // how an order came to count as delivered (studio payout emails)
+    howBuyer: 'kupujący potwierdził dostawę', howAuto: 'automatycznie, 14 dni po wysyłce',
+    howReleased: 'zgłoszenie problemu zamknięte na korzyść sprzedającego', howRetry: 'ponowiono wypłatę',
     payoutAfterLab: 'Otrzymasz {payout}, gdy para przejdzie kontrolę w naszym laboratorium i dotrze do kupującego.',
     payoutAfterDelivery: 'Otrzymasz {payout}, gdy para dotrze do kupującego.',
     ratePos: 'pozytywna', rateNeu: 'neutralna', rateNeg: 'negatywna',

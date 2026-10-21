@@ -1017,7 +1017,9 @@ async function payoutsSetup({ request, env }) {
       'business_profile[mcc]': '5931', 'business_profile[url]': siteUrl(env) + '/vault.html',
       'business_profile[product_description]': 'Selling sneakers on the ShoeLab Vault marketplace',
       'metadata[user_id]': String(me.id),
-    }, { idem: 'vault-seller-' + me.id });
+    // a key per ten minutes: a double click creates one account, while an
+    // error Stripe remembers (say, Connect not switched on yet) clears soon
+    }, { idem: 'vault-seller-' + me.id + '-' + Math.floor(Date.now() / 600000) });
     if (!a || !a.id) fail(502, (a && a.error && a.error.message) || 'Stripe could not start the setup', 'stripe_failed');
     await env.DB.prepare('INSERT OR IGNORE INTO mk_sellers (user_id, stripe_account, created_at, updated_at) VALUES (?, ?, ?, ?)')
       .bind(me.id, a.id, nowIso(), nowIso()).run();
