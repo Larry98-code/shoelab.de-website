@@ -989,7 +989,7 @@
   }
 
   w.SLV = {
-    t: t, tn: tn, has: has, lang: function () { return lang; }, locale: loc,
+    t: t, tn: tn, has: has, lang: function () { return lang; }, locale: loc, started: function () { return started; },
     money: money, num: num, fmtDate: fmtDate, fmtDateTime: fmtDateTime, fmtShort: fmtShort, ago: ago, left: left,
     esc: esc, initials: initials, firstName: firstName, qs: qs, parseEuro: parseEuro, centsOf: centsOf, amountText: amountText,
     titleOf: titleOf, ico: ico,

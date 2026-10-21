@@ -171,4 +171,7 @@
   }
 
   w.SLVHelp = { init: init, relabel: relabel, open: function () { if (root) toggle(true); } };
+  // On a slow connection this file can arrive after the page has already
+  // started (and found no SLVHelp to start); then it starts itself.
+  if (S.started && S.started()) init();
 })(window, document);

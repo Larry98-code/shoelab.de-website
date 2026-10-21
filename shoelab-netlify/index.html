@@ -4491,6 +4491,12 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 100) + 'px';
 }
 
+// This script runs inside a try { } block, where async functions stay local
+// to the block (plain ones don't). The send button and the Enter key call
+// these by name from the page, so they have to be on window explicitly.
+window.sendMessage = sendMessage;
+window.handleUserMessage = handleUserMessage;
+
 // Auto-show label after 3s
 setTimeout(() => {
   if (!wesleyOpen) {
@@ -6354,6 +6360,9 @@ const _origHandleUserMessage = handleUserMessage;
     padding:0.6rem 1.3rem;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.18);}
   #cookieBar .cb-ok{background:#CC1111;border-color:#CC1111;color:#fff;font-weight:600;}
   #cookieBar .cb-ok:hover{background:#FF2020;}
+  /* while the notice is up, Wesley sits above it, not under it */
+  body.cb-on .wesley-launcher,body.cb-on .wesley-window{translate:0 calc(-1 * var(--cb-h, 0px));}
+  body.cb-on .wesley-window{max-height:calc(100vh - 8rem - var(--cb-h, 0px));}
   /* Wesley photo upload */
   .wes-attach-btn{flex-shrink:0;width:42px;height:42px;border-radius:12px;cursor:pointer;
     background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#bbb;
@@ -6414,11 +6423,17 @@ const _origHandleUserMessage = handleUserMessage;
   /* Cookie notice — essential cookies only, info banner suffices */
   try{
     var bar=document.getElementById('cookieBar');
+    // Wesley moves up by the notice's height while it shows (it wraps on narrow screens)
+    var lift=function(on){
+      document.body.classList.toggle('cb-on', !!on);
+      if(on) document.documentElement.style.setProperty('--cb-h', bar.offsetHeight+'px');
+    };
     if(bar && !localStorage.getItem('shoelab_cookie_ok')){
-      setTimeout(function(){ bar.classList.add('show'); }, 800);
+      setTimeout(function(){ bar.classList.add('show'); lift(true); }, 800);
+      window.addEventListener('resize', function(){ if(bar.classList.contains('show')) lift(true); });
     }
     var ok=document.getElementById('cookieOk');
-    if(ok) ok.addEventListener('click', function(){ try{localStorage.setItem('shoelab_cookie_ok','1');}catch(_){} if(bar) bar.classList.remove('show'); });
+    if(ok) ok.addEventListener('click', function(){ try{localStorage.setItem('shoelab_cookie_ok','1');}catch(_){} if(bar){ bar.classList.remove('show'); lift(false); } });
   }catch(e){}
 
   /* Record bookings to the backend without altering the Stripe flow */
