@@ -51,8 +51,6 @@
   width:min(76vw, 760px);
   height:100vh;
   display:block;
-  transform-style:preserve-3d;
-  perspective:1400px;
 }
 .dc-layer{
   position:absolute; left:50%; top:50%;

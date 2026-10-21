@@ -4,14 +4,16 @@
  * every visit. The layer images were cut from the studio photography; each
  * entry below is [file, x, y, width, height] in the coordinate space of the
  * original frame, so the exploded state is exactly where the photographer
- * put it. */
+ * put it. The first layer of every pair must be the WHOLE sneaker, sole
+ * included: the scroll ends with the parts dissolving into it. */
 (function (w, d) {
   'use strict';
 
   var BASE = '/img/deconstruct/';
-  var SHOES = [{"id":"pegasus-white","label":"Nike Pegasus","sub":"ZoomX \u00b7 Air Zoom","w":676,"h":1024,"l":[["pegasus-white-0.webp",73,35,603,326],["pegasus-white-1.webp",73,377,603,259],["pegasus-white-2.webp",84,629,592,108],["pegasus-white-3.webp",70,730,606,143],["pegasus-white-4.webp",68,879,608,86]]},{"id":"pegasus-black","label":"Nike Pegasus","sub":"Vomero Plus","w":676,"h":1024,"l":[["pegasus-black-0.webp",29,97,600,236],["pegasus-black-1.webp",8,384,615,243],["pegasus-black-2.webp",0,640,616,226],["pegasus-black-3.webp",0,878,617,86]]},{"id":"nb9060-grey","label":"New Balance 9060","sub":"ABZORB SBS \u00b7 FuelCell","w":913,"h":1191,"l":[["nb9060-grey-0.webp",18,77,862,363],["nb9060-grey-1.webp",24,433,836,113],["nb9060-grey-2.webp",44,539,836,174],["nb9060-grey-3.webp",28,706,880,438]]},{"id":"nb9060-black","label":"New Balance 9060","sub":"Premium Suede","w":1193,"h":995,"l":[["nb9060-black-0.webp",160,26,872,409],["nb9060-black-1.webp",176,444,837,104],["nb9060-black-2.webp",160,542,880,155],["nb9060-black-3.webp",163,691,868,118],["nb9060-black-4.webp",160,802,874,181]]},{"id":"nb880","label":"New Balance 880","sub":"Fresh Foam X","w":676,"h":1024,"l":[["nb880-0.webp",28,59,642,324],["nb880-1.webp",44,403,612,109],["nb880-2.webp",25,505,644,145],["nb880-3.webp",27,643,637,296]]},{"id":"nb1080","label":"New Balance 1080","sub":"Fresh Foam X","w":676,"h":1024,"l":[["nb1080-0.webp",0,61,643,332],["nb1080-1.webp",0,418,649,236],["nb1080-2.webp",0,647,640,112],["nb1080-3.webp",0,752,644,221]]},{"id":"nb9060-blk2","label":"New Balance 9060","sub":"Black / Silver","w":676,"h":1024,"l":[["nb9060-blk2-0.webp",36,77,627,291],["nb9060-blk2-1.webp",55,397,570,83],["nb9060-blk2-2.webp",52,486,572,100],["nb9060-blk2-3.webp",44,579,606,206],["nb9060-blk2-4.webp",23,798,647,152]]},{"id":"jordan1","label":"Air Jordan 1 Low","sub":"Panda","w":676,"h":1024,"l":[["jordan1-0.webp",0,49,579,308],["jordan1-1.webp",3,394,575,93],["jordan1-2.webp",0,496,587,109],["jordan1-3.webp",2,618,584,87],["jordan1-4.webp",11,724,573,79],["jordan1-5.webp",0,825,602,150]]}];
+  var SHOES = [{"id":"nb9060-black","label":"New Balance 9060","sub":"Premium Suede","w":1193,"h":995,"l":[["nb9060-black-0.webp",160,26,872,409],["nb9060-black-1.webp",176,444,837,104],["nb9060-black-2.webp",160,542,880,155],["nb9060-black-3.webp",163,691,868,118],["nb9060-black-4.webp",160,802,874,181]]},{"id":"nb880","label":"New Balance 880","sub":"Fresh Foam X","w":676,"h":1024,"l":[["nb880-0.webp",28,59,642,324],["nb880-1.webp",44,403,612,109],["nb880-2.webp",25,505,644,145],["nb880-3.webp",27,643,637,296]]},{"id":"nb1080","label":"New Balance 1080","sub":"Fresh Foam X","w":676,"h":1024,"l":[["nb1080-0.webp",0,61,643,332],["nb1080-1.webp",0,418,649,236],["nb1080-2.webp",0,647,640,112],["nb1080-3.webp",0,752,644,221]]},{"id":"nb9060-blk2","label":"New Balance 9060","sub":"Black / Silver","w":676,"h":1024,"l":[["nb9060-blk2-0.webp",36,77,627,291],["nb9060-blk2-1.webp",55,397,570,83],["nb9060-blk2-2.webp",52,486,572,100],["nb9060-blk2-3.webp",44,579,606,206],["nb9060-blk2-4.webp",23,798,647,152]]},{"id":"jordan1","label":"Air Jordan 1 Low","sub":"Panda","w":676,"h":1024,"l":[["jordan1-0.webp",0,49,579,308],["jordan1-1.webp",3,394,575,93],["jordan1-2.webp",0,496,587,109],["jordan1-3.webp",2,618,584,87],["jordan1-4.webp",11,724,573,79],["jordan1-5.webp",0,825,602,150]]}];
 
   var LAST_KEY = 'shoelab_dc_last';
+  var HERO_END = 1.07;                   // the whole shoe grows this much on the final beat
   var reduce = false;
   try { reduce = w.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 
@@ -54,9 +56,9 @@
   function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
   function lerp(a, b, t) { return a + (b - a) * t; }
 
-  /* A shuffled queue rather than a coin flip: across eight visits you see
-     all eight pairs, in a random order, and never the same one twice in a
-     row. Pure Math.random() repeats far too often to feel curated. */
+  /* A shuffled queue rather than a coin flip: over a few visits you see
+     every pair, in a random order, and never the same one twice in a row.
+     Pure Math.random() repeats far too often to feel curated. */
   var QUEUE_KEY = 'shoelab_dc_queue';
 
   function shuffled(ids) {
@@ -177,6 +179,14 @@
     // a gentle push-in as it locks together, capped so it still fits
     var push = Math.min(1.12, (vh * 0.90) / (aH * base));
     if (!isFinite(push) || push < 1) push = 1;
+    // ...and so the finished shoe, heel to toe, stays on screen: on a phone
+    // the push-in (and the hero's last 7%) would carry it past the edges
+    var r = shoeBox.getBoundingClientRect(), vw = d.documentElement.clientWidth || w.innerWidth;
+    var mid = r.left + r.width / 2, margin = Math.max(10, vw * 0.035), half = ws[0] * HERO_END / 2;
+    var fitR = cx[0] + half > 0 ? (vw - margin - mid) / (cx[0] + half) : Infinity;
+    var fitL = half - cx[0] > 0 ? (mid - margin) / (half - cx[0]) : Infinity;
+    var fit = Math.min(fitR, fitL) / base;
+    if (isFinite(fit) && fit > 0) push = Math.min(push, fit);
 
     els.forEach(function (el, j) { el.style.width = ws[j].toFixed(1) + 'px'; });
 
@@ -214,7 +224,7 @@
       if (mp > 0) {
         var m = ease(mp);
         if (i === 0) {
-          sc *= lerp(1, 1.07, m);          // hero pushes forward
+          sc *= lerp(1, HERO_END, m);      // hero pushes forward
         } else {
           yc -= g.hs[0] * 0.46 * m * posScale;
           op *= (1 - m);              // all the way out, or they read as smudges
