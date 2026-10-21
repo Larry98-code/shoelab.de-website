@@ -16,7 +16,7 @@
 </nav>
 <main class="legal-wrap">
   <h1>Daten<span>schutz</span></h1>
-  <p class="updated">Informationen nach Art. 13/14 DSGVO · Stand: Juni 2026</p>
+  <p class="updated">Informationen nach Art. 13/14 DSGVO · Stand: Oktober 2026</p>
 
   <h2>1. Verantwortlicher</h2>
   <div class="box">
@@ -36,14 +36,17 @@
     Verpflichtungen (lit. c) oder auf Grundlage berechtigter Interessen (lit. f).
   </p>
 
-  <h2>3. Hosting (Cloudflare)</h2>
+  <h2>3. Hosting, Datenbank und Fotospeicher (Cloudflare)</h2>
   <p>
     Diese Website wird bei <strong>Cloudflare</strong> (Cloudflare, Inc., 101 Townsend St,
     San Francisco, CA, USA) gehostet. Beim Aufruf der Seite werden technisch notwendige
     Daten (z. B. IP-Adresse, Browsertyp, Datum/Uhrzeit, abgerufene Datei) in Server-Logs
     verarbeitet, um die Auslieferung, Sicherheit und Stabilität zu gewährleisten
-    (Art. 6 Abs. 1 lit. f DSGVO). Mit Cloudflare besteht ein Auftragsverarbeitungsvertrag;
-    Datenübermittlungen in Drittländer sind über die EU-Standardvertragsklauseln abgesichert.
+    (Art. 6 Abs. 1 lit. f DSGVO). Auch unsere Datenbank (Cloudflare D1) und der Speicher für
+    die Fotos im ShoeLab Vault (Cloudflare R2) liegen bei Cloudflare. Mit Cloudflare besteht ein
+    Auftragsverarbeitungsvertrag; Datenübermittlungen in Drittländer sind über die
+    EU-Standardvertragsklauseln abgesichert, zudem ist Cloudflare nach dem EU-US Data Privacy
+    Framework zertifiziert.
   </p>
 
   <h2>4. Buchungs- und Kontaktformular</h2>
@@ -57,42 +60,124 @@
     gesetzlichen Aufbewahrungsfristen (z. B. handels-/steuerrechtlich) entgegenstehen.
   </p>
 
-  <h2>5. Kundenkonto</h2>
+  <h2>5. Kundenkonto und E-Mail-Bestätigung</h2>
   <p>
-    Bei der Registrierung eines Kontos speichern wir Name und E-Mail-Adresse. Ihr Passwort
+    Bei der Registrierung eines Kontos speichern wir Name und E-Mail-Adresse sowie die von
+    Ihnen gewählte Sprache, damit wir Ihnen E-Mails in Ihrer Sprache senden können. Ihr Passwort
     wird ausschließlich als kryptografischer Hash (PBKDF2-SHA256 mit individuellem Salt)
     gespeichert — es ist uns nicht im Klartext bekannt. Die Anmeldung erfolgt über ein
     signiertes, technisch notwendiges Sitzungscookie (<em>shoelab_session</em>).
-    Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO. Sie können Ihr Konto jederzeit per
-    E-Mail löschen lassen.
+  </p>
+  <p>
+    Damit niemand ein Konto mit fremder E-Mail-Adresse nutzt, senden wir nach der Registrierung
+    einen Bestätigungslink. Wir speichern, wann die Adresse bestätigt wurde; nicht genutzte Links
+    verfallen nach sieben Tagen und werden gelöscht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
+    Sie können Ihr Konto jederzeit per E-Mail löschen lassen; Daten, die wir aufbewahren müssen
+    (siehe Abschnitt 7), löschen wir nach Ablauf der Fristen.
   </p>
 
-  <h2>6. KI-Assistent „Wesley"</h2>
+  <h2>6. E-Mail-Versand (Resend)</h2>
   <p>
-    Für unseren Chat-Assistenten nutzen wir die API von <strong>Anthropic</strong>
-    (Anthropic PBC, USA). Ihre im Chat eingegebenen Nachrichten werden zur Generierung
-    der Antwort an Anthropic übermittelt. Bitte geben Sie im Chat keine sensiblen Daten
-    ein. Rechtsgrundlage ist unser berechtigtes Interesse an einem hilfreichen Kundenservice
-    (Art. 6 Abs. 1 lit. f DSGVO).
+    Bestätigungen, Benachrichtigungen und Antworten auf Supportanfragen versenden wir über den
+    E-Mail-Dienst <strong>Resend</strong> (Anbieter mit Sitz in den USA) als Auftragsverarbeiter.
+    Dabei werden Ihre E-Mail-Adresse, Ihr Name und der Inhalt der E-Mail verarbeitet
+    (Art. 6 Abs. 1 lit. b DSGVO). Die Übermittlung in die USA ist über die
+    EU-Standardvertragsklauseln abgesichert.
+  </p>
+  <p>
+    Jede E-Mail enthält Links, um sie in einer anderen Sprache zu lesen. Dafür speichern wir die
+    Angaben der E-Mail 180 Tage lang; abrufbar sind sie nur über den geheimen Link in der E-Mail.
+    E-Mails mit Bestätigungs- oder Passwort-Links werden nicht gespeichert.
   </p>
 
-  <h2>7. Zahlungsabwicklung (Stripe)</h2>
+  <h2>7. ShoeLab Vault (Marktplatz)</h2>
   <p>
-    Zahlungen werden über <strong>Stripe</strong> (Stripe Payments Europe Ltd., Irland)
+    Wenn Sie im ShoeLab Vault kaufen oder verkaufen, verarbeiten wir die dafür nötigen Daten:
+    Angebote mit Fotos und Beschreibung, Gebote, Preisvorschläge mit Ihren Nachrichten,
+    Bestellungen, Lieferadressen, Sendungsnummern, Zahlungs- und Auszahlungsstatus, Bewertungen
+    sowie gemeldete Probleme (Art. 6 Abs. 1 lit. b DSGVO). Unsere Spezialisten prüfen Angebote
+    und Fotos auf Echtheit.
+  </p>
+  <p>Für andere sichtbar ist nur, was der Handel erfordert:</p>
+  <ul>
+    <li>Angebote, Fotos und Beschreibungen sind öffentlich;</li>
+    <li>Verkäufer erscheinen mit Vornamen und abgekürztem Nachnamen (z. B. „Anna K.“), dem Datum der
+      Registrierung, der Zahl ihrer Verkäufe und ihren Bewertungen;</li>
+    <li>Bieter erscheinen in der Gebotsübersicht nur maskiert (z. B. „A***a“);</li>
+    <li>bei „Photo Verified“ erhält der Verkäufer nach der Zahlung Namen und Lieferadresse des
+      Käufers, um das Paar zu versenden; bei „Lab Verified“ geht das Paar an unser Labor und der
+      Verkäufer erfährt die Adresse des Käufers nicht. Käufer sehen die Adresse des Verkäufers nicht.</li>
+  </ul>
+  <p>
+    Bestell- und Abrechnungsdaten bewahren wir für die gesetzlichen Fristen auf (bis zu zehn
+    Jahre nach § 147 AO und § 257 HGB, Art. 6 Abs. 1 lit. c DSGVO). Andere Daten löschen wir, wenn
+    sie nicht mehr benötigt werden oder Sie Ihr Konto löschen lassen.
+  </p>
+
+  <h2>8. Zahlungen, Verkäufer-Verifizierung und Auszahlungen (Stripe)</h2>
+  <p>
+    Zahlungen werden über <strong>Stripe</strong> (Stripe Payments Europe, Ltd., Irland)
     abgewickelt. Die für die Zahlung erforderlichen Daten werden direkt an Stripe
-    übermittelt; wir speichern keine vollständigen Kartendaten. Es gilt zusätzlich die
-    Datenschutzerklärung von Stripe.
+    übermittelt; wir speichern keine vollständigen Kartendaten.
   </p>
-
-  <h2>8. Cookies</h2>
   <p>
-    Wir verwenden technisch notwendige Cookies (z. B. für die Anmeldung und
-    Spracheinstellung). Diese sind für den Betrieb erforderlich und bedürfen keiner
-    Einwilligung. Sollten künftig Analyse- oder Marketing-Cookies eingesetzt werden,
-    geschieht dies nur nach Ihrer Einwilligung über unseren Cookie-Hinweis.
+    Verkäufer im Vault verifizieren sich bei Stripe (Stripe Connect). Stripe erhebt dabei Name,
+    Geburtsdatum, Anschrift, gegebenenfalls Ausweisdokumente und die Bankverbindung, um
+    gesetzliche Pflichten zur Identitätsprüfung und Geldwäscheprävention zu erfüllen, und ist
+    dafür selbst verantwortlich. Wir erhalten von Stripe nur die Kennung des Stripe-Kontos und
+    den Stand der Prüfung und Auszahlungen, keine Ausweis- oder Bankdaten. An Stripe übermitteln
+    wir Ihre E-Mail-Adresse und die Beträge der Verkäufe und Auszahlungen
+    (Art. 6 Abs. 1 lit. b und c DSGVO). Es gilt zusätzlich die
+    <a href="https://stripe.com/de/privacy" rel="noopener" target="_blank">Datenschutzerklärung von Stripe</a>.
   </p>
 
-  <h2>9. Ihre Rechte</h2>
+  <h2>9. Meldepflichten für Verkäufer (DAC7)</h2>
+  <p>
+    Nach dem Plattformen-Steuertransparenzgesetz (PStTG) müssen wir Angaben zu Verkäufern
+    erheben und dem Bundeszentralamt für Steuern melden, wenn diese in einem Kalenderjahr
+    30 oder mehr Verkäufe tätigen oder mehr als 2.000 € erlösen: insbesondere Name, Anschrift,
+    Geburtsdatum, Steuer-Identifikationsnummer, Bankverbindung sowie Zahl und Summe der Verkäufe
+    und der einbehaltenen Gebühren. Rechtsgrundlage ist Art. 6 Abs. 1 lit. c DSGVO in Verbindung
+    mit dem PStTG. Die Daten bewahren wir zehn Jahre auf, wie das Gesetz es verlangt.
+  </p>
+
+  <h2>10. KI-Assistent „Wesley“ und Support</h2>
+  <p>
+    Für unseren Chat-Assistenten auf der Website und im ShoeLab Vault nutzen wir die API von
+    <strong>Anthropic</strong> (Anthropic, PBC, USA). Ihre Chatnachrichten werden zur
+    Generierung der Antwort an Anthropic übermittelt. Sind Sie im Vault angemeldet, senden wir
+    zusätzlich Ihren Vornamen und eine kurze Übersicht Ihrer letzten Bestellungen und Angebote
+    (Artikel, Status, Beträge, Sendungsnummern) mit, damit Wesley Fragen dazu beantworten kann;
+    E-Mail-Adresse, Anschriften und Zahlungsdaten gehören nicht dazu. Anthropic verarbeitet die Daten als Auftragsverarbeiter und verwendet sie
+    nach seinen Geschäftsbedingungen nicht zum Training seiner Modelle. Die Übermittlung in die
+    USA ist über die EU-Standardvertragsklauseln abgesichert. Bitte geben Sie im Chat keine
+    sensiblen Daten ein.
+  </p>
+  <p>
+    Wesley trifft keine Entscheidungen über Bestellungen, Erstattungen oder Konten. Braucht ein
+    Anliegen einen Menschen, gibt Wesley es an unsere Spezialisten weiter: Wir speichern dann
+    Ihren Namen, Ihre E-Mail-Adresse, das Thema, Ihre Nachricht und den Chatverlauf als
+    Supportanfrage und antworten per E-Mail. Supportanfragen löschen wir zwei Jahre nach ihrem
+    Abschluss. Damit der Chat nicht missbraucht wird, zählen wir die Nachrichten pro Tag; bei
+    Gästen dafür anhand eines gekürzten, nicht umkehrbaren Hashwerts der IP-Adresse, der nach
+    einem Tag gelöscht wird. Den Chatverlauf speichert Ihr Browser nur bis zum Schließen des Tabs
+    (sessionStorage). Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO bei Fragen zu Ihren
+    Bestellungen und Ihrem Konto, im Übrigen unser berechtigtes Interesse an einem hilfreichen
+    Kundenservice (Art. 6 Abs. 1 lit. f DSGVO).
+  </p>
+
+  <h2>11. Cookies und Speicher im Browser</h2>
+  <p>
+    Wir verwenden nur technisch notwendige Cookies und Browser-Speicher: das Sitzungscookie
+    <em>shoelab_session</em> für die Anmeldung, das Cookie <em>shoelab_lang</em> (bis zu einem Jahr)
+    für Ihre Sprache, damit auch unsere E-Mails in dieser Sprache ankommen, sowie lokalen
+    Speicher für Warenkorb, Spracheinstellung und den Hilfe-Chat. Diese sind für den Betrieb
+    erforderlich und bedürfen keiner Einwilligung (§ 25 Abs. 2 TDDDG). Sollten künftig Analyse-
+    oder Marketing-Cookies eingesetzt werden, geschieht dies nur nach Ihrer Einwilligung über
+    unseren Cookie-Hinweis.
+  </p>
+
+  <h2>12. Ihre Rechte</h2>
   <p>Sie haben nach der DSGVO das Recht auf:</p>
   <ul>
     <li>Auskunft (Art. 15), Berichtigung (Art. 16) und Löschung (Art. 17),</li>
@@ -104,6 +189,6 @@
   </ul>
   <p>Zur Wahrnehmung Ihrer Rechte genügt eine E-Mail an die oben genannte Adresse.</p>
 </main>
-<footer class="legal-foot">© 2026 ShoeLab · Bremen — <a href="/impressum.html">Impressum</a> · <a href="/agb.html">AGB</a> · <a href="/widerruf.html">Widerruf</a></footer>
+<footer class="legal-foot">© 2026 ShoeLab · Bremen — <a href="/impressum.html">Impressum</a> · <a href="/agb.html">AGB</a> · <a href="/vault-terms.html">Vault-Bedingungen</a> · <a href="/widerruf.html">Widerruf</a></footer>
 </body>
 </html>

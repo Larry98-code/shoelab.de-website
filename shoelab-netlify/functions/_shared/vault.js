@@ -529,6 +529,10 @@ export async function housekeeping(env, force) {
     await env.DB.prepare('DELETE FROM mail_log WHERE created_at < ?').bind(half).run();
     await env.DB.prepare('DELETE FROM email_tokens WHERE expires_at < ?').bind(at).run();
     await env.DB.prepare('DELETE FROM support_usage WHERE day < ?').bind(at.slice(0, 10)).run();
+    // support requests are kept for two years after they were last answered or closed
+    const gone = new Date(Date.now() - 730 * 86400000).toISOString();
+    await env.DB.prepare("DELETE FROM mk_ticket_msgs WHERE ticket_id IN (SELECT id FROM mk_tickets WHERE status != 'open' AND updated_at < ?)").bind(gone).run();
+    await env.DB.prepare("DELETE FROM mk_tickets WHERE status != 'open' AND updated_at < ?").bind(gone).run();
   }
 }
 
