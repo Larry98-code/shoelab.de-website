@@ -134,7 +134,13 @@
     });
   }
 
-  function choose(lang) { writeStore(KEY, lang); }
+  // The server reads the same choice from a cookie, so emails it sends later
+  // (a booking confirmation, an outbid notice) arrive in this language too.
+  function remember(lang) {
+    if (!ok(lang)) return;
+    try { d.cookie = 'shoelab_lang=' + lang + '; Path=/; Max-Age=31536000; SameSite=Lax' + (w.location.protocol === 'https:' ? '; Secure' : ''); } catch (e) {}
+  }
+  function choose(lang) { writeStore(KEY, lang); remember(lang); }
 
   /* ── the offer / undo toast ─────────────────────────────────────────── */
   var LABEL = {
@@ -225,6 +231,7 @@
     countryToLang: countryToLang,
     resolve: resolve,
     choose: choose,
+    remember: remember,
     offer: offer,
     label: function (l) { return LABEL[l] || l; }
   };

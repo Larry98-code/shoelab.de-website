@@ -77,6 +77,16 @@
   }
 
   /* ── photos: pick, compress, store ────────────────────────────────── */
+  // a small copy for listing grids: quick on a phone, sharp enough to tell pairs apart
+  function thumbnail(img, wd, ht) {
+    var k = Math.min(1, 480 / Math.max(wd, ht)), cw = Math.round(wd * k), ch = Math.round(ht * k);
+    var c = d.createElement('canvas'); c.width = cw; c.height = ch;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch);
+    ctx.drawImage(img, 0, 0, cw, ch);
+    var out = c.toDataURL('image/jpeg', 0.74);
+    return out.length * 0.75 <= 110 * 1024 ? out : c.toDataURL('image/jpeg', 0.55);
+  }
   function compress(file) {
     return new Promise(function (resolve, reject) {
       var url = URL.createObjectURL(file), img = new Image();
@@ -84,6 +94,7 @@
         URL.revokeObjectURL(url);
         var wd = img.naturalWidth, ht = img.naturalHeight;
         if (!wd || !ht) { reject(new Error('empty')); return; }
+        var thumb = thumbnail(img, wd, ht);
         var side = MAX_SIDE, data = null;
         for (var round = 0; round < 4; round++) {
           var k = Math.min(1, side / Math.max(wd, ht)), cw = Math.round(wd * k), ch = Math.round(ht * k);
@@ -93,11 +104,11 @@
           ctx.drawImage(img, 0, 0, cw, ch);
           for (var q = 0.86; q >= 0.5; q -= 0.08) {
             data = c.toDataURL('image/jpeg', q);
-            if (data.length * 0.75 <= MAX_BYTES) { resolve(data); return; }
+            if (data.length * 0.75 <= MAX_BYTES) { resolve({ data: data, thumb: thumb }); return; }
           }
           side = Math.round(side * 0.75);
         }
-        if (data && data.length * 0.75 <= 740 * 1024) resolve(data); else reject(new Error('large'));
+        if (data && data.length * 0.75 <= 740 * 1024) resolve({ data: data, thumb: thumb }); else reject(new Error('large'));
       };
       img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('format')); };
       img.src = url;
@@ -119,8 +130,8 @@
       var k = targets[i];
       if (!/^image\//.test(f.type || 'image/')) { photoErr(t('e_photo_bad')); return; }
       st.busy[k] = true; renderPhotos();
-      compress(f).then(function (data) {
-        st.photos[k] = { data: data };
+      compress(f).then(function (out) {
+        st.photos[k] = out;
         delete st.busy[k];
         renderPhotos(); refresh();
       }, function (err) {
@@ -168,6 +179,42 @@
     }
     return out;
   }
+  function confirmed() { return $('sOwn').checked && $('sBind').checked && $('sTerms').checked; }
+
+  /* ── getting paid: seller verification with Stripe ────────────────── */
+  // With Stripe payouts on, a seller verifies once before listing. Stripe
+  // opens in a new tab, so nothing typed or uploaded here is lost; this page
+  // checks back by itself and lets them carry on.
+  var gatePoll = null;
+  function gate() {
+    var c = S.config(), me = S.me(), box = $('sGate');
+    var need = c && c.connect && me && !(me.seller && me.seller.ready);
+    if (!need) { box.innerHTML = ''; clearInterval(gatePoll); gatePoll = null; return; }
+    box.innerHTML = '<div class="v-payouts todo v-seller-gate"><div class="ico">' + S.ico('shield') + '</div>' +
+      '<div><b>' + esc(t('sellerGateT')) + '</b><small>' + esc(t('sellerGateP')) + '</small></div>' +
+      '<div class="act"><button type="button" class="v-btn gold sm" id="sGateGo">' + esc(t('verifyWithStripe')) + '</button>' +
+      '<div style="text-align:center;margin-top:0.45rem;"><button type="button" class="v-link-btn" id="sGateCheck">' + esc(t('sellerGateCheck')) + '</button></div></div></div>';
+    $('sGateGo').onclick = function () { S.payoutsSetup(this).then(function (okk) { if (okk) watchGate(); }); };
+    $('sGateCheck').onclick = function () { checkGate(true); };
+  }
+  function checkGate(loud) {
+    return S.market('payouts/status').then(function (res) {
+      if (!res.ok) return;
+      var me = S.me();
+      if (me) me.seller = { connected: res.data.connected, ready: res.data.ready, payouts: res.data.payouts, due: res.data.due };
+      if (res.data.ready) { gate(); S.toast(t('sellerReadyToast'), 'ok'); }
+      else if (loud) S.toast(t('sellerNotYet'), 'info');
+    });
+  }
+  function watchGate() {
+    clearInterval(gatePoll);
+    var until = Date.now() + 15 * 60000;
+    gatePoll = setInterval(function () {
+      if (Date.now() > until || !$('sGateGo')) { clearInterval(gatePoll); gatePoll = null; return; }
+      if (!d.hidden) checkGate(false);
+    }, 6000);
+  }
+
   function sections() {
     var o = terms(), pp = priceProblems(o);
     return {
@@ -175,7 +222,7 @@
       tier: !!st.tier,
       photos: REQ[st.tier].every(function (k) { return st.photos[k]; }),
       price: !Object.keys(pp).length,
-      confirm: $('sOwn').checked && $('sBind').checked
+      confirm: confirmed()
     };
   }
 
@@ -230,7 +277,7 @@
     }
     var o = terms(), pp = priceProblems(o);
     ['sStart', 'sBinA', 'sPrice', 'sMin'].forEach(function (id) { mark($(id), pp[id] || ''); });
-    var conf = $('sOwn').checked && $('sBind').checked, cerr = $('sConfirmErr');
+    var conf = confirmed(), cerr = $('sConfirmErr');
     cerr.textContent = conf ? '' : t('e_confirm'); cerr.classList.toggle('on', !conf);
     if (!conf) { ok = false; first = first || $('sOwn'); }
     if (first) {
@@ -244,13 +291,13 @@
     msg.textContent = ''; msg.className = 'v-msg';
     if (Object.keys(st.busy).length) { msg.textContent = t('photosBusy'); msg.className = 'v-msg bad'; return; }
     if (!validate()) { msg.textContent = t('e_fix'); msg.className = 'v-msg bad'; return; }
-    S.requireAuth('authSell').then(function (u) {
+    S.requireVerified('authSell').then(function (u) {
       if (!u) return;
       var o = terms(), btn = $('sSubmit');
       var body = {
         brand: val('sBrand'), model: val('sModel'), size: $('sSize').value, cond: st.cond, description: val('sDesc'),
         tier: st.tier, format: o.format,
-        photos: Object.keys(st.photos).map(function (k) { return { kind: k, data: st.photos[k].data }; })
+        photos: Object.keys(st.photos).map(function (k) { return { kind: k, data: st.photos[k].data, thumb: st.photos[k].thumb }; })
       };
       if (o.format === 'auction') { body.startPrice = o.start / 100; body.duration = o.duration; if (o.bin != null) body.buyNow = o.bin / 100; }
       else { body.buyNow = o.bin / 100; body.acceptOffers = o.offers; if (o.min != null) body.minOffer = o.min / 100; }
@@ -289,9 +336,9 @@
       $(id).addEventListener('input', function () { fieldErr(this, ''); refresh(); });
     });
     ['sSize', 'sDur'].forEach(function (id) { $(id).addEventListener('change', function () { fieldErr(this, ''); refresh(); }); });
-    ['sOwn', 'sBind'].forEach(function (id) {
+    ['sOwn', 'sBind', 'sTerms'].forEach(function (id) {
       $(id).addEventListener('change', function () {
-        if ($('sOwn').checked && $('sBind').checked) $('sConfirmErr').classList.remove('on');
+        if (confirmed()) $('sConfirmErr').classList.remove('on');
         refresh();
       });
     });
@@ -356,6 +403,8 @@
     init: function (me, c) {
       cfg = c;
       if (c && c.required) { REQ = c.required; }
+      gate();
+      w.addEventListener('focus', function () { if ($('sGateGo')) checkGate(false); });
       buildStatic();
       renderPhotos();
       wire();
@@ -363,9 +412,11 @@
     },
     onLang: function () {
       if (sent) return;
+      gate();
       buildStatic();
       renderPhotos();
       refresh();
-    }
+    },
+    onAuth: function () { if (!sent) gate(); }
   });
 })(window, document);

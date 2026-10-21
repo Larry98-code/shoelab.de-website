@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '1';   // bump together with the ?v= of the translation files
+  var V = '2';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },
@@ -216,11 +216,21 @@
       return { ok: false, status: 0, data: { code: 'network', error: 'Network error' } };
     });
   }
-  function market(route, opts) { return api('/api/market/' + route, opts); }
+  // Two answers are better met with a next step than with an error message:
+  // confirm your email, or verify as a seller with Stripe.
+  function market(route, opts) {
+    return api('/api/market/' + route, opts).then(function (res) {
+      var code = res && res.data && res.data.code;
+      if (code === 'verify_email') verifyPrompt();
+      else if (code === 'seller_unverified') sellerPrompt();
+      return res;
+    });
+  }
   // The server sends a stable code with every error; show it in the
   // visitor's language and fall back to its English message.
   function errText(res) {
     var dt = (res && res.data) || {};
+    if (dt.code === 'verify_email' || dt.code === 'seller_unverified') return '';   // a dialog explains these
     if (dt.code && has('e_' + dt.code)) {
       return t('e_' + dt.code, {
         amount: dt.amount != null ? money(dt.amount, true) : '',
@@ -253,6 +263,20 @@
     if (me) return Promise.resolve(me);
     return new Promise(function (resolve) { openAuth(reasonKey, resolve); });
   }
+  // Bidding, buying, offers and selling also need a confirmed email address.
+  // Ask before a form is filled in, not after; the member may have confirmed
+  // in another tab since this page loaded, so check with the server first.
+  function requireVerified(reasonKey) {
+    return requireAuth(reasonKey).then(function (u) {
+      if (!u || u.verified !== false) return u;
+      return loadConfig().then(function () {
+        renderVerifyBar();
+        if (me && me.verified !== false) return me;
+        if (me) verifyPrompt();
+        return null;
+      });
+    });
+  }
 
   function openAuth(reasonKey, done) {
     var mode = 'in', finished = false;
@@ -274,7 +298,9 @@
           '<button class="v-btn block" type="submit" id="vaGo">' + esc(t('signIn')) + '</button>' +
           '<div class="v-msg" role="alert"></div>' +
           '<p class="v-note" style="text-align:center;margin-top:0.6rem;" data-only="in"><a class="v-link-btn" href="/account.html">' + esc(t('forgotPw')) + '</a></p>' +
-          '<p class="v-note" style="margin-top:0.8rem;" data-only="up" hidden>' + esc(t('authTerms')) + '</p>' +
+          '<p class="v-note" style="margin-top:0.8rem;" data-only="up" hidden>' + esc(t('authTerms')) +
+            ' <a class="v-link-btn" href="/vault-terms.html" target="_blank" rel="noopener">' + esc(t('termsLink')) + '</a> · ' +
+            '<a class="v-link-btn" href="/datenschutz.html" target="_blank" rel="noopener">' + esc(t('privacyLink')) + '</a></p>' +
         '</form>',
       onClose: function () { if (!finished) { finished = true; done(null); } }
     });
@@ -304,7 +330,8 @@
       if (mode === 'up' ? pass.length < 8 : !pass) return bad(mode === 'up' ? 'e_pwShort' : 'e_pw');
       busy(go, true);
       api('/api/account/' + (mode === 'up' ? 'signup' : 'login'), {
-        body: mode === 'up' ? { name: name, email: email, password: pass } : { email: email, password: pass }
+        // the confirmation link brings a new member back to this very page
+        body: mode === 'up' ? { name: name, email: email, password: pass, next: here() } : { email: email, password: pass }
       }).then(function (res) {
         if (!res.ok || !res.data.user) {
           busy(go, false);
@@ -320,7 +347,8 @@
           finished = true;
           m.close(true);
           renderChrome();
-          toast(t(mode === 'up' ? 'welcomeNew' : 'welcomeBack', { name: firstName(me.name) }), 'ok');
+          if (mode === 'up') toast(t('welcomeVerify', { name: firstName(me.name), email: me.email }), 'ok');
+          else toast(t('welcomeBack', { name: firstName(me.name) }), 'ok');
           if (page.onAuth) page.onAuth(me);
           done(me);
         });
@@ -349,6 +377,7 @@
   }
 
   function toast(text, kind) {
+    if (!text) return;
     var box = d.querySelector('.v-toasts');
     if (!box) { box = d.createElement('div'); box.className = 'v-toasts'; box.setAttribute('aria-live', 'polite'); d.body.appendChild(box); }
     var el = d.createElement('div');
@@ -605,6 +634,7 @@
       if (si) si.addEventListener('click', function () { requireAuth(); });
     }
 
+    renderVerifyBar();
     var tab = d.getElementById('vTabbar');
     if (tab) {
       var tb = function (k, href, icon, label, cls) {
@@ -632,7 +662,7 @@
             '<a href="/vault.html#fees">' + esc(t('footFees')) + '</a>' +
             '<a href="/vault-sell.html">' + esc(t('sellPair')) + '</a>' +
             '<a href="/">ShoeLab.de</a>' +
-            '<a href="/agb.html">' + esc(t('footTerms')) + '</a>' +
+            '<a href="/vault-terms.html">' + esc(t('footTerms')) + '</a>' +
             '<a href="/datenschutz.html">' + esc(t('footPrivacy')) + '</a>' +
             '<a href="/impressum.html">' + esc(t('footImprint')) + '</a>' +
           '</nav>' +
@@ -657,6 +687,93 @@
   d.addEventListener('click', function (e) { if (openMenu && !openMenu[1].contains(e.target)) closeMenus(); });
   d.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenus(); });
 
+  /* ── confirming the email address ───────────────────────────────────── */
+  function here() { return w.location.pathname + w.location.search + w.location.hash; }
+  function resendVerification(btn) {
+    busy(btn, true);
+    return api('/api/account/resend-verification', { body: { next: here() } }).then(function (res) {
+      busy(btn, false);
+      if (res.ok) toast(t(res.data.already ? 'verifiedToast' : 'verifySent', { email: me ? me.email : '' }), 'ok');
+      else toast(res.data.code === 'verify_wait' ? t('e_verify_wait') : errText(res), 'bad');
+      if (res.ok && res.data.already && me) { me.verified = true; renderChrome(); }
+    });
+  }
+  var verifyOpen = false;
+  function verifyPrompt() {
+    if (verifyOpen || !me) return;
+    verifyOpen = true;
+    var m = modal({
+      title: t('verifyT'),
+      html: '<p>' + esc(t('verifyLead', { email: me.email })) + '</p><p class="v-note">' + esc(t('verifyHint')) + '</p>',
+      foot: '<button type="button" class="v-btn ghost" data-no>' + esc(t('close')) + '</button>' +
+            '<button type="button" class="v-btn" data-go>' + esc(t('verifyResend')) + '</button>',
+      onClose: function () { verifyOpen = false; }
+    });
+    m.$('[data-no]').addEventListener('click', function () { m.close(); });
+    m.$('[data-go]').addEventListener('click', function () { resendVerification(m.$('[data-go]')).then(function () { m.close(); }); });
+  }
+  // The thin bar under the header for members who have not confirmed yet.
+  function renderVerifyBar() {
+    var bar = d.getElementById('vVerify'), nav = d.getElementById('vNav');
+    if (!nav) return;
+    if (!bar) { bar = d.createElement('div'); bar.id = 'vVerify'; bar.className = 'v-verify-bar'; nav.parentNode.insertBefore(bar, nav.nextSibling); }
+    if (!me || me.verified) { bar.hidden = true; bar.innerHTML = ''; return; }
+    bar.hidden = false;
+    bar.innerHTML = ico('alert') + '<span>' + esc(t('verifyBar', { email: me.email })) + '</span>' +
+      '<button type="button" class="v-btn xs gold" id="vVerifyResend">' + esc(t('verifyResend')) + '</button>';
+    d.getElementById('vVerifyResend').onclick = function () { resendVerification(this); };
+  }
+  // Confirmed in another tab: the bar goes as soon as this one is looked at.
+  d.addEventListener('visibilitychange', function () {
+    if (!d.hidden && me && me.verified === false) loadConfig().then(renderVerifyBar);
+  });
+  // Back from a confirmation link (?verified=1 / 0) or from Stripe.
+  function arrivedFromEmail() {
+    var v = qs('verified');
+    if (v == null) return;
+    if (v === '1') { toast(t('verifiedToast'), 'ok'); if (me) { me.verified = true; renderVerifyBar(); } }
+    else toast(t('verifyExpired'), 'bad');
+    try {
+      var u = new URL(w.location.href); u.searchParams.delete('verified');
+      w.history.replaceState(null, '', u.pathname + u.search + u.hash);
+    } catch (e) {}
+  }
+
+  /* ── seller verification with Stripe ────────────────────────────────── */
+  // Opens Stripe's onboarding in a new tab, so a half-filled listing (with
+  // its photos) stays exactly as it is. The tab is opened inside the click,
+  // so browsers do not block it, and pointed at Stripe once the link exists.
+  function payoutsSetup(btn, sameTab) {
+    var tab = sameTab ? null : w.open('about:blank', '_blank');
+    busy(btn, true);
+    return market('payouts/setup', { body: {} }).then(function (res) {
+      busy(btn, false);
+      if (!res.ok || !res.data.url) {
+        if (tab) tab.close();
+        toast(errText(res), 'bad');
+        return false;
+      }
+      if (tab) tab.location.href = res.data.url; else w.location.href = res.data.url;
+      return true;
+    });
+  }
+  var sellerOpen = false;
+  function sellerPrompt() {
+    if (sellerOpen) return;
+    sellerOpen = true;
+    var m = modal({
+      title: t('sellerVerifyT'),
+      html: '<p>' + esc(t('sellerVerifyLead')) + '</p><ul class="v-flow">' +
+        ['sellerVerify1', 'sellerVerify2', 'sellerVerify3'].map(function (k, i) { return '<li><i>' + (i + 1) + '</i><span>' + esc(t(k)) + '</span></li>'; }).join('') +
+        '</ul><p class="v-note" style="margin-top:0.9rem;">' + esc(t('sellerVerifyNote')) + '</p>',
+      foot: '<button type="button" class="v-btn ghost" data-no>' + esc(t('later')) + '</button>' +
+            '<button type="button" class="v-btn gold" data-go>' + esc(t('verifyWithStripe')) + '</button>',
+      onClose: function () { sellerOpen = false; }
+    });
+    m.$('[data-no]').addEventListener('click', function () { m.close(); });
+    m.$('[data-go]').addEventListener('click', function () { payoutsSetup(m.$('[data-go]')).then(function (okk) { if (okk) m.close(); }); });
+  }
+
   /* ── boot ───────────────────────────────────────────────────────────── */
   var wanted = null, langReady = false, cfgReady = false;
   function want(L) {
@@ -664,9 +781,11 @@
     loadLang(L, function () {
       if (wanted !== L) return;              // a newer choice arrived meanwhile
       lang = (L === 'en' || I18N[L]) ? L : 'en';
+      if (w.SLGeo && w.SLGeo.remember) w.SLGeo.remember(lang);   // emails follow the same language
       if (!langReady) { langReady = true; maybeStart(); return; }
       if (started) {
         applyI18n(); renderChrome(); tick();
+        if (w.SLVHelp) w.SLVHelp.relabel();
         if (page.onLang) page.onLang(lang);
       }
     });
@@ -680,6 +799,8 @@
     tick();
     reveal();
     d.documentElement.classList.remove('v-wait');
+    arrivedFromEmail();
+    if (w.SLVHelp) w.SLVHelp.init();
   }
   function boot(p) {
     page = p || {};
@@ -732,7 +853,7 @@
   // Resolves { redirect } when Stripe opens, { manual } when ShoeLab will
   // email payment details, { unpaid } if closed after the order exists, or null.
   function payFlow(o) {
-    return requireAuth('authBuy').then(function (u) {
+    return requireVerified('authBuy').then(function (u) {
       if (!u) return null;
       return api('/api/account/me').then(function (pr) {
         var p = (pr.ok && pr.data && pr.data.user) || {};
@@ -745,8 +866,10 @@
               '<p style="margin-bottom:0.6rem;"><b style="color:#fff;font-weight:500;">' + esc(o.title) + '</b></p>' +
               totalsHtml(o) +
               '<h3 class="v-h3" style="margin:1.3rem 0 0.8rem;">' + esc(t('deliveryTo')) + '</h3>' + addressHtml(p) +
-              '<div class="v-state ' + (online ? 'info' : 'gold') + '">' + ico(online ? 'lock' : 'info') + '<span>' + esc(t(online ? 'payNoteOnline' : 'payNoteManual')) + '</span></div>' +
-              (o.create ? '<p class="v-note" style="margin-top:0.8rem;">' + esc(t('bindingNote')) + '</p>' : '') +
+              '<div class="v-state ' + (online ? 'info' : 'gold') + '">' + ico(online ? 'lock' : 'info') + '<span>' + esc(t(online ? (config.connect ? 'payNoteHeld' : 'payNoteOnline') : 'payNoteManual')) + '</span></div>' +
+              '<p class="v-note" style="margin-top:0.8rem;">' + (o.create ? esc(t('bindingNote')) + ' ' : '') + esc(t('payTerms')) +
+                ' <a class="v-link-btn" href="/vault-terms.html" target="_blank" rel="noopener">' + esc(t('termsLink')) + '</a> · ' +
+                '<a class="v-link-btn" href="/datenschutz.html" target="_blank" rel="noopener">' + esc(t('privacyLink')) + '</a></p>' +
               '<div class="v-msg" role="alert"></div>',
             foot: '<button type="button" class="v-btn block" data-go>' + esc(t(online ? 'payBtn' : 'reserveBtn', { amount: money(o.total, true) })) + '</button>',
             onClose: function () {
@@ -875,7 +998,8 @@
     titleOf: titleOf, ico: ico,
     api: api, market: market, errText: errText,
     me: function () { return me; }, config: function () { return config; }, reloadConfig: loadConfig,
-    requireAuth: requireAuth, signOut: signOut,
+    requireAuth: requireAuth, requireVerified: requireVerified, signOut: signOut, verifyPrompt: verifyPrompt, resendVerification: resendVerification,
+    sellerPrompt: sellerPrompt, payoutsSetup: payoutsSetup,
     busy: busy, toast: toast, modal: modal, confirm: confirmBox,
     tierBadge: tierBadge, condLabel: condLabel, countdownHtml: countdownHtml, photoHtml: photoHtml,
     totalsHtml: totalsHtml, lineHtml: lineHtml, payFlow: payFlow, relistFlow: relistFlow,

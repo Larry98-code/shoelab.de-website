@@ -8,6 +8,9 @@
   var $ = function (id) { return d.getElementById(id); };
 
   var data = null, tab = null, firstRender = true;
+  var payouts = null;           // the latest answer from payouts/status
+
+  function box(kind, icon, html) { return '<div class="v-state ' + kind + '">' + S.ico(icon) + '<div>' + html + '</div></div>'; }
 
   /* ── loading ──────────────────────────────────────────────────────── */
   function load() {
@@ -21,6 +24,7 @@
       }
       data = res.data;
       render();
+      if (data.connect && !payouts) refreshPayouts();
     });
   }
   function gate() {
@@ -53,6 +57,8 @@
     s.orders.forEach(function (o) {
       if (o.status === 'paid') out.push({ icon: 'box', text: t(o.tier === 'lab' ? 'todoShipLab' : 'todoShip', { title: o.title }), go: t('open'), order: o.id });
     });
+    var waiting = s.orders.filter(function (o) { return o.payoutStatus === 'waiting'; }).reduce(function (n, o) { return n + o.payout; }, 0);
+    if (waiting && !(data.seller && data.seller.ready)) out.push({ icon: 'euro', text: t('todoPayouts', { amount: money(waiting, true) }), go: t('payoutsSetupBtn'), payouts: 1 });
     s.offers.forEach(function (f) {
       if (f.status === 'pending') out.push({ icon: 'chat', text: t('todoOffer', { amount: money(f.amount), title: f.title }), go: t('answer'), offers: 'selling' });
     });
@@ -85,7 +91,6 @@
   }
   function orderActions(o) {
     var buyer = o.role === 'buyer', h = '';
-    var box = function (kind, icon, html) { return '<div class="v-state ' + kind + '">' + S.ico(icon) + '<div>' + html + '</div></div>'; };
     switch (o.status) {
       case 'awaiting_payment': {
         var due = new Date(new Date(o.createdAt).getTime() + 72 * 3600000).toISOString();
@@ -102,7 +107,7 @@
       case 'paid':
         if (buyer) h += box('info', 'box', esc(t(o.tier === 'lab' ? 'buyerPaidLab' : 'buyerPaid')));
         else h += box('gold', 'box', '<b>' + esc(t(o.tier === 'lab' ? 'shipToLab' : 'shipToBuyer')) + '</b>') +
-          (o.shipInstructions ? '<div class="v-instr">' + esc(o.shipInstructions) + '</div>' : '') +
+          shipToHtml(o) +
           '<div class="row"><input class="v-input" id="trk' + o.id + '" maxlength="80" autocomplete="off" placeholder="' + esc(t('trackingPh')) + '"/>' +
           '<button type="button" class="v-btn sm" data-ship="' + o.id + '">' + esc(t('markShipped')) + '</button></div>';
         break;
@@ -131,22 +136,45 @@
               '<button type="button" class="v-btn ghost sm" data-rate="0">➖ ' + esc(t('rateNeu')) + '</button>' +
               '<button type="button" class="v-btn ghost sm" data-rate="-1">👎 ' + esc(t('rateNeg')) + '</button></div>' +
             '<div class="row" style="margin-top:0.5rem;"><input class="v-input" id="fbc' + o.id + '" maxlength="300" placeholder="' + esc(t('rateCommentPh')) + '"/></div></div>';
-        } else h += box('ok', 'check', esc(t('sellerDelivered', { amount: money(o.payout, true) })));
+        } else h += payoutHtml(o);
         break;
       case 'disputed':
         h += box('bad', 'flag', esc(t(buyer ? 'buyerDisputed' : 'sellerDisputed')));
         break;
       case 'refunded':
-        h += box('info', 'refresh', esc(t(buyer ? 'buyerRefunded' : 'sellerRefunded')));
+        h += box('info', 'refresh', esc(t(buyer ? 'buyerRefunded' : 'sellerRefunded')) + (buyer && o.refunded ? ' ' + esc(t('refundCardNote')) : ''));
         break;
       case 'failed':
-        h += box('bad', 'alert', esc(t(buyer ? 'buyerFailed' : 'sellerFailed')));
+        h += box('bad', 'alert', esc(t(buyer ? 'buyerFailed' : 'sellerFailed')) + (buyer && o.refunded ? ' ' + esc(t('refundCardNote')) : ''));
         break;
       case 'cancelled':
         h += box('info', 'x', esc(t('orderCancelled')));
         break;
     }
     return h ? '<div class="v-order-act">' + h + '</div>' : '';
+  }
+  // Where a paid order goes: the buyer (Photo Verified) or the lab (Lab Verified).
+  function shipToHtml(o) {
+    var s = o.shipTo;
+    if (!s) return '';
+    if (!s.address) return s.lab ? '<p class="v-note">' + esc(t('labAddrLater')) + '</p>' : '';
+    return '<div class="v-instr"><span class="v-label">' + esc(t(s.lab ? 'sendToLab' : 'sendToBuyer')) + '</span>' +
+      '<span class="v-addr" style="display:block;margin-top:0.3rem;">' + esc(s.address) + '</span>' +
+      (s.lab ? '<span class="v-note" style="display:block;margin-top:0.55rem;">' + esc(t('labNoteInside', { n: o.id })) + '</span>' : '') + '</div>';
+  }
+  // A delivered sale: where the seller's money is.
+  function payoutHtml(o) {
+    var amount = money(o.payout, true), sel = data.seller || {};
+    switch (o.payoutStatus) {
+      case 'sent': return box('ok', 'check', esc(t('payoutSentLine', { amount: amount, date: S.fmtDate(o.payoutAt) })));
+      case 'sending': return box('info', 'clock', esc(t('payoutSendingLine', { amount: amount })));
+      case 'failed': return box('bad', 'alert', esc(t('payoutFailedLine', { amount: amount })));
+      case 'waiting':
+        if (sel.ready) return box('warn', 'clock', esc(t('payoutCheckingLine', { amount: amount })));
+        return box('warn', 'euro', esc(t('payoutWaitingLine', { amount: amount }))) +
+          '<div class="row"><button type="button" class="v-btn gold sm" data-payouts="setup">' + esc(t(sel.connected ? 'payoutsContinueBtn' : 'payoutsSetupBtn')) + '</button></div>';
+      default: return box('ok', 'check', esc(t('sellerDelivered', { amount: amount })));
+    }
   }
   function orderHtml(o) {
     var buyer = o.role === 'buyer';
@@ -236,6 +264,57 @@
         '<div class="acts">' + acts + '</div></div></div>';
   }
 
+  /* ── payouts (Stripe Connect) ─────────────────────────────────────── */
+  function payoutState(p) {
+    return p.payouts ? 'ready' : p.ready ? (p.due ? 'due' : 'check') : p.connected ? 'continue' : 'setup';
+  }
+  function payoutsHtml() {
+    if (!data.connect) return '';
+    var p = payouts || data.seller || {}, state = payoutState(p);
+    var copy = {
+      setup: ['payoutsSetupT', 'payoutsSetupP', 'setup', 'payoutsSetupBtn'],
+      'continue': ['payoutsContinueT', 'payoutsContinueP', 'setup', 'payoutsContinueBtn'],
+      due: ['payoutsCheckT', 'payoutsDueP', 'setup', 'payoutsContinueBtn'],
+      check: ['payoutsCheckT', 'payoutsCheckP', 'check', 'payoutsRecheck'],
+      ready: ['payoutsReadyT', 'payoutsReadyP', 'dash', 'payoutsDashBtn']
+    }[state];
+    var nums = [];
+    if (payouts && payouts.paid && payouts.paid.count) nums.push('<span>' + esc(t('payoutsPaidL')) + ' <b>' + money(payouts.paid.amount, true) + '</b></span>');
+    if (payouts && payouts.waiting && payouts.waiting.count) nums.push('<span>' + esc(t('payoutsWaitingL')) + ' <b>' + money(payouts.waiting.amount, true) + '</b></span>');
+    var main = copy[2] === 'setup';
+    return '<section class="v-group" id="payouts" style="scroll-margin-top:90px;"><div class="v-group-head"><h2>' + esc(t('payoutsT')) + '</h2><small>' + esc(t('payoutsSub')) + '</small></div>' +
+      '<div class="v-payouts ' + (state === 'ready' ? 'ready' : main ? 'todo' : '') + '">' +
+        '<span class="ico">' + S.ico(state === 'ready' ? 'check' : state === 'check' ? 'clock' : 'euro') + '</span>' +
+        '<div><b>' + esc(t(copy[0])) + '</b><small>' + esc(t(copy[1])) + '</small>' + (nums.length ? '<div class="nums">' + nums.join('') + '</div>' : '') + '</div>' +
+        '<div class="act"><button type="button" class="v-btn ' + (main ? 'gold' : 'ghost') + ' sm" data-payouts="' + copy[2] + '">' + esc(t(copy[3])) + '</button></div>' +
+      '</div></section>';
+  }
+  function refreshPayouts(btn, loud) {
+    if (!data || !data.connect) return Promise.resolve();
+    S.busy(btn, true);
+    return S.market('payouts/status').then(function (res) {
+      S.busy(btn, false);
+      if (!res.ok || !res.data.connect) { if (loud) S.toast(S.errText(res), 'bad'); return; }
+      payouts = res.data;
+      data.seller = { connected: payouts.connected, ready: payouts.ready, payouts: payouts.payouts, due: payouts.due };
+      if (loud) S.toast(t(payouts.payouts ? 'sellerReadyToast' : 'sellerNotYet'), payouts.payouts ? 'ok' : '');
+      // money that waited for the setup has just been sent: show it
+      if (payouts.released) { S.toast(t('payoutsReleasedToast'), 'ok'); return load(); }
+      render();
+    });
+  }
+  // Stripe's dashboard for the seller (bank account, payouts, tax forms).
+  // The tab opens inside the click so browsers do not block it.
+  function dashboard(btn) {
+    var tab2 = w.open('about:blank', '_blank');
+    S.busy(btn, true);
+    S.market('payouts/dashboard', { body: {} }).then(function (res) {
+      S.busy(btn, false);
+      if (!res.ok || !res.data.url) { if (tab2) tab2.close(); S.toast(S.errText(res), 'bad'); return; }
+      if (tab2) tab2.location.href = res.data.url; else w.location.href = res.data.url;
+    });
+  }
+
   /* ── render ───────────────────────────────────────────────────────── */
   function counts() {
     var b = data.buying, s = data.selling;
@@ -256,7 +335,7 @@
     var h = '';
     if (td.length) {
       h += '<div class="v-todo" role="list" aria-label="' + esc(t('todoTitle')) + '">' + td.map(function (x) {
-        return '<button type="button" class="v-todo-item" role="listitem" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '">' +
+        return '<button type="button" class="v-todo-item" role="listitem" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '" data-todo-payouts="' + (x.payouts || '') + '">' +
           S.ico(x.icon) + '<span>' + esc(x.text) + '</span><span class="go">' + esc(x.go) + ' →</span></button>';
       }).join('') + '</div>';
     }
@@ -280,8 +359,8 @@
     }
     if (tab === 'selling') {
       var listings = s.listings.filter(function (l) { return l.status !== 'relisted'; });
-      if (!listings.length && !s.orders.length) return emptyBig('tag', 'emptySellingT', 'emptySelling', '/vault-sell.html', 'sellPair');
-      return group('offers', t('offersToAnswer'), t('offersSub'), s.offers.length ? s.offers.map(offerReceivedHtml).join('') : emptyNote(t('noOffersIn'))) +
+      if (!listings.length && !s.orders.length) return payoutsHtml() + emptyBig('tag', 'emptySellingT', 'emptySelling', '/vault-sell.html', 'sellPair');
+      return payoutsHtml() + group('offers', t('offersToAnswer'), t('offersSub'), s.offers.length ? s.offers.map(offerReceivedHtml).join('') : emptyNote(t('noOffersIn'))) +
         (s.orders.length ? group('sellOrders', t('sales'), '', s.orders.map(orderHtml).join('')) : '') +
         group('listings', t('yourListings'), '', listings.map(listingRowHtml).join(''));
     }
@@ -295,6 +374,7 @@
   function pickTab() {
     var h = (w.location.hash || '').slice(1);
     if (h === 'selling' || h === 'buying' || h === 'watching') return h;
+    if (h === 'payouts') return 'selling';
     var m = /^order-(\d+)$/.exec(h);
     if (m) {
       var id = +m[1];
@@ -313,7 +393,7 @@
   // scroll to the card a link (or an email) pointed at
   function jump() {
     var h = (w.location.hash || '').slice(1);
-    var el = /^order-\d+$/.test(h) ? $(h) : h === 'offers' ? $('offers') : null;
+    var el = /^order-\d+$/.test(h) ? $(h) : (h === 'offers' || h === 'payouts') ? $(h) : null;
     if (!el) return;
     setTimeout(function () {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -353,6 +433,7 @@
     if (el.classList.contains('v-todo-item')) {
       if (g('data-todo-pay')) { pay(+g('data-todo-pay')); return; }
       if (g('data-todo-offers')) { setTab(g('data-todo-offers'), true); w.location.hash = 'offers'; jump(); return; }
+      if (g('data-todo-payouts')) { setTab('selling', true); w.location.hash = 'payouts'; jump(); return; }
       if (g('data-todo-order')) {
         var o = findOrder(+g('data-todo-order'));
         if (o) { tab = o.role === 'seller' ? 'selling' : 'buying'; render(); w.location.hash = 'order-' + o.id; jump(); }
@@ -360,6 +441,13 @@
       return;
     }
     if (g('data-pay')) { pay(+g('data-pay')); return; }
+    if (g('data-payouts')) {
+      var how = g('data-payouts');
+      if (how === 'setup') S.payoutsSetup(el, true);
+      else if (how === 'dash') dashboard(el);
+      else refreshPayouts(el, true);
+      return;
+    }
     if (g('data-ship')) {
       var trk = $('trk' + g('data-ship'));
       if (!trk.value.trim()) { trk.classList.add('err'); trk.focus(); S.toast(t('e_tracking'), 'bad'); return; }
@@ -460,7 +548,12 @@
     if (k !== tab) { tab = k; render(); }
     jump();
   });
-  d.addEventListener('visibilitychange', function () { if (!d.hidden && data) load(); });
+  d.addEventListener('visibilitychange', function () {
+    if (d.hidden || !data) return;
+    load();
+    // back from Stripe in another tab
+    if (data.connect && !(data.seller && data.seller.payouts)) refreshPayouts();
+  });
   d.addEventListener('slv:watch', function (e) {
     if (tab === 'watching' && !e.detail.watching) load();
   });
@@ -475,6 +568,15 @@
         try { w.history.replaceState(null, '', w.location.pathname + w.location.hash); } catch (e) {}
         // the payment webhook can trail the redirect by a few seconds
         if (paid) { setTimeout(load, 4000); setTimeout(load, 12000); }
+      }
+      // back from Stripe's onboarding: ?payouts=done, or ?payouts=retry when
+      // the link had expired, in which case a fresh one is made straight away
+      var po = S.qs('payouts');
+      if (po) {
+        try { w.history.replaceState(null, '', w.location.pathname + '#payouts'); } catch (e) {}
+        tab = 'selling';
+        if (po === 'retry' && me) { S.payoutsSetup(null, true).then(function (ok) { if (!ok) load(); }); return; }
+        if (po === 'done' && me) S.toast(t('payoutsDoneToast'), 'ok');
       }
       if (!me) { gate(); return; }
       load();

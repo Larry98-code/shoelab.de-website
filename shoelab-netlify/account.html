@@ -136,6 +136,11 @@ a{color:inherit;text-decoration:none;}
 /* link-style button (forgot password) */
 .linkbtn{background:none;border:none;color:var(--muted);font-family:inherit;font-size:0.78rem;cursor:pointer;text-decoration:underline;}
 .linkbtn:hover{color:#fff;}
+.verify-note{display:flex;flex-wrap:wrap;gap:0.4rem 0.7rem;align-items:center;margin:0 0 1.2rem;padding:0.8rem 1rem;border-radius:12px;
+  font-size:0.85rem;line-height:1.5;color:#fde3b5;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);}
+.verify-note b{font-weight:600;color:#ffd0d0;}
+.verify-note .linkbtn{color:#fde3b5;font-size:0.85rem;}
+.verify-note.ok{color:#bff3d2;background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.35);}
 
 /* ───────── responsive ───────── */
 @media(max-width:820px){
@@ -223,6 +228,7 @@ a{color:inherit;text-decoration:none;}
       </div>
       <a href="/" class="ghost-link">View site →</a>
     </div>
+    <div class="verify-note" id="verifyNote" role="status" hidden></div>
 
     <!-- PROFILE -->
     <section class="panel active" data-panel="profile">
@@ -308,6 +314,44 @@ a{color:inherit;text-decoration:none;}
     return ((p[0]||'').charAt(0)+((p[1]||'').charAt(0)||(p[0]||'').charAt(1)||'')).toUpperCase();
   }
 
+  /* ── email confirmation ── in the language the visitor picked on the site */
+  var VT = {
+    en:{bar:'Please confirm your email address. We sent a link to {email}.',resend:'Send the link again',sent:'Sent! Check your inbox and the spam folder.',wait:'Please wait a minute before asking again.',ok:'Your email address is confirmed. Thank you!',bad:'That confirmation link has expired or was already used.'},
+    de:{bar:'Bitte bestätige deine E-Mail-Adresse. Wir haben einen Link an {email} geschickt.',resend:'Link erneut senden',sent:'Gesendet! Schau in dein Postfach und in den Spam-Ordner.',wait:'Bitte warte eine Minute, bevor du es erneut versuchst.',ok:'Deine E-Mail-Adresse ist bestätigt. Danke!',bad:'Dieser Bestätigungslink ist abgelaufen oder wurde schon benutzt.'},
+    pl:{bar:'Potwierdź swój adres e-mail. Wysłaliśmy link na {email}.',resend:'Wyślij link ponownie',sent:'Wysłano! Sprawdź skrzynkę odbiorczą i folder spam.',wait:'Odczekaj minutę, zanim poprosisz ponownie.',ok:'Twój adres e-mail jest potwierdzony. Dziękujemy!',bad:'Ten link potwierdzający wygasł lub został już użyty.'},
+    ru:{bar:'Подтвердите адрес электронной почты. Мы отправили ссылку на {email}.',resend:'Отправить ссылку ещё раз',sent:'Отправлено! Проверьте входящие и папку «Спам».',wait:'Подождите минуту, прежде чем запросить снова.',ok:'Ваш адрес электронной почты подтверждён. Спасибо!',bad:'Срок действия этой ссылки истёк, или она уже была использована.'},
+    uk:{bar:'Підтвердіть адресу електронної пошти. Ми надіслали посилання на {email}.',resend:'Надіслати посилання ще раз',sent:'Надіслано! Перевірте вхідні та папку «Спам».',wait:'Зачекайте хвилину, перш ніж запитувати знову.',ok:'Вашу адресу електронної пошти підтверджено. Дякуємо!',bad:'Термін дії цього посилання минув, або його вже використано.'},
+    it:{bar:'Conferma il tuo indirizzo email. Abbiamo inviato un link a {email}.',resend:'Invia di nuovo il link',sent:'Inviato! Controlla la posta in arrivo e la cartella spam.',wait:'Attendi un minuto prima di richiederlo di nuovo.',ok:'Il tuo indirizzo email è confermato. Grazie!',bad:'Questo link di conferma è scaduto o è già stato usato.'},
+    es:{bar:'Confirma tu dirección de correo. Te enviamos un enlace a {email}.',resend:'Enviar el enlace de nuevo',sent:'¡Enviado! Revisa tu bandeja de entrada y la carpeta de spam.',wait:'Espera un minuto antes de volver a pedirlo.',ok:'Tu dirección de correo está confirmada. ¡Gracias!',bad:'Este enlace de confirmación ha caducado o ya se usó.'},
+    fr:{bar:'Confirme ton adresse e-mail. Nous avons envoyé un lien à {email}.',resend:'Renvoyer le lien',sent:'Envoyé ! Vérifie ta boîte de réception et tes spams.',wait:'Attends une minute avant de redemander.',ok:'Ton adresse e-mail est confirmée. Merci !',bad:'Ce lien de confirmation a expiré ou a déjà été utilisé.'}
+  };
+  function vt(k){
+    var m=document.cookie.match(/(?:^|;\s*)shoelab_lang=([a-z]{2})/), l=m&&VT[m[1]]?m[1]:'';
+    if(!l){ var b=(navigator.language||'en').slice(0,2).toLowerCase(); l=VT[b]?b:'en'; }
+    return VT[l][k];
+  }
+  function verifyNote(u){
+    var box=$('verifyNote'), flag=new URLSearchParams(location.search).get('verified');
+    if(flag!=null){ try{ history.replaceState(null,'',location.pathname+location.hash); }catch(e){} }
+    if(!u){ box.hidden=true; return; }
+    if(flag==='1' && u.verified){ box.className='verify-note ok'; box.textContent='✓ '+vt('ok'); box.hidden=false; return; }
+    if(u.verified!==false){ box.hidden=true; return; }
+    box.className='verify-note';
+    box.innerHTML=(flag==='0'?'<b>'+esc(vt('bad'))+'</b> ':'')+'<span>'+esc(vt('bar').replace('{email}', u.email||''))+'</span> <button type="button" class="linkbtn" id="verifyResend">'+esc(vt('resend'))+'</button>';
+    box.hidden=false;
+    $('verifyResend').onclick=function(){
+      var b=this; b.disabled=true;
+      api('/api/account/resend-verification', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({next:'/account.html'})})
+        .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+        .then(function(res){
+          b.disabled=false;
+          if(res.ok && res.d.already){ box.className='verify-note ok'; box.textContent='✓ '+vt('ok'); return; }
+          box.querySelector('span').textContent = res.ok ? vt('sent') : (res.d && res.d.code==='verify_wait' ? vt('wait') : (res.d && res.d.error) || '…');
+        })
+        .catch(function(){ b.disabled=false; });
+    };
+  }
+
   function renderUser(u){
     show($('loading'), false);
     if(!u){ show($('loggedOut'), true); show($('loggedIn'), false); return; }
@@ -325,6 +369,7 @@ a{color:inherit;text-decoration:none;}
     $('pfPostal').value  = u.postal || '';
     $('pfCountry').value = u.country || '';
     try{ localStorage.setItem('shoelab_user', JSON.stringify({name:u.name,email:u.email})); }catch(e){}
+    verifyNote(u);
     loadOrders();
   }
 

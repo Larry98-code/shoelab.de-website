@@ -1,16 +1,18 @@
 // ShoeLab Vault API — every /api/market/* route.
 //
-//   GET  config | listings | listing?id= | photo?id= | me | queue
+//   GET  config | listings | listing?id= | photo?id= | me | queue | payouts/status
 //   POST listings | bid | buy | offer | offer/respond | watch | listing/cancel
 //        listing/relist | order/pay | order/ship | order/received | order/problem
-//        order/feedback | review | lab
+//        order/feedback | payouts/setup | payouts/dashboard | support/chat
+//        support/ticket | support/answer | review | lab | lab/photos-to-r2
 import { json, preflight, clean, currentUser, stripeApi, sessionSecret } from '../../_shared/util.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
-  siteUrl, isSpecialist, shortName, maskName, fees, ensureSchema, logEvent, userById,
-  listingTitle, mail, mailStudio, createOrder, markPaid, shipInstructions, housekeeping,
-  settleAuction, payoutDue,
+  siteUrl, isSpecialist, onSpecialistList, shortName, maskName, fees, ensureSchema, logEvent, userById,
+  listingTitle, tell, tellStudio, createOrder, markPaid, shipTo, housekeeping, settleAuction,
+  orderDelivered, releasePayout, releaseWaiting, refundOrder, connectOn, sellerRow, refreshSeller, LAB,
 } from '../../_shared/vault.js';
+import { supportChat, supportTicket, supportAnswer, ticketsForQueue } from '../../_shared/support.js';
 
 // Errors carry a stable code next to the English message, so the pages can
 // show them in the visitor's language; extra fields (an amount) fill the gaps.
@@ -29,8 +31,31 @@ async function needUser(request, env) {
 }
 async function needSpecialist(request, env) {
   const u = await needUser(request, env);
-  if (!isSpecialist(env, u)) fail(403, 'Specialists only', 'specialists');
+  if (!isSpecialist(env, u)) {
+    if (onSpecialistList(env, u.email)) fail(403, 'Please confirm your email address first', 'verify_email', { email: u.email });
+    fail(403, 'Specialists only', 'specialists');
+  }
   return u;
+}
+// Bidding, buying, offering and selling need a confirmed email address.
+async function needVerified(request, env) {
+  const u = await needUser(request, env);
+  if (!u.verified) fail(403, 'Please confirm your email address first', 'verify_email', { email: u.email });
+  return u;
+}
+// With Stripe Connect on, a seller verifies with Stripe before listing, so
+// there is somewhere for the money to go once a pair sells.
+async function needSellerReady(env, u) {
+  if (!connectOn(env)) return;
+  let row = await sellerRow(env, u.id);
+  // they may have finished on Stripe's pages without coming back here: ask Stripe
+  if (row && !row.details_submitted) row = await refreshSeller(env, u.id);
+  if (!row || !row.details_submitted) fail(403, 'Verify your seller account first', 'seller_unverified');
+}
+async function sellerState(env, userId) {
+  if (!connectOn(env)) return null;
+  const row = await sellerRow(env, userId);
+  return { connected: !!row, ready: !!(row && row.details_submitted), payouts: !!(row && row.payouts_enabled), due: row ? row.due : 0 };
 }
 // prices arrive in euros from the form, live in cents everywhere else
 function cents(v) {
@@ -48,7 +73,8 @@ function card(l) {
     id: l.id, title: listingTitle(l), brand: l.brand, model: l.model, size: l.size, cond: l.cond,
     format: l.format, tier: l.tier, price: l.price, buyNow: l.buy_now, bids: l.bids,
     endsAt: l.ends_at, status: l.status, acceptOffers: !!l.accept_offers,
-    photo: l.photo_id ? '/api/market/photo?id=' + l.photo_id : null,
+    // cards load the small version; the item page asks for the full photo
+    photo: l.photo_id ? '/api/market/photo?id=' + l.photo_id + '&s=t' : null,
     watchers: l.watchers || 0, createdAt: l.created_at, liveAt: l.live_at, updatedAt: l.updated_at,
   };
 }
@@ -75,7 +101,11 @@ async function getConfig({ request, env }) {
     minPrice: VAULT.minPrice, maxPrice: VAULT.maxPrice, durations: VAULT.durations,
     conditions: CONDITIONS, tiers: TIERS, photoKinds: PHOTO_KINDS, required: REQUIRED_KINDS,
     maxPhotos: VAULT.maxPhotos, maxPhotoBytes: VAULT.maxPhotoBytes, onlinePayment: !!env.STRIPE_SECRET_KEY,
-    me: me ? { id: me.id, name: me.name, email: me.email, specialist: isSpecialist(env, me) } : null,
+    connect: connectOn(env), support: !!env.ANTHROPIC_API_KEY,
+    me: me ? {
+      id: me.id, name: me.name, email: me.email, specialist: isSpecialist(env, me), verified: !!me.verified,
+      seller: await sellerState(env, me.id),
+    } : null,
   }, 200, { 'Cache-Control': 'no-store' });
 }
 
@@ -168,11 +198,15 @@ async function getListing({ request, env }) {
      WHERE b.listing_id = ? AND b.pub = 1 ORDER BY b.id DESC LIMIT 30`
   ).bind(id).all();
 
+  const sellerAcct = connectOn(env) ? await sellerRow(env, l.seller_id) : null;
   const out = card(l);
   Object.assign(out, {
     description: l.description || '', startPrice: l.start_price, minOffer: null,
     photos: (photos.results || []).map((p) => ({ url: '/api/market/photo?id=' + p.id, kind: p.kind })),
-    seller: Object.assign({ name: shortName(seller && seller.name), since: seller && seller.created_at, sales: sales ? sales.n : 0 }, rep),
+    seller: Object.assign({
+      name: shortName(seller && seller.name), since: seller && seller.created_at, sales: sales ? sales.n : 0,
+      verified: !!(sellerAcct && sellerAcct.details_submitted),
+    }, rep),
     bidHistory: (hist.results || []).map((h) => ({ who: maskName(h.name), amount: h.amount, auto: !!h.auto, at: h.created_at })),
     increment: l.format === 'auction' ? increment(l.price) : null,
     minNext: l.format === 'auction' ? (l.bids ? l.price + increment(l.price) : l.start_price) : null,
@@ -217,34 +251,63 @@ async function reputation(env, sellerId) {
 }
 
 // ── photos ─────────────────────────────────────────────────────────────────
-// Photos live in D1 as base64 by default. Bind an R2 bucket as VAULT_PHOTOS
-// and new photos go there instead (the row then holds "r2:<key>"), which
-// keeps the database small once the Vault has a few hundred listings.
+// Each photo is stored twice: the full picture (about 1600 px) for the item
+// page and a small one (about 480 px) for grids, both made on the seller's
+// phone before upload. With an R2 bucket bound as VAULT_PHOTOS they live in
+// R2 (the row holds "r2:<key>"); without it, in D1 as base64.
 function b64ToBytes(b64) {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes;
 }
-async function storePhoto(env, listingId, idx, p) {
-  if (!env.VAULT_PHOTOS) return p.data;
+async function putR2(env, listingId, name, mime, b64) {
   const rand = Array.from(crypto.getRandomValues(new Uint8Array(6)), (x) => x.toString(16).padStart(2, '0')).join('');
-  const key = 'vault/' + listingId + '/' + idx + '-' + rand + '.' + p.mime.split('/')[1];
-  await env.VAULT_PHOTOS.put(key, b64ToBytes(p.data), { httpMetadata: { contentType: p.mime } });
+  const key = 'vault/' + listingId + '/' + name + '-' + rand + '.' + mime.split('/')[1];
+  await env.VAULT_PHOTOS.put(key, b64ToBytes(b64), { httpMetadata: { contentType: mime } });
   return 'r2:' + key;
+}
+async function storePhoto(env, listingId, idx, p) {
+  if (!env.VAULT_PHOTOS) return { data: p.data, thumb: p.thumb || null };
+  return {
+    data: await putR2(env, listingId, String(idx), p.mime, p.data),
+    thumb: p.thumb ? await putR2(env, listingId, idx + 't', 'image/jpeg', p.thumb) : null,
+  };
 }
 
 async function getPhoto({ request, env }) {
-  const id = intParam(new URL(request.url).searchParams.get('id'));
-  const p = id && await env.DB.prepare('SELECT mime, data FROM mk_photos WHERE id = ?').bind(id).first();
+  const q = new URL(request.url).searchParams;
+  const id = intParam(q.get('id'));
+  const p = id && await env.DB.prepare('SELECT mime, data, thumb FROM mk_photos WHERE id = ?').bind(id).first();
   if (!p) return new Response('Not found', { status: 404 });
-  const headers = { 'Content-Type': p.mime, 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' };
-  if (String(p.data).slice(0, 3) === 'r2:') {
-    const obj = env.VAULT_PHOTOS && await env.VAULT_PHOTOS.get(p.data.slice(3));
+  const small = q.get('s') === 't' && p.thumb;
+  const src = small ? p.thumb : p.data;
+  const headers = {
+    'Content-Type': small ? 'image/jpeg' : p.mime,
+    'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff',
+  };
+  if (String(src).slice(0, 3) === 'r2:') {
+    const obj = env.VAULT_PHOTOS && await env.VAULT_PHOTOS.get(src.slice(3));
     if (!obj) return new Response('Not found', { status: 404 });
     return new Response(obj.body, { headers });
   }
-  return new Response(b64ToBytes(p.data), { headers });
+  return new Response(b64ToBytes(src), { headers });
+}
+
+// Moves photos kept in D1 into the R2 bucket, a batch at a time.
+async function photosToR2({ request, env }) {
+  await needSpecialist(request, env);
+  if (!env.VAULT_PHOTOS) fail(409, 'Bind an R2 bucket as VAULT_PHOTOS first', 'no_r2');
+  const rows = await env.DB.prepare("SELECT id, listing_id, idx, mime, data, thumb FROM mk_photos WHERE data NOT LIKE 'r2:%' LIMIT 15").all();
+  let moved = 0;
+  for (const p of rows.results || []) {
+    const data = await putR2(env, p.listing_id, String(p.idx), p.mime, p.data);
+    const thumb = p.thumb && String(p.thumb).slice(0, 3) !== 'r2:' ? await putR2(env, p.listing_id, p.idx + 't', 'image/jpeg', p.thumb) : p.thumb;
+    const r = await env.DB.prepare("UPDATE mk_photos SET data = ?, thumb = ? WHERE id = ? AND data NOT LIKE 'r2:%'").bind(data, thumb, p.id).run();
+    if (r.meta.changes) moved++;
+  }
+  const left = await env.DB.prepare("SELECT COUNT(*) AS n FROM mk_photos WHERE data NOT LIKE 'r2:%'").first();
+  return json({ ok: true, moved, left: left.n });
 }
 
 // How a pair is sold: an auction (start price, length, optional Buy Now) or a
@@ -278,7 +341,8 @@ function parseTerms(b) {
 
 // ── POST listings (create) ─────────────────────────────────────────────────
 async function createListing({ request, env }) {
-  const me = await needUser(request, env);
+  const me = await needVerified(request, env);
+  await needSellerReady(env, me);
   const b = await body(request);
   const brand = clean(b.brand, 40), model = clean(b.model, 90), size = clean(String(b.size || ''), 8);
   const description = clean(b.description || '', 2000);
@@ -294,7 +358,10 @@ async function createListing({ request, env }) {
     const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(p && p.data || ''));
     if (!m) fail(400, 'One of the photos could not be read — please use JPG, PNG or WebP', 'photo_bad');
     if (m[2].length * 0.75 > VAULT.maxPhotoBytes) fail(400, 'A photo is too large — keep each under 750 KB', 'photo_big');
-    parsed.push({ mime: m[1], data: m[2], kind: PHOTO_KINDS.indexOf(p.kind) !== -1 ? p.kind : 'other' });
+    // the small version is optional; a bad one is simply dropped
+    const t = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String(p.thumb || ''));
+    const thumb = t && t[1].length * 0.75 <= VAULT.maxThumbBytes ? t[1] : null;
+    parsed.push({ mime: m[1], data: m[2], thumb, kind: PHOTO_KINDS.indexOf(p.kind) !== -1 ? p.kind : 'other' });
   }
   const have = parsed.map((p) => p.kind);
   const missing = REQUIRED_KINDS[b.tier].filter((k) => have.indexOf(k) === -1);
@@ -311,20 +378,19 @@ async function createListing({ request, env }) {
   const stored = [];
   for (let i = 0; i < parsed.length; i++) stored.push(await storePhoto(env, id, i, parsed[i]));
   await env.DB.batch(parsed.map((p, i) => env.DB.prepare(
-    'INSERT INTO mk_photos (listing_id, idx, kind, mime, data, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(id, i, p.kind, p.mime, stored[i], at)));
+    'INSERT INTO mk_photos (listing_id, idx, kind, mime, data, thumb, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, i, p.kind, p.mime, stored[i].data, stored[i].thumb, at)));
   await logEvent(env, { listingId: id, kind: 'submitted' });
 
   const title = listingTitle({ brand, model });
-  await mail(env, me.email, 'We are checking your listing',
-    'Hi ' + (me.name || '') + ',\n\nThanks for listing your ' + title + ' (EU ' + size + ').\n' +
-    (b.tier === 'photo'
-      ? 'A ShoeLab specialist now checks your photos for authenticity. If everything adds up, the listing goes live with a Photo Verified badge.'
-      : 'We give it a quick look and put it live. Once it sells, you post it to our lab and a specialist authenticates it by hand before it travels on to the buyer.') +
-    '\n\nUsually within one working day.');
-  await mailStudio(env, 'New listing to review: ' + title,
-    'Seller: ' + me.email + '\nTier: ' + b.tier + '\nFormat: ' + format + '\nPrice: ' + euro(format === 'auction' ? start : buyNow) +
-    '\n\nReview it: ' + siteUrl(env) + '/vault-lab.html', me.email);
+  await tell(env, me, 'listingSubmitted', {
+    title, size, url: '/vault-item.html?id=' + id, next: { k: b.tier === 'photo' ? 'nextPhotoCheck' : 'nextLabCheck' },
+  });
+  await tellStudio(env, 'sListingReview', {
+    title, url: LAB,
+    rows: [['seller', me.name + ' <' + me.email + '>'], ['tier', { k: b.tier === 'lab' ? 'tierLab' : 'tierPhoto' }],
+      ['format', { k: format === 'auction' ? 'auction' : 'fixed' }], ['price', { m: format === 'auction' ? start : buyNow }], ['size', 'EU ' + size]],
+  }, me.email);
   return json({ ok: true, id, status: 'review' });
 }
 
@@ -332,7 +398,7 @@ async function createListing({ request, env }) {
 // Bidders enter the most they would pay; the Vault bids for them one step
 // at a time, so the price only rises as far as the competition forces it.
 async function placeBid({ request, env }) {
-  const me = await needUser(request, env);
+  const me = await needVerified(request, env);
   const b = await body(request);
   const id = intParam(b.id), max = cents(b.max);
   if (!id || !Number.isFinite(max)) fail(400, 'Enter your maximum bid', 'bid_input');
@@ -398,10 +464,9 @@ async function placeBid({ request, env }) {
     if (!done[done.length - 1].meta.changes) continue;   // someone else bid first — re-read and retry
 
     if (outbidUser) {
-      const prev = await userById(env, outbidUser);
-      if (prev) await mail(env, prev.email, 'You have been outbid on ' + listingTitle(l),
-        'Someone outbid you on ' + listingTitle(l) + '. The price is now ' + euro(price) + '.\n\n' +
-        'Bid again: ' + siteUrl(env) + '/vault-item.html?id=' + id);
+      await tell(env, await userById(env, outbidUser), 'outbid', {
+        title: listingTitle(l), price: { m: price }, url: '/vault-item.html?id=' + id,
+      });
     }
     return json({
       ok: true, leading: !lost, outbid: lost, price, bids: l.bids + counted, endsAt: ends,
@@ -413,7 +478,7 @@ async function placeBid({ request, env }) {
 
 // ── POST buy ───────────────────────────────────────────────────────────────
 async function buyNow({ request, env }) {
-  const me = await needUser(request, env);
+  const me = await needVerified(request, env);
   const id = intParam((await body(request)).id);
   const l = await freshListing(env, id);
   if (!l || l.status !== 'live' || !l.buy_now) fail(409, 'This pair is no longer available to buy', 'unavailable');
@@ -430,7 +495,7 @@ async function buyNow({ request, env }) {
 
 // ── POST offer ─────────────────────────────────────────────────────────────
 async function makeOffer({ request, env }) {
-  const me = await needUser(request, env);
+  const me = await needVerified(request, env);
   const b = await body(request);
   const id = intParam(b.id), amount = cents(b.amount);
   const l = await freshListing(env, id);
@@ -450,11 +515,10 @@ async function makeOffer({ request, env }) {
   ).bind(id, me.id, l.seller_id, amount, clean(b.message || '', 300), auto ? 'declined' : 'pending',
     isoIn(VAULT.offerTtlMs), at, at).run();
   if (auto) return json({ ok: true, offerId: res.meta.last_row_id, status: 'declined', autoDeclined: true });
-  const seller = await userById(env, l.seller_id);
-  if (seller) await mail(env, seller.email, 'New offer: ' + euro(amount) + ' for ' + listingTitle(l),
-    'Someone offered ' + euro(amount) + ' for your ' + listingTitle(l) + ' (listed at ' + euro(l.buy_now) + ').\n' +
-    (b.message ? '\nTheir note: "' + clean(b.message, 300) + '"\n' : '') +
-    '\nAccept, decline or counter within 48 hours:\n' + siteUrl(env) + '/vault-me.html#offers');
+  await tell(env, await userById(env, l.seller_id), 'offerReceived', {
+    title: listingTitle(l), amount: { m: amount }, price: { m: l.buy_now }, message: clean(b.message || '', 300),
+    url: '/vault-me.html#offers',
+  });
   return json({ ok: true, offerId: res.meta.last_row_id, status: 'pending' });
 }
 
@@ -484,19 +548,18 @@ async function respondOffer({ request, env }) {
     if (b.action === 'accept') return json({ ok: true, status: 'accepted', orderId: await sell(o.amount) });
     if (b.action === 'decline') {
       await set('declined');
-      const buyer = await userById(env, o.buyer_id);
-      if (buyer) await mail(env, buyer.email, 'Offer declined',
-        'Your offer of ' + euro(o.amount) + ' for ' + (l ? listingTitle(l) : 'the pair') + ' was declined. You can still buy it at the listed price or make a new offer.');
+      await tell(env, await userById(env, o.buyer_id), 'offerDeclined', {
+        title: l ? listingTitle(l) : '', amount: { m: o.amount }, url: '/vault-item.html?id=' + o.listing_id,
+      });
       return json({ ok: true, status: 'declined' });
     }
     if (b.action === 'counter') {
       const c = cents(b.amount);
       if (!(c > o.amount) || (l.buy_now && c >= l.buy_now)) fail(400, 'A counter-offer sits between their offer and your price', 'counter_range');
       await set('countered', { counter: c, expires: isoIn(VAULT.offerTtlMs) });
-      const buyer = await userById(env, o.buyer_id);
-      if (buyer) await mail(env, buyer.email, 'Counter-offer: ' + euro(c),
-        'The seller countered your ' + euro(o.amount) + ' offer for ' + listingTitle(l) + ' with ' + euro(c) + '.\n\n' +
-        'Accept or decline within 48 hours: ' + siteUrl(env) + '/vault-me.html#offers');
+      await tell(env, await userById(env, o.buyer_id), 'counterOffer', {
+        title: listingTitle(l), offer: { m: o.amount }, amount: { m: c }, url: '/vault-me.html#offers',
+      });
       return json({ ok: true, status: 'countered' });
     }
   }
@@ -540,7 +603,7 @@ async function cancelListing({ request, env }) {
 // A pair that already passed review and went live goes straight back on sale
 // with new terms; its photos move across, so nothing is stored twice.
 async function relistListing({ request, env }) {
-  const me = await needUser(request, env);
+  const me = await needVerified(request, env);
   const b = await body(request);
   const l = await env.DB.prepare('SELECT * FROM mk_listings WHERE id = ?').bind(intParam(b.id)).first();
   if (!l || l.seller_id !== me.id) fail(404, 'Listing not found', 'gone');
@@ -573,23 +636,32 @@ async function orderView(env, o, me, spec) {
   const asBuyer = me && o.buyer_id === me.id;
   const v = {
     id: o.id, listingId: o.listing_id, title: l ? listingTitle(l) : 'Listing #' + o.listing_id,
-    size: l && l.size, photo: l && l.photo_id ? '/api/market/photo?id=' + l.photo_id : null,
+    size: l && l.size, photo: l && l.photo_id ? '/api/market/photo?id=' + l.photo_id + '&s=t' : null,
     tier: o.tier, source: o.source, status: o.status, payMode: o.pay_mode,
     itemPrice: o.item_price, authFee: o.auth_fee, shipFee: o.ship_fee, total: o.total,
     trackingIn: o.tracking_in, trackingOut: o.tracking_out,
     createdAt: o.created_at, updatedAt: o.updated_at,
-    events: (ev.results || []).map((e) => ({ kind: e.kind, note: e.note, at: e.created_at })),
+    // payouts are between the seller and ShoeLab; Stripe references and
+    // error texts are for the specialists
+    events: (ev.results || []).filter((e) => spec || asSeller || e.kind.indexOf('payout_') !== 0)
+      .map((e) => ({ kind: e.kind, note: spec || !/^(payout|refund)_/.test(e.kind) ? e.note : null, at: e.created_at })),
     role: asSeller ? 'seller' : asBuyer ? 'buyer' : 'lab',
   };
   const fb = await env.DB.prepare('SELECT rating, comment FROM mk_feedback WHERE order_id = ?').bind(o.id).first();
   if (fb) v.feedback = { rating: fb.rating, comment: fb.comment };
-  if (asSeller || spec) { v.payout = o.payout; v.commission = o.commission; }
+  if (asSeller || spec) {
+    v.payout = o.payout; v.commission = o.commission;
+    // manual | waiting (seller has not finished Stripe) | sending | sent | failed
+    v.payoutStatus = o.payout_status || null; v.payoutAt = o.payout_at || null;
+  }
+  if (o.refund_ref) v.refunded = true;
   // the buyer's address goes to the seller only when the seller posts direct
   const showAddress = asBuyer || spec || (asSeller && o.tier === 'photo' && o.status !== 'awaiting_payment');
   if (showAddress) {
     v.address = { name: o.ship_name, line1: o.ship_line1, line2: o.ship_line2, city: o.ship_city, postal: o.ship_postal, country: o.ship_country };
   }
-  if (asSeller && o.status === 'paid') v.shipInstructions = shipInstructions(env, o, null);
+  if (asSeller && o.status === 'paid') v.shipTo = shipTo(env, o);
+  if (spec) { v.stripePaid = !!o.stripe_pi; v.payoutRef = o.payout_ref || null; v.refundRef = o.refund_ref || null; }
   return v;
 }
 
@@ -632,6 +704,8 @@ async function payOrder({ request, env }) {
       client_reference_id: 'vault_' + o.id,
       'metadata[vault_order]': String(o.id),
       'payment_intent_data[metadata][vault_order]': String(o.id),
+      // ties the charge to the later transfer to the seller (Stripe Connect)
+      'payment_intent_data[transfer_group]': 'vault_' + o.id,
     });
     if (!s || !s.url) fail(502, (s && s.error && s.error.message) || 'Payment could not be started', 'pay_failed');
     await env.DB.prepare('UPDATE mk_orders SET stripe_session = ?, pay_mode = ? WHERE id = ?').bind(s.id, 'stripe', o.id).run();
@@ -640,11 +714,10 @@ async function payOrder({ request, env }) {
   // no card payments configured yet: ShoeLab sends payment details by hand
   await env.DB.prepare("UPDATE mk_orders SET pay_mode = 'manual' WHERE id = ?").bind(o.id).run();
   await logEvent(env, { orderId: o.id, kind: 'payment_requested' });
-  await mailStudio(env, 'Payment details needed for order #' + o.id,
-    'Send ' + me.email + ' payment details for ' + euro(o.total) + ' (' + listingTitle(l) + '), then mark it paid in the lab console:\n' +
-    siteUrl(env) + '/vault-lab.html', me.email);
-  await mail(env, me.email, 'Payment for ' + listingTitle(l),
-    'Thanks. We will email you payment details for ' + euro(o.total) + ' within one working day. The pair is reserved for you meanwhile.');
+  await tellStudio(env, 'sPaymentNeeded', {
+    order: o.id, title: listingTitle(l), amount: { m: o.total }, buyerEmail: me.email, url: LAB,
+  }, me.email);
+  await tell(env, me, 'paymentManual', { title: listingTitle(l), amount: { m: o.total } });
   return json({ ok: true, manual: true });
 }
 
@@ -663,11 +736,14 @@ async function shipOrder({ request, env }) {
   await logEvent(env, { orderId: o.id, kind: lab ? 'to_lab' : 'shipped', note: tracking });
   const l = await loadListing(env, o.listing_id);
   if (lab) {
-    await mailStudio(env, 'Incoming to the lab: order #' + o.id, listingTitle(l) + '\nTracking: ' + tracking);
+    await tellStudio(env, 'sIncoming', {
+      order: o.id, url: LAB,
+      rows: [['item', listingTitle(l) + ' · EU ' + l.size], ['tracking', tracking], ['seller', me.name + ' <' + me.email + '>']],
+    }, me.email);
   } else {
-    const buyer = await userById(env, o.buyer_id);
-    if (buyer) await mail(env, buyer.email, 'Your ' + listingTitle(l) + ' is on its way',
-      'The seller posted your pair.\nTracking: ' + tracking + '\n\nConfirm delivery when it arrives: ' + siteUrl(env) + '/vault-me.html#order-' + o.id);
+    await tell(env, await userById(env, o.buyer_id), 'shippedToBuyer', {
+      title: listingTitle(l), url: '/vault-me.html#order-' + o.id, rows: [['tracking', tracking]],
+    });
   }
   return json({ ok: true });
 }
@@ -680,10 +756,7 @@ async function receivedOrder({ request, env }) {
     .bind(nowIso(), o.id).run();
   if (!r.meta.changes) fail(409, 'This order is not out for delivery', 'wrong_step');
   await logEvent(env, { orderId: o.id, kind: 'delivered' });
-  const seller = await userById(env, o.seller_id);
-  if (seller) await mail(env, seller.email, 'Delivered — payout on its way',
-    'The buyer confirmed delivery of order #' + o.id + '. Your payout of ' + euro(o.payout) + ' is being released.');
-  await payoutDue(env, o, 'the buyer confirmed delivery');
+  await orderDelivered(env, o, 'buyer');
   return json({ ok: true });
 }
 
@@ -703,13 +776,13 @@ async function reportProblem({ request, env }) {
   const l = await loadListing(env, o.listing_id);
   const title = l ? listingTitle(l) : 'order #' + o.id;
   const seller = await userById(env, o.seller_id);
-  await mailStudio(env, 'PROBLEM reported on order #' + o.id + ': ' + title,
-    'Buyer: ' + me.email + '\nSeller: ' + (seller ? seller.email : o.seller_id) + '\nTier: ' + o.tier +
-    '\nPaid: ' + euro(o.total) + '\n\nThe buyer says:\n' + note + '\n\nResolve it in the lab console: ' + siteUrl(env) + '/vault-lab.html', me.email);
-  await mail(env, me.email, 'We received your report on order #' + o.id,
-    'Thanks for telling us. The seller is not paid while a ShoeLab specialist looks into it. We will get back to you within one working day.\n\nYour report:\n' + note);
-  if (seller) await mail(env, seller.email, 'The buyer reported a problem with order #' + o.id,
-    'The buyer of ' + title + ' reported a problem with the delivery. Your payout is on hold while a ShoeLab specialist looks into it. We will contact you shortly.');
+  await tellStudio(env, 'sProblem', {
+    order: o.id, title, message: note, url: LAB,
+    rows: [['buyer', me.name + ' <' + me.email + '>'], ['seller', seller ? seller.name + ' <' + seller.email + '>' : String(o.seller_id)],
+      ['tier', { k: o.tier === 'lab' ? 'tierLab' : 'tierPhoto' }], ['paid', { m: o.total }]],
+  }, me.email);
+  await tell(env, me, 'problemReceived', { order: o.id, message: note });
+  await tell(env, seller, 'problemSeller', { order: o.id, title });
   return json({ ok: true });
 }
 
@@ -727,10 +800,9 @@ async function leaveFeedback({ request, env }) {
   ).bind(o.id, o.seller_id, me.id, rating, comment || null, nowIso()).run();
   if (!r.meta.changes) fail(409, 'You already left feedback for this order', 'feedback_done');
   await logEvent(env, { orderId: o.id, kind: 'feedback', note: String(rating) });
-  const seller = await userById(env, o.seller_id);
-  const word = rating > 0 ? 'positive' : rating < 0 ? 'negative' : 'neutral';
-  if (seller) await mail(env, seller.email, 'New ' + word + ' feedback',
-    'The buyer of order #' + o.id + ' left ' + word + ' feedback' + (comment ? ':\n\n  "' + comment + '"' : '.'));
+  await tell(env, await userById(env, o.seller_id), 'feedbackNew', {
+    order: o.id, rating: { k: rating > 0 ? 'ratePos' : rating < 0 ? 'rateNeg' : 'rateNeu' }, message: comment,
+  });
   return json({ ok: true });
 }
 
@@ -771,8 +843,10 @@ async function getMe({ request, env }) {
     createdAt: o.created_at, buyer: o.buyer_name ? shortName(o.buyer_name) : undefined, listingStatus: o.listing_status,
   });
   return json({
-    user: { id: me.id, name: me.name, email: me.email },
+    user: { id: me.id, name: me.name, email: me.email, verified: !!me.verified },
     specialist: spec,
+    connect: connectOn(env),
+    seller: await sellerState(env, me.id),
     selling: {
       listings: (mine.results || []).map((l) => Object.assign(card(l), { openOffers: l.open_offers, reviewNote: l.review_note })),
       offers: (received.results || []).map(offerView),
@@ -793,7 +867,7 @@ async function getQueue({ request, env }) {
   const me = await needSpecialist(request, env);
   await housekeeping(env, true);
   const review = await env.DB.prepare(
-    `SELECT l.*, u.name AS seller_name, u.email AS seller_email FROM mk_listings l
+    `SELECT l.*, u.name AS seller_name, u.email AS seller_email, u.email_verified_at AS seller_verified FROM mk_listings l
      LEFT JOIN users u ON u.id = l.seller_id WHERE l.status = 'review' ORDER BY l.id ASC LIMIT 50`
   ).all();
   const items = [];
@@ -801,13 +875,14 @@ async function getQueue({ request, env }) {
     const ph = await env.DB.prepare('SELECT id, kind FROM mk_photos WHERE listing_id = ? ORDER BY idx').bind(l.id).all();
     items.push(Object.assign(card(l), {
       description: l.description, startPrice: l.start_price, duration: l.duration_days, minOffer: l.min_offer,
-      seller: { name: l.seller_name, email: l.seller_email },
+      seller: { name: l.seller_name, email: l.seller_email, emailVerifiedAt: l.seller_verified }, sellerId: l.seller_id,
       photos: (ph.results || []).map((p) => ({ url: '/api/market/photo?id=' + p.id, kind: p.kind })),
     }));
   }
   const active = await env.DB.prepare(
     `SELECT * FROM mk_orders WHERE status IN ('paid','to_lab','in_lab','verified','disputed')
        OR (status = 'awaiting_payment' AND pay_mode = 'manual')
+       OR (status = 'delivered' AND payout_status IN ('failed','waiting'))
      ORDER BY CASE status WHEN 'disputed' THEN 0 ELSE 1 END, id ASC LIMIT 100`
   ).all();
   const orders = [];
@@ -823,9 +898,19 @@ async function getQueue({ request, env }) {
             (SELECT COUNT(*) FROM mk_listings WHERE status = 'review') AS review,
             (SELECT COUNT(*) FROM mk_orders WHERE status NOT IN ('delivered','cancelled','failed','refunded')) AS open_orders,
             (SELECT COUNT(*) FROM mk_orders WHERE status = 'disputed') AS disputes,
-            (SELECT COALESCE(SUM(commission + auth_fee),0) FROM mk_orders WHERE status IN ('delivered','shipped','verified')) AS revenue`
+            (SELECT COALESCE(SUM(commission + auth_fee),0) FROM mk_orders WHERE status IN ('delivered','shipped','verified')) AS revenue,
+            (SELECT COALESCE(SUM(LENGTH(data) + COALESCE(LENGTH(thumb),0)),0) FROM mk_photos WHERE data NOT LIKE 'r2:%') AS photo_bytes,
+            (SELECT COUNT(*) FROM mk_photos WHERE data NOT LIKE 'r2:%') AS photos_in_db`
   ).first();
-  return json({ review: items, orders, stats }, 200, { 'Cache-Control': 'no-store' });
+  for (const it of items) {
+    const acct = connectOn(env) ? await sellerRow(env, it.sellerId) : null;
+    it.seller.verifiedSeller = !!(acct && acct.details_submitted);
+    it.seller.emailVerified = !!it.seller.emailVerifiedAt;
+    delete it.sellerId; delete it.seller.emailVerifiedAt;
+  }
+  stats.r2 = !!env.VAULT_PHOTOS;
+  stats.connect = connectOn(env);
+  return json({ review: items, orders, stats, tickets: await ticketsForQueue(env) }, 200, { 'Cache-Control': 'no-store' });
 }
 
 async function review({ request, env }) {
@@ -840,16 +925,15 @@ async function review({ request, env }) {
     await env.DB.prepare("UPDATE mk_listings SET status = 'live', live_at = ?, ends_at = ?, review_note = ?, updated_at = ? WHERE id = ? AND status = 'review'")
       .bind(at, ends, note || null, at, l.id).run();
     await logEvent(env, { listingId: l.id, kind: 'approved', note });
-    if (seller) await mail(env, seller.email, 'Your ' + listingTitle(l) + ' is live',
-      (l.tier === 'photo' ? 'Our specialists checked your photos and it carries the Photo Verified badge.\n' : 'It is live now.\n') +
-      'See it here: ' + siteUrl(env) + '/vault-item.html?id=' + l.id);
+    await tell(env, seller, 'listingLive', {
+      title: listingTitle(l), url: '/vault-item.html?id=' + l.id, note: { k: l.tier === 'photo' ? 'livePhoto' : 'liveLab' },
+    });
   } else if (b.decision === 'reject') {
     if (!note) fail(400, 'Tell the seller why', 'note_needed');
     await env.DB.prepare("UPDATE mk_listings SET status = 'rejected', review_note = ?, updated_at = ? WHERE id = ? AND status = 'review'")
       .bind(note, at, l.id).run();
     await logEvent(env, { listingId: l.id, kind: 'rejected', note });
-    if (seller) await mail(env, seller.email, 'We could not accept your ' + listingTitle(l),
-      'Our specialist could not approve this listing:\n\n  ' + note + '\n\nYou are welcome to list it again with the issue fixed.');
+    await tell(env, seller, 'listingRejected', { title: listingTitle(l), message: note, url: '/vault-sell.html' });
   } else fail(400, 'Unknown decision', 'bad_action');
   return json({ ok: true });
 }
@@ -875,51 +959,126 @@ async function lab({ request, env }) {
       break;
     case 'received':
       await move('to_lab', 'in_lab');
-      if (buyer) await mail(env, buyer.email, title + ' arrived at the lab', 'Your pair is with our specialists now. We will let you know the result.');
+      await tell(env, buyer, 'labArrived', { title });
       break;
     case 'pass':
       await move('in_lab', 'verified');
-      if (buyer) await mail(env, buyer.email, 'Authenticated: ' + title, 'Good news — your pair passed our in-lab authentication. It ships to you next.' + (note ? '\n\nSpecialist note: ' + note : ''));
-      if (seller) await mail(env, seller.email, 'Authenticated: ' + title, 'Your pair passed authentication. Your payout of ' + euro(o.payout) + ' is released once it is delivered.');
+      await tell(env, buyer, 'labPassedBuyer', { title, message: note });
+      await tell(env, seller, 'labPassedSeller', { title, payout: { m: o.payout } });
       break;
     case 'fail':
       if (!note) fail(400, 'Record why it failed', 'note_needed');
       await move('in_lab', 'failed');
-      if (buyer) await mail(env, buyer.email, 'Order #' + o.id + ' did not pass authentication',
-        'Our specialists could not authenticate this pair, so it will not be sent to you. Your payment of ' + euro(o.total) + ' is refunded in full.');
-      if (seller) await mail(env, seller.email, title + ' did not pass authentication',
-        'Our specialists could not authenticate the pair:\n\n  ' + note + '\n\nWe will send it back to you.');
-      await mailStudio(env, 'REFUND order #' + o.id, 'Refund ' + euro(o.total) + ' to ' + (buyer ? buyer.email : o.buyer_id) + ' and return the pair to ' + (seller ? seller.email : o.seller_id) + '.');
+      await tell(env, buyer, 'labFailedBuyer', { order: o.id, amount: { m: o.total } });
+      await tell(env, seller, 'labFailedSeller', { title, message: note });
+      // the buyer already heard about the refund in the email above
+      await refundOrder(env, o, { note, tellBuyer: false });
       break;
     case 'shipped': {
       const tracking = clean(b.tracking, 80);
       if (!tracking) fail(400, 'Add the tracking number', 'tracking');
       await move('verified', 'shipped', 'tracking_out', tracking);
-      if (buyer) await mail(env, buyer.email, 'Authenticated and on its way: ' + title,
-        'Your Lab Verified pair is on its way.\nTracking: ' + tracking + '\n\nConfirm delivery when it arrives: ' + siteUrl(env) + '/vault-me.html#order-' + o.id);
+      await tell(env, buyer, 'labShipped', { title, url: '/vault-me.html#order-' + o.id, rows: [['tracking', tracking]] });
       break;
     }
     // a reported problem ends one of two ways
     case 'release':
       await move('disputed', 'delivered');
-      if (seller) await mail(env, seller.email, 'Problem resolved — payout released',
-        'Our specialist closed the report on order #' + o.id + '. Your payout of ' + euro(o.payout) + ' is being released.' + (note ? '\n\nNote: ' + note : ''));
-      if (buyer) await mail(env, buyer.email, 'Your report on order #' + o.id + ' is closed',
-        'Our specialist reviewed your report and closed it.' + (note ? '\n\n' + note : '') + '\n\nQuestions? Just reply to this email.');
-      await payoutDue(env, o, 'problem report closed in the seller\'s favour');
+      await tell(env, seller, 'disputeReleased', { order: o.id, payout: { m: o.payout }, message: note });
+      await tell(env, buyer, 'disputeClosed', { order: o.id, message: note });
+      await orderDelivered(env, o, 'released');
       break;
     case 'refund':
       if (!note) fail(400, 'Record why the buyer is refunded', 'note_needed');
       await move('disputed', 'refunded');
-      if (buyer) await mail(env, buyer.email, 'Refund for order #' + o.id,
-        'We are refunding your payment of ' + euro(o.total) + ' in full.\n\n' + note);
-      if (seller) await mail(env, seller.email, 'Order #' + o.id + ' was refunded',
-        'After reviewing the buyer\'s report, we refunded order #' + o.id + ':\n\n  ' + note + '\n\nWe will be in touch about returning the pair.');
-      await mailStudio(env, 'REFUND order #' + o.id, 'Refund ' + euro(o.total) + ' to ' + (buyer ? buyer.email : o.buyer_id) + '.\nReason: ' + note);
+      await refundOrder(env, o, { note });
+      await tell(env, seller, 'refundedSeller', { order: o.id, title, message: note });
       break;
+    // a payout that failed, or waited for the seller's Stripe setup, can be retried
+    case 'payout': {
+      if (o.status !== 'delivered' || ['failed', 'waiting'].indexOf(o.payout_status) === -1) fail(409, 'This payout cannot be retried', 'wrong_step');
+      const res = await releasePayout(env, o, 'retry');
+      return json({ ok: res === 'sent', payout: res });
+    }
     default: fail(400, 'Unknown action', 'bad_action');
   }
   return json({ ok: true });
+}
+
+// ── payouts (Stripe Connect) ───────────────────────────────────────────────
+// A seller verifies once with Stripe — identity and bank account, on Stripe's
+// own pages — and from then on the money for each delivered order reaches
+// their Stripe account by itself.
+async function payoutsSetup({ request, env }) {
+  const me = await needVerified(request, env);
+  if (!connectOn(env)) fail(409, 'Payouts through Stripe are not switched on', 'no_connect');
+  let row = await sellerRow(env, me.id);
+  if (!row) {
+    const a = await stripeApi(env, 'accounts', {
+      type: 'express', country: 'DE', email: me.email,
+      'capabilities[card_payments][requested]': 'true', 'capabilities[transfers][requested]': 'true',
+      'business_profile[mcc]': '5931', 'business_profile[url]': siteUrl(env) + '/vault.html',
+      'business_profile[product_description]': 'Selling sneakers on the ShoeLab Vault marketplace',
+      'metadata[user_id]': String(me.id),
+    // a key per ten minutes: a double click creates one account, while an
+    // error Stripe remembers (say, Connect not switched on yet) clears soon
+    }, { idem: 'vault-seller-' + me.id + '-' + Math.floor(Date.now() / 600000) });
+    if (!a || !a.id) fail(502, (a && a.error && a.error.message) || 'Stripe could not start the setup', 'stripe_failed');
+    await env.DB.prepare('INSERT OR IGNORE INTO mk_sellers (user_id, stripe_account, created_at, updated_at) VALUES (?, ?, ?, ?)')
+      .bind(me.id, a.id, nowIso(), nowIso()).run();
+    row = await sellerRow(env, me.id);
+  }
+  const back = siteUrl(env) + '/vault-me.html';
+  const link = await stripeApi(env, 'account_links', {
+    account: row.stripe_account, type: 'account_onboarding',
+    refresh_url: back + '?payouts=retry#payouts', return_url: back + '?payouts=done#payouts',
+  });
+  if (!link || !link.url) fail(502, (link && link.error && link.error.message) || 'Stripe could not start the setup', 'stripe_failed');
+  return json({ ok: true, url: link.url });
+}
+
+async function payoutsStatus({ request, env }) {
+  const me = await needUser(request, env);
+  if (!connectOn(env)) return json({ connect: false });
+  const row = await refreshSeller(env, me.id);
+  const released = row && row.payouts_enabled ? await releaseWaiting(env, me.id) : 0;
+  const waiting = await env.DB.prepare(
+    "SELECT COALESCE(SUM(payout),0) AS s, COUNT(*) AS n FROM mk_orders WHERE seller_id = ? AND payout_status IN ('waiting','failed')"
+  ).bind(me.id).first();
+  const paid = await env.DB.prepare(
+    "SELECT COALESCE(SUM(payout),0) AS s, COUNT(*) AS n FROM mk_orders WHERE seller_id = ? AND payout_status = 'sent'"
+  ).bind(me.id).first();
+  return json({
+    connect: true, connected: !!row, ready: !!(row && row.details_submitted), payouts: !!(row && row.payouts_enabled),
+    due: row ? row.due : 0, released, waiting: { amount: waiting.s, count: waiting.n }, paid: { amount: paid.s, count: paid.n },
+  }, 200, { 'Cache-Control': 'no-store' });
+}
+
+// Stripe's own dashboard for the seller: payouts, bank account, tax details.
+async function payoutsDashboard({ request, env }) {
+  const me = await needUser(request, env);
+  const row = connectOn(env) ? await sellerRow(env, me.id) : null;
+  if (!row || !row.details_submitted) fail(409, 'Finish setting up payouts first', 'no_connect');
+  const l = await stripeApi(env, 'accounts/' + encodeURIComponent(row.stripe_account) + '/login_links', {});
+  if (!l || !l.url) fail(502, (l && l.error && l.error.message) || 'Stripe could not open the dashboard', 'stripe_failed');
+  return json({ ok: true, url: l.url });
+}
+
+// ── support ────────────────────────────────────────────────────────────────
+async function supportChatRoute({ request, env }) {
+  const me = await currentUser(request, env);
+  const r = await supportChat(request, env, me, await body(request));
+  return json(r.body, r.status);
+}
+async function supportTicketRoute({ request, env }) {
+  const me = await currentUser(request, env);
+  const r = await supportTicket(request, env, me, await body(request));
+  return json(r.body, r.status);
+}
+async function supportAnswerRoute({ request, env }) {
+  await needSpecialist(request, env);
+  const r = await supportAnswer(env, await body(request));
+  return json(r.body, r.status);
 }
 
 const ROUTES = {
@@ -944,6 +1103,13 @@ const ROUTES = {
   'POST order/feedback': leaveFeedback,
   'POST review': review,
   'POST lab': lab,
+  'POST lab/photos-to-r2': photosToR2,
+  'POST payouts/setup': payoutsSetup,
+  'GET payouts/status': payoutsStatus,
+  'POST payouts/dashboard': payoutsDashboard,
+  'POST support/chat': supportChatRoute,
+  'POST support/ticket': supportTicketRoute,
+  'POST support/answer': supportAnswerRoute,
 };
 
 export async function onRequest(context) {

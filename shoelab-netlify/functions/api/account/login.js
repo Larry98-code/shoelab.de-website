@@ -19,7 +19,7 @@ export async function onRequestPost(context) {
   if (!validEmail(email) || !password) return json({ error: 'Email and password are required' }, 400);
 
   const user = await env.DB.prepare(
-    'SELECT id, name, email, pw_salt, pw_hash FROM users WHERE email = ?'
+    'SELECT * FROM users WHERE email = ?'
   ).bind(email).first();
 
   // Same response whether or not the account exists, to avoid user enumeration.
@@ -33,7 +33,7 @@ export async function onRequestPost(context) {
   );
 
   return json(
-    { user: { id: user.id, name: user.name, email: user.email } },
+    { user: { id: user.id, name: user.name, email: user.email, verified: !!user.email_verified_at } },
     200,
     { 'Set-Cookie': setCookie('shoelab_session', token) }
   );

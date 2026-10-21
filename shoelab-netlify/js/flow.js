@@ -503,6 +503,7 @@
   function initLang(render) {
     var apply = function (L) {
       lang = (T[L] || L === 'en') ? L : L;   // unknown codes still fall back per-key
+      if (w.SLGeo && w.SLGeo.remember) w.SLGeo.remember(lang);
       applyI18n();
       if (render) render();
     };

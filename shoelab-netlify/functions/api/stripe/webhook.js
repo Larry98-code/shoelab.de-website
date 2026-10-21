@@ -1,6 +1,5 @@
-import {
-  json, verifyStripeSignature, sendEmail, notifyAddress, dropoffInstructions,
-} from '../../_shared/util.js';
+import { json, verifyStripeSignature } from '../../_shared/util.js';
+import { sendMail, sendStudio } from '../../_shared/mail.js';
 import { ensureSchema, markPaid } from '../../_shared/vault.js';
 
 // Stripe sends events here. Configure the endpoint URL + signing secret in the
@@ -48,7 +47,11 @@ export async function onRequestPost(context) {
           : obj.amount_received != null ? obj.amount_received : obj.amount_paid;
         const settled = event.type !== 'checkout.session.completed' || !obj.payment_status || obj.payment_status === 'paid';
         if (order && amount === order.total && String(obj.currency || '').toLowerCase() === 'eur' && settled) {
-          await markPaid(env, id, 'stripe');
+          // the payment intent is what the seller's payout and any refund hang on
+          const pi = event.type === 'payment_intent.succeeded' ? obj.id : (typeof obj.payment_intent === 'string' ? obj.payment_intent : null);
+          const fresh = await markPaid(env, id, 'stripe', pi);
+          // a later event may carry the payment intent the first one lacked
+          if (!fresh && pi) await env.DB.prepare('UPDATE mk_orders SET stripe_pi = ? WHERE id = ? AND stripe_pi IS NULL').bind(pi, id).run();
         }
       }
       return json({ received: true }, 200);
@@ -105,56 +108,29 @@ export async function onRequestPost(context) {
 }
 
 async function notifyPaid(env, row, obj, eventType, fallbackEmail) {
-  const amount = obj.amount_total != null ? (obj.amount_total / 100).toFixed(2)
-               : obj.amount_paid != null ? (obj.amount_paid / 100).toFixed(2)
-               : obj.amount != null ? (obj.amount / 100).toFixed(2)
-               : (row && row.amount) || '';
-  const cur = (obj.currency || 'eur').toUpperCase();
-  const money = amount ? amount + ' ' + cur : 'see Stripe';
-
+  const cents = obj.amount_total != null ? obj.amount_total : obj.amount_paid != null ? obj.amount_paid
+    : obj.amount != null ? obj.amount : row && row.amount ? Math.round(parseFloat(row.amount) * 100) : null;
+  const money = cents != null && Number.isFinite(cents) ? { m: cents } : 'see Stripe';
   const ref = row && row.id ? 'SL-' + String(row.id).padStart(5, '0') : '(unmatched)';
   const name = row ? ((row.first_name || '') + ' ' + (row.last_name || '')).trim() : '';
-  const when = row ? (row.date || '?') + ' at ' + (row.time_slot || '?') : 'see booking';
   const email = (row && row.email) || fallbackEmail || '';
+  const service = (row && (row.service || row.plan)) || '—';
+  const base = { ref, date: { d: (row && row.date) || '' }, time: (row && row.time_slot) || '?', when: { k: 'whenAt' }, service, amount: money };
 
-  const studioText =
-    '[PAID] ' + (name || email) + ' — ' + ref + '\n' +
-    '======================================\n\n' +
-    'PAID     ' + money + '\n' +
-    'WHEN     ' + when + '\n' +
-    'SERVICE  ' + ((row && (row.service || row.plan)) || '—') + '\n' +
-    'TYPE     ' + ((row && row.type === 'subscription') ? 'Monthly subscription' : 'One-time') + '\n\n' +
-    'CUSTOMER\n' +
-    '  Name   ' + (name || '—') + '\n' +
-    '  Email  ' + (email || '—') + '\n' +
-    '  Phone  ' + ((row && row.phone) || '—') + '\n\n' +
-    'NOTES\n  ' + ((row && row.notes) || '—') + '\n\n' +
-    'Stripe event: ' + eventType + '\n' +
-    (obj.id ? 'Stripe id:    ' + obj.id + '\n' : '') +
-    '--\nThe appointment is confirmed. Reply to reach the customer.\n';
-
-  await sendEmail(env, {
-    to: notifyAddress(env),
-    subject: '[PAID] ' + (name || email) + ' — ' + when + ' — ' + money,
-    text: studioText,
-    replyTo: email || undefined,
-  });
+  await sendStudio(env, 'sBookingPaid', Object.assign({}, base, {
+    customer: name || email, message: (row && row.notes) || '',
+    rows: [['paid', money], ['when', { k: 'whenAt' }], ['service', service],
+      ['plan', { k: row && row.type === 'subscription' ? 'monthly' : 'oneTime' }],
+      ['name', name || '—'], ['email', email || '—'], ['phone', (row && row.phone) || '—'], ['ref', ref]],
+  }), email || undefined, false);
 
   if (email) {
-    await sendEmail(env, {
-      to: email,
-      subject: 'Payment confirmed — your ShoeLab appointment ' + ref,
-      text:
-        'Hi' + (row && row.first_name ? ' ' + row.first_name : '') + ',\n\n' +
-        'Your payment went through and your appointment is confirmed.\n\n' +
-        '  Reference  ' + ref + '\n' +
-        '  When       ' + when + '\n' +
-        '  Service    ' + ((row && (row.service || row.plan)) || '—') + '\n' +
-        '  Paid       ' + money + '\n\n' +
-        dropoffInstructions(env) + '\n' +
-        'Most treatments are done within 48 hours.\n\n' +
-        'Questions? Reply here or WhatsApp +49 177 2258878.\n\n' +
-        'See you soon,\nShoeLab\n',
+    await sendMail(env, {
+      to: email, lang: (row && row.lang) || 'en', key: 'bookingPaid',
+      params: Object.assign({}, base, {
+        name: (row && row.first_name) || '', dropoff: String(env.DROPOFF_ADDRESS || '').trim(),
+        rows: [['ref', ref], ['when', { k: 'whenAt' }], ['service', service], ['paid', money]],
+      }),
     });
   }
 }

@@ -1,6 +1,6 @@
-import {
-  json, preflight, clean, validEmail, signSession, sessionSecret, sendEmail,
-} from '../../_shared/util.js';
+import { json, preflight, clean, validEmail, signSession, sessionSecret } from '../../_shared/util.js';
+import { ensureCore, requestLang, pickLang, siteUrl } from '../../_shared/core.js';
+import { sendMail } from '../../_shared/mail.js';
 
 export async function onRequestOptions() { return preflight(); }
 
@@ -14,22 +14,18 @@ export async function onRequestPost(context) {
   if (!validEmail(email)) return json({ error: 'A valid email is required' }, 400);
 
   if (env.DB) {
-    const user = await env.DB.prepare('SELECT id, name FROM users WHERE email = ?').bind(email).first();
+    await ensureCore(env);
+    const user = await env.DB.prepare('SELECT id, name, lang FROM users WHERE email = ?').bind(email).first();
     if (user) {
       const token = await signSession(
         { uid: user.id, purpose: 'reset', exp: Date.now() + 1000 * 60 * 60 }, // 1 hour
         sessionSecret(env)
       );
-      const origin = new URL(request.url).origin;
-      const link = origin + '/reset.html?token=' + encodeURIComponent(token);
-      await sendEmail(env, {
-        to: email,
-        subject: 'Reset your ShoeLab password',
-        text:
-          `Hi ${user.name || ''},\n\n` +
-          `We received a request to reset your ShoeLab password. ` +
-          `Click the link below within 1 hour to choose a new one:\n\n${link}\n\n` +
-          `If you didn't request this, you can safely ignore this email.\n\n— ShoeLab, Bremen`,
+      const link = siteUrl(env) + '/reset.html?token=' + encodeURIComponent(token);
+      // in the language of the page the request came from
+      await sendMail(env, {
+        to: email, lang: requestLang(request) || pickLang(user.lang), key: 'passwordReset', keep: false,
+        params: { name: String(user.name || '').split(' ')[0], url: link },
       });
     }
   }

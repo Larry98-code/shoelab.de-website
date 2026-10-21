@@ -1,6 +1,7 @@
 import {
-  json, preflight, clean, currentUser, sendEmail, notifyAddress,
+  json, preflight, clean, currentUser,
 } from '../_shared/util.js';
+import { sendStudio } from '../_shared/mail.js';
 
 export async function onRequestOptions() {
   return preflight();
@@ -37,11 +38,7 @@ export async function onRequestPost(context) {
     ).bind(name, rating, text).run();
   }
 
-  await sendEmail(env, {
-    to: notifyAddress(env),
-    subject: `New review pending approval — ${name} (${rating}★)`,
-    text: `${name} left a ${rating}-star review:\n\n${text}`,
-  });
+  await sendStudio(env, 'sReview', { customer: name, rating: String(rating), message: text }, undefined, false);
 
   return json({ ok: true, pending: true }, 200);
 }
