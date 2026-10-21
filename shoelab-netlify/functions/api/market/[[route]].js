@@ -8,7 +8,7 @@
 import { json, preflight, clean, currentUser, stripeApi, sessionSecret } from '../../_shared/util.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
-  siteUrl, isSpecialist, shortName, maskName, fees, ensureSchema, logEvent, userById,
+  siteUrl, isSpecialist, onSpecialistList, shortName, maskName, fees, ensureSchema, logEvent, userById,
   listingTitle, tell, tellStudio, createOrder, markPaid, shipTo, housekeeping, settleAuction,
   orderDelivered, releasePayout, releaseWaiting, refundOrder, connectOn, sellerRow, refreshSeller, LAB,
 } from '../../_shared/vault.js';
@@ -31,7 +31,10 @@ async function needUser(request, env) {
 }
 async function needSpecialist(request, env) {
   const u = await needUser(request, env);
-  if (!isSpecialist(env, u)) fail(403, 'Specialists only', 'specialists');
+  if (!isSpecialist(env, u)) {
+    if (onSpecialistList(env, u.email)) fail(403, 'Please confirm your email address first', 'verify_email', { email: u.email });
+    fail(403, 'Specialists only', 'specialists');
+  }
   return u;
 }
 // Bidding, buying, offering and selling need a confirmed email address.

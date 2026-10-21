@@ -56,6 +56,8 @@ Lab Verified:    sold → paid → to the lab → in the lab → authenticated �
 - **Email confirmation.** New accounts get a confirmation link (valid 7 days).
   Until it is clicked, the member can browse but not bid, buy, offer or sell;
   a bar at the top of every Vault page offers to send the link again.
+  Accounts made before this existed confirm the same way, the first time
+  they want to bid, buy or sell (orders already under way carry on).
 - **Seller verification.** With Stripe payouts switched on (below), sellers
   verify their identity and bank account with Stripe before their first
   listing. ShoeLab never sees their ID or bank details. Verified sellers get a
@@ -139,7 +141,7 @@ In Cloudflare Pages → your project → **Settings → Variables and Secrets**:
 |---|---|---|
 | `SESSION_SECRET` | A long random string that signs sign-ins. The Vault stays closed without it. | **Yes** |
 | `RESEND_API_KEY`, `MAIL_FROM`, `NOTIFY_EMAIL` | The same email setup as bookings (BOOKINGS-EMAIL.md). `MAIL_FROM` must end in `@mail.shoelabonline.de`. | **Yes** |
-| `VAULT_SPECIALISTS` | Comma-separated emails allowed into the lab console. Each person signs up for a normal ShoeLab account with that email. Defaults to `NOTIFY_EMAIL`. | Recommended |
+| `VAULT_SPECIALISTS` | Comma-separated emails allowed into the lab console. Each person signs up for a normal ShoeLab account with that email and **confirms it** (the link in the welcome email); until then the console stays closed, so nobody can claim a specialist address first. Defaults to `NOTIFY_EMAIL`. | Recommended |
 | `DROPOFF_ADDRESS` | Where Lab Verified sellers post their pairs; shown only to that seller, on My Vault and by email | Recommended |
 | `STRIPE_SECRET_KEY` | Card payments through Stripe Checkout | Recommended |
 | `STRIPE_WEBHOOK_SECRET` | Marks orders paid. Card orders are only ever marked paid by a signed Stripe event. | With Stripe |

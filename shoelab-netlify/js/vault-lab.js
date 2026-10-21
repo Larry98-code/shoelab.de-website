@@ -14,6 +14,8 @@
   function load() {
     return S.market('queue').then(function (res) {
       if (res.status === 401) { gate('lock', 'gateT', 'gateLab', true); return; }
+      // on the list, but the address is not confirmed yet (the bar above offers the link)
+      if (res.status === 403 && res.data.code === 'verify_email') { gate('alert', 'verifyT', null, false, t('verifyLead', { email: (S.me() || {}).email || '' })); return; }
       if (res.status === 403) { gate('shield', 'labOnlyT', 'labOnly', false); return; }
       if (!res.ok) { gate('alert', 'emptyErrorT', null, false, S.errText(res)); return; }
       keepDrafts();

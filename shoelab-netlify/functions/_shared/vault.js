@@ -56,11 +56,15 @@ export function euro(c) {
 
 export { siteUrl };
 
-export function isSpecialist(env, user) {
-  if (!user || !user.email) return false;
+export function onSpecialistList(env, email) {
   const list = String(env.VAULT_SPECIALISTS || notifyAddress(env))
     .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-  return list.indexOf(String(user.email).toLowerCase()) !== -1;
+  return !!email && list.indexOf(String(email).toLowerCase()) !== -1;
+}
+// The address has to be confirmed: otherwise anyone could sign up with a
+// specialist's address before the specialist does.
+export function isSpecialist(env, user) {
+  return !!(user && (user.verified || user.email_verified_at) && onSpecialistList(env, user.email));
 }
 
 // "Lena Koch" -> "Lena K."  — enough to recognise a seller, not to find them.
