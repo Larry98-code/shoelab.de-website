@@ -29,8 +29,12 @@ runs on **Cloudflare Pages**; there is no other host.
 
 ### Variables and secrets
 
-Project → **Settings → Variables and Secrets** (secrets encrypted). After a
-change, **retry the latest deployment** so it takes effect.
+Project → **Settings → Variables and Secrets** → **Add**, for the
+**Production** environment. Add every one as type **Secret** (tick *Encrypt*),
+even the ones that aren't secret: this project has a `wrangler.jsonc`, which
+Cloudflare treats as the source of truth for its settings, and encrypted
+secrets are always kept. After a change, **retry the latest deployment** so it
+takes effect. `/api/health` then shows what the live site can see.
 
 | Name | Used for |
 |---|---|

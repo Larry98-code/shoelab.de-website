@@ -139,7 +139,10 @@ language of the account with the `NOTIFY_EMAIL` address.
 ## Turn it on
 
 The tables create themselves on the first request, so there is nothing to migrate.
-In Cloudflare Pages → your project → **Settings → Variables and Secrets**:
+In Cloudflare Pages → your project → **Settings → Variables and Secrets**, add
+each for **Production** as type **Secret** (tick *Encrypt*). The project's
+`wrangler.jsonc` is Cloudflare's source of truth for settings; encrypted
+secrets are always kept:
 
 | Variable | What it does | Required |
 |---|---|---|
