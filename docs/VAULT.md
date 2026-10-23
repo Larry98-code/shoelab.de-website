@@ -14,7 +14,9 @@ teaser section between Reviews and Shop, the footer and the account page.
 | `vault-lab.html` | Lab console for specialists: review queue, orders, support requests |
 | `vault-terms.html` | The Vault terms: German (binding), English, key points in all 8 languages |
 
-Every Vault page has **Wesley**, the help chat (bottom right).
+Every Vault page has **Wesley**, the help chat (bottom right), and a way back
+to the main site: the "Back to ShoeLab.de" bar at the top and, on phones, the
+ShoeLab tab in the bottom bar.
 
 `vault.html?preview=1` shows five clearly labelled **example** listings, so
 you can see the whole experience before the first real pair is listed.

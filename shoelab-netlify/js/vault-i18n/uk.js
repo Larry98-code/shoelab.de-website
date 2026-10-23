@@ -6,7 +6,7 @@
   /* chrome */
   navBrowse: 'Каталог', navSell: 'Продати', navMine: 'Мій Vault', navLab: 'Консоль лабораторії',
   tabBrowse: 'Каталог', tabSell: 'Продати', tabMine: 'Мій Vault', tabLab: 'Лабораторія',
-  backToSite: '← ShoeLab.de', language: 'Мова', account: 'Акаунт', accountSettings: 'Налаштування акаунта',
+  backToSite: 'Назад на ShoeLab.de', bookCleaning: 'Записатися на чистку', language: 'Мова', account: 'Акаунт', accountSettings: 'Налаштування акаунта',
   signIn: 'Увійти', signOut: 'Вийти', sellCta: 'Продати', sellPair: 'Продати пару', watchlist: 'Список відстеження',
   footAbout: 'ShoeLab Vault — майданчик для перепродажу від ShoeLab, студії догляду за кросівками в Бремені. Кожну пару перевіряють наші спеціалісти.',
   footHow: 'Як це працює', footFees: 'Тарифи', footTerms: 'Умови', footPrivacy: 'Конфіденційність', footImprint: 'Вихідні дані', footTag: 'Перепродаж перевірених кросівок',

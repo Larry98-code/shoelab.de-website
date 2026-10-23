@@ -6,7 +6,7 @@
   /* chrome */
   navBrowse: 'Entdecken', navSell: 'Verkaufen', navMine: 'Mein Vault', navLab: 'Lab-Konsole',
   tabBrowse: 'Entdecken', tabSell: 'Verkaufen', tabMine: 'Mein Vault', tabLab: 'Lab',
-  backToSite: '← ShoeLab.de', language: 'Sprache', account: 'Konto', accountSettings: 'Kontoeinstellungen',
+  backToSite: 'Zurück zu ShoeLab.de', bookCleaning: 'Reinigung buchen', language: 'Sprache', account: 'Konto', accountSettings: 'Kontoeinstellungen',
   signIn: 'Anmelden', signOut: 'Abmelden', sellCta: 'Verkaufen', sellPair: 'Paar verkaufen', watchlist: 'Beobachtungsliste',
   footAbout: 'Der ShoeLab Vault ist der Resale-Marktplatz von ShoeLab, dem Studio für Sneaker-Pflege in Bremen. Jedes Paar wird von unseren Spezialisten geprüft.',
   footHow: 'So funktioniert’s', footFees: 'Gebühren', footTerms: 'AGB', footPrivacy: 'Datenschutz', footImprint: 'Impressum', footTag: 'Sneaker-Resale mit Echtheitsprüfung',

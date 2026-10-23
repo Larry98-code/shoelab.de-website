@@ -9,7 +9,7 @@
   /* chrome */
   navBrowse: 'Browse', navSell: 'Sell', navMine: 'My Vault', navLab: 'Lab console',
   tabBrowse: 'Browse', tabSell: 'Sell', tabMine: 'My Vault', tabLab: 'Lab',
-  backToSite: '← ShoeLab.de', language: 'Language', account: 'Account', accountSettings: 'Account settings',
+  backToSite: 'Back to ShoeLab.de', bookCleaning: 'Book a cleaning', language: 'Language', account: 'Account', accountSettings: 'Account settings',
   signIn: 'Sign in', signOut: 'Sign out', sellCta: 'Sell', sellPair: 'Sell a pair', watchlist: 'Watchlist',
   footAbout: 'The ShoeLab Vault is the resale marketplace of ShoeLab, the sneaker care studio in Bremen. Every pair is checked by our specialists.',
   footHow: 'How it works', footFees: 'Fees', footTerms: 'Terms', footPrivacy: 'Privacy', footImprint: 'Imprint', footTag: 'Authenticated sneaker resale',

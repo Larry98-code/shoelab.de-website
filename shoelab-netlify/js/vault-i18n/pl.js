@@ -6,7 +6,7 @@
   /* chrome */
   navBrowse: 'Przeglądaj', navSell: 'Sprzedaj', navMine: 'Mój Vault', navLab: 'Panel laboratorium',
   tabBrowse: 'Przeglądaj', tabSell: 'Sprzedaj', tabMine: 'Mój Vault', tabLab: 'Lab',
-  backToSite: '← ShoeLab.de', language: 'Język', account: 'Konto', accountSettings: 'Ustawienia konta',
+  backToSite: 'Wróć do ShoeLab.de', bookCleaning: 'Zarezerwuj czyszczenie', language: 'Język', account: 'Konto', accountSettings: 'Ustawienia konta',
   signIn: 'Zaloguj się', signOut: 'Wyloguj się', sellCta: 'Sprzedaj', sellPair: 'Sprzedaj parę', watchlist: 'Obserwowane',
   footAbout: 'ShoeLab Vault to marketplace do odsprzedaży sneakersów prowadzony przez ShoeLab, studio pielęgnacji sneakersów w Bremie. Każdą parę sprawdzają nasi specjaliści.',
   footHow: 'Jak to działa', footFees: 'Opłaty', footTerms: 'Regulamin', footPrivacy: 'Prywatność', footImprint: 'Nota prawna', footTag: 'Odsprzedaż sneakersów z weryfikacją',

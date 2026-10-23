@@ -6,7 +6,7 @@
   /* chrome */
   navBrowse: 'Esplora', navSell: 'Vendi', navMine: 'Il mio Vault', navLab: 'Console del lab',
   tabBrowse: 'Esplora', tabSell: 'Vendi', tabMine: 'Il mio Vault', tabLab: 'Lab',
-  backToSite: '← ShoeLab.de', language: 'Lingua', account: 'Account', accountSettings: 'Impostazioni account',
+  backToSite: 'Torna a ShoeLab.de', bookCleaning: 'Prenota una pulizia', language: 'Lingua', account: 'Account', accountSettings: 'Impostazioni account',
   signIn: 'Accedi', signOut: 'Esci', sellCta: 'Vendi', sellPair: 'Vendi un paio', watchlist: 'Oggetti osservati',
   footAbout: 'ShoeLab Vault è il marketplace di rivendita di ShoeLab, lo studio di cura delle sneaker di Brema. Ogni paio viene controllato dai nostri specialisti.',
   footHow: 'Come funziona', footFees: 'Costi', footTerms: 'Termini e condizioni', footPrivacy: 'Privacy', footImprint: 'Note legali', footTag: 'Rivendita di sneaker autenticate',

@@ -6,7 +6,7 @@
   /* chrome */
   navBrowse: 'Explorer', navSell: 'Vendre', navMine: 'Mon Vault', navLab: 'Console du lab',
   tabBrowse: 'Explorer', tabSell: 'Vendre', tabMine: 'Mon Vault', tabLab: 'Lab',
-  backToSite: '← ShoeLab.de', language: 'Langue', account: 'Compte', accountSettings: 'Paramètres du compte',
+  backToSite: 'Retour à ShoeLab.de', bookCleaning: 'Réserver un nettoyage', language: 'Langue', account: 'Compte', accountSettings: 'Paramètres du compte',
   signIn: 'Se connecter', signOut: 'Se déconnecter', sellCta: 'Vendre', sellPair: 'Vendre une paire', watchlist: 'Liste de suivi',
   footAbout: 'Le ShoeLab Vault est la marketplace de revente de ShoeLab, le studio de soin de sneakers de Brême. Chaque paire est contrôlée par nos spécialistes.',
   footHow: 'Comment ça marche', footFees: 'Frais', footTerms: 'Conditions', footPrivacy: 'Confidentialité', footImprint: 'Mentions légales', footTag: 'Revente de sneakers authentifiées',

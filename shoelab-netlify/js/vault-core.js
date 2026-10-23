@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '3';   // bump together with the ?v= of the translation files
+  var V = '4';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },
@@ -600,7 +600,6 @@
           (me && me.specialist ? link('lab', '/vault-lab.html', t('navLab'), ' lab') : '') +
         '</nav>' +
         '<div class="v-tools">' +
-          '<a class="v-back" href="/">' + esc(t('backToSite')) + '</a>' +
           '<div class="v-drop"><button type="button" class="v-pill-btn" id="vLangBtn" aria-haspopup="true" aria-expanded="false" aria-label="' + esc(t('language')) + '">🌐 ' + lang.toUpperCase() + ' ▾</button>' +
             '<div class="v-menu" id="vLangMenu">' + langMenuHtml() + '</div></div>' +
           (me
@@ -634,6 +633,12 @@
       if (si) si.addEventListener('click', function () { requireAuth(); });
     }
 
+    // leaving the Vault: always one tap back to the main site
+    var site = d.getElementById('vSite');
+    if (site) site.innerHTML =
+      '<a href="/">' + ico('left') + '<img src="/img/shoelab-logo-96.png" alt="" width="18" height="18" decoding="async"/>' + esc(t('backToSite')) + '</a>' +
+      '<a class="book" href="/booking.html">' + esc(t('bookCleaning')) + ' →</a>';
+
     renderVerifyBar();
     var tab = d.getElementById('vTabbar');
     if (tab) {
@@ -642,6 +647,7 @@
       };
       tab.setAttribute('aria-label', 'Vault');
       tab.innerHTML =
+        '<a class="v-tab home" href="/"><img src="/img/shoelab-logo-96.png" alt="" width="22" height="22" decoding="async"/><span>ShoeLab</span></a>' +
         tb('browse', '/vault.html', 'grid', t('tabBrowse')) +
         tb('sell', '/vault-sell.html', 'plus', t('tabSell'), 'sell') +
         tb('me', '/vault-me.html', 'vault', t('tabMine')) +

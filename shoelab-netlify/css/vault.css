@@ -37,6 +37,18 @@ html.v-wait .v-main,html.v-wait .v-foot{opacity:0;}
 .red{color:var(--red);}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
 
+/* ── the way back to the main site, above the Vault header ── */
+.v-site{
+  height:36px;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0 1.5rem;
+  background:#0e0e0e;border-bottom:1px solid var(--border);font-size:0.74rem;
+}
+.v-site a{display:inline-flex;align-items:center;gap:0.45rem;color:#d4d4d4;white-space:nowrap;transition:color .2s;}
+.v-site a:hover{color:#fff;}
+.v-site svg{width:14px;height:14px;flex-shrink:0;}
+.v-site img{width:18px;height:18px;border-radius:5px;}
+.v-site .book{color:var(--gold-hi);}
+@media(max-width:600px){ .v-site{padding:0 1rem;} .v-site .book{display:none;} }
+
 /* ── nav ─────────────────────────────────────────────── */
 .v-nav{
   position:sticky;top:0;z-index:50;height:var(--nav-h);
@@ -58,8 +70,6 @@ html.v-wait .v-main,html.v-wait .v-foot{opacity:0;}
 .v-link.on{color:#fff;background:rgba(255,255,255,0.07);}
 .v-link.lab{color:var(--gold-hi);}
 .v-tools{display:flex;align-items:center;gap:0.55rem;margin-left:auto;}
-.v-back{font-size:0.74rem;color:var(--muted);white-space:nowrap;}
-.v-back:hover{color:#fff;}
 .v-pill-btn{
   display:inline-flex;align-items:center;gap:0.4rem;background:rgba(255,255,255,0.05);
   border:1px solid var(--border);color:#ddd;border-radius:999px;padding:0.42rem 0.75rem;
@@ -89,7 +99,6 @@ html.v-wait .v-main,html.v-wait .v-foot{opacity:0;}
 }
 .v-menu-item:hover{background:rgba(255,255,255,0.06);color:#fff;}
 .v-menu-item.active{background:var(--gold-soft);color:#fff;}
-@media(max-width:900px){ .v-back{display:none;} }
 @media(max-width:760px){
   .v-nav{padding:0 1rem;gap:0.6rem;}
   .v-links,.v-sell-cta{display:none;}
@@ -101,7 +110,7 @@ html.v-wait .v-main,html.v-wait .v-foot{opacity:0;}
 .v-tabbar{display:none;}
 @media(max-width:760px){
   .v-tabbar{
-    position:fixed;left:0;right:0;bottom:0;z-index:55;display:grid;grid-template-columns:repeat(4,1fr);
+    position:fixed;left:0;right:0;bottom:0;z-index:55;display:grid;grid-template-columns:repeat(5,1fr);
     height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);
     background:rgba(10,10,10,0.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     border-top:1px solid var(--border);
@@ -109,6 +118,8 @@ html.v-wait .v-main,html.v-wait .v-foot{opacity:0;}
   .v-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.22rem;
     font-size:0.62rem;letter-spacing:0.04em;color:var(--muted);background:none;border:none;cursor:pointer;}
   .v-tab svg{width:21px;height:21px;}
+  .v-tab span{text-align:center;line-height:1.15;padding:0 2px;}
+  .v-tab.home img{width:22px;height:22px;border-radius:6px;}
   .v-tab.on{color:#fff;}
   .v-tab.on svg{color:var(--gold);}
   .v-tab.sell svg{color:#fff;background:var(--red);border-radius:10px;padding:4px;width:30px;height:30px;margin:-5px 0 -2px;}
