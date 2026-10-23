@@ -44,6 +44,18 @@ takes effect. `/api/health` then shows what the live site can see.
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Card payments and the payment webhook |
 | `VAULT_STRIPE_CONNECT`, `VAULT_SPECIALISTS`, `DROPOFF_ADDRESS`, `STUDIO_LANG`, `REPLY_TO`, `SITE_URL` | The Vault (see VAULT.md) |
 
+## The product shop: "Coming soon"
+
+Until stock arrives, the shop shows every product with a **Coming soon** tag:
+no prices, ratings, badges, cart or buy buttons, on the homepage and the brush
+catalog, and Wesley tells people the shop opens soon. The switch is one line in
+`shoelab-netlify/js/shop-status.js` (`var OPEN = false;`). To open the shop:
+
+1. Create the live Stripe Prices and put their ids in `js/sl-stripe.js` (the
+   list there says which products still need one).
+2. Set `OPEN` to `true`, and bump `?v=` where the file is loaded
+   (`index.html`, `brushes.html`).
+
 ## Notes
 
 - **BACKEND.md**: accounts, sessions, the D1 database, Stripe

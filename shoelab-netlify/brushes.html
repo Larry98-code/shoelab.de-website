@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<!-- is the product shop selling yet? one switch, in js/shop-status.js -->
+<script src="/js/shop-status.js?v=1"></script>
 <style>
 :root{ --red:#CC1111; --red-bright:#FF2020; --black:#080808; --dark2:#181818; --muted:#888; --border:rgba(255,255,255,0.08); }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -43,6 +45,10 @@ h1 span{color:var(--red);}
 .add{background:var(--red);color:#fff;border:none;border-radius:9px;padding:0.6rem 1.1rem;cursor:pointer;
   font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:0.14em;}
 .add:hover{background:var(--red-bright);}
+/* shop not open yet: the brushes stay on show, nothing is for sale */
+.soon{display:inline-flex;align-items:center;gap:0.5rem;white-space:nowrap;font-family:'Bebas Neue',sans-serif;font-size:0.85rem;
+  letter-spacing:0.18em;color:#fff;padding:0.38rem 0.85rem;border:1px solid rgba(204,17,17,0.55);background:rgba(204,17,17,0.1);}
+.soon::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--red);box-shadow:0 0 8px rgba(204,17,17,0.85);}
 .note{max-width:1080px;margin:0 auto;padding:0 1.5rem 3rem;text-align:center;color:#777;font-size:0.75rem;}
 footer{text-align:center;padding:2rem 1.5rem;border-top:1px solid var(--border);color:var(--muted);font-size:0.78rem;}
 footer a{color:var(--red);}
@@ -79,56 +85,56 @@ footer a{color:var(--red);}
   ];
 
   var I18N = {
-    en:{ back:'← Back to the shop', eyebrow:'Hand-finished · Beech & Walnut', title:'Brush Catalog',
+    en:{ soon:"Coming soon", soonNote:"Our shop opens soon. Until then, these are the brushes we use in the studio.", back:'← Back to the shop', eyebrow:'Hand-finished · Beech & Walnut', title:'Brush Catalog',
       sub:'Choose your bristle — from gentle hog hair for suede to stiff boar for soles. Every brush is lab-approved.',
       note:'Adding a brush takes you back to the shop with it in your cart.', add:'+ Cart', badge:'Best Value',
       set:'All three bristles — the full arsenal in one box.', soft:'Gentle on suede, nubuck and knits.',
       medium:'The all-rounder for leather and mesh.', stiff:'Deep scrub for soles and rubber.',
       applicator:'Works solution deep into midsoles.', flat:'Precision cleaning for seams and panels.',
       dauber:'Even polish and cream application.' },
-    de:{ back:'← Zurück zum Shop', eyebrow:'Handgefertigt · Buche & Walnuss', title:'Bürsten-Katalog',
+    de:{ soon:"Bald erhältlich", soonNote:"Unser Shop öffnet bald. Bis dahin arbeiten wir im Studio mit genau diesen Bürsten.", back:'← Zurück zum Shop', eyebrow:'Handgefertigt · Buche & Walnuss', title:'Bürsten-Katalog',
       sub:'Wähle deine Borste — vom sanften Schweinehaar für Wildleder bis zur festen Wildschweinborste für Sohlen. Jede Bürste ist Lab-geprüft.',
       note:'Beim Hinzufügen geht es zurück zum Shop — die Bürste liegt dann im Warenkorb.', add:'+ Warenkorb', badge:'Bestes Angebot',
       set:'Alle drei Borsten — das komplette Arsenal in einer Box.', soft:'Sanft zu Wildleder, Nubuk und Strick.',
       medium:'Der Allrounder für Leder und Mesh.', stiff:'Tiefenreinigung für Sohlen und Gummi.',
       applicator:'Arbeitet Reiniger tief in die Zwischensohle ein.', flat:'Präzise Reinigung für Nähte und Panels.',
       dauber:'Gleichmäßiges Auftragen von Polish und Creme.' },
-    pl:{ back:'← Powrót do sklepu', eyebrow:'Ręczne wykończenie · Buk i orzech', title:'Katalog szczotek',
+    pl:{ soon:"Wkrótce w sprzedaży", soonNote:"Nasz sklep wkrótce ruszy. Do tego czasu pracujemy tymi szczotkami w studiu.", back:'← Powrót do sklepu', eyebrow:'Ręczne wykończenie · Buk i orzech', title:'Katalog szczotek',
       sub:'Wybierz włosie — od delikatnego dla zamszu po sztywne do podeszew. Każda szczotka zatwierdzona przez lab.',
       note:'Po dodaniu wrócisz do sklepu ze szczotką w koszyku.', add:'+ Koszyk', badge:'Najlepsza oferta',
       set:'Wszystkie trzy rodzaje włosia — pełny arsenał w jednym pudełku.', soft:'Delikatna dla zamszu, nubuku i dzianin.',
       medium:'Uniwersalna do skóry i siatki.', stiff:'Głębokie szorowanie podeszew i gumy.',
       applicator:'Wciera środek głęboko w międzypodeszwę.', flat:'Precyzyjne czyszczenie szwów i paneli.',
       dauber:'Równomierna aplikacja pasty i kremu.' },
-    ru:{ back:'← Назад в магазин', eyebrow:'Ручная работа · Бук и орех', title:'Каталог щёток',
+    ru:{ soon:"Скоро в продаже", soonNote:"Наш магазин скоро откроется. А пока мы работаем этими щётками в студии.", back:'← Назад в магазин', eyebrow:'Ручная работа · Бук и орех', title:'Каталог щёток',
       sub:'Выберите щетину — от мягкой для замши до жёсткой для подошв. Каждая щётка одобрена лабораторией.',
       note:'После добавления вы вернётесь в магазин — щётка будет в корзине.', add:'+ Корзина', badge:'Выгодно',
       set:'Все три вида щетины — полный арсенал в одной коробке.', soft:'Бережно для замши, нубука и текстиля.',
       medium:'Универсальная для кожи и сетки.', stiff:'Глубокая чистка подошв и резины.',
       applicator:'Втирает средство глубоко в подошву.', flat:'Точная чистка швов и панелей.',
       dauber:'Равномерное нанесение крема и полироли.' },
-    uk:{ back:'← Назад до магазину', eyebrow:'Ручна робота · Бук і горіх', title:'Каталог щіток',
+    uk:{ soon:"Незабаром у продажу", soonNote:"Наш магазин незабаром відкриється. А поки ми працюємо цими щітками в студії.", back:'← Назад до магазину', eyebrow:'Ручна робота · Бук і горіх', title:'Каталог щіток',
       sub:'Оберіть щетину — від м’якої для замші до жорсткої для підошов. Кожна щітка схвалена лабораторією.',
       note:'Після додавання ви повернетесь до магазину — щітка буде в кошику.', add:'+ Кошик', badge:'Вигідно',
       set:'Усі три види щетини — повний арсенал в одній коробці.', soft:'Дбайливо для замші, нубуку та текстилю.',
       medium:'Універсальна для шкіри та сітки.', stiff:'Глибоке чищення підошов і гуми.',
       applicator:'Втирає засіб глибоко в підошву.', flat:'Точне чищення швів і панелей.',
       dauber:'Рівномірне нанесення крему та поліролі.' },
-    it:{ back:'← Torna al negozio', eyebrow:'Finitura a mano · Faggio e noce', title:'Catalogo spazzole',
+    it:{ soon:"Presto disponibile", soonNote:"Il nostro shop apre a breve. Nel frattempo, queste sono le spazzole che usiamo in studio.", back:'← Torna al negozio', eyebrow:'Finitura a mano · Faggio e noce', title:'Catalogo spazzole',
       sub:'Scegli le setole — dalle morbide per il camoscio alle rigide per le suole. Ogni spazzola è approvata dal lab.',
       note:'Aggiungendo una spazzola torni al negozio con l’articolo nel carrello.', add:'+ Carrello', badge:'Più conveniente',
       set:'Tutte e tre le setole — l’arsenale completo in una scatola.', soft:'Delicata su camoscio, nabuk e tessuti.',
       medium:'Il tuttofare per pelle e mesh.', stiff:'Pulizia profonda per suole e gomma.',
       applicator:'Applica la soluzione in profondità nell’intersuola.', flat:'Pulizia di precisione per cuciture e pannelli.',
       dauber:'Applicazione uniforme di cere e creme.' },
-    fr:{ back:'← Retour à la boutique', eyebrow:'Fini main · Hêtre et noyer', title:'Catalogue de brosses',
+    fr:{ soon:"Bientôt disponible", soonNote:"Notre boutique ouvre bientôt. En attendant, ce sont les brosses que nous utilisons au studio.", back:'← Retour à la boutique', eyebrow:'Fini main · Hêtre et noyer', title:'Catalogue de brosses',
       sub:'Choisis tes poils — des poils de porc doux pour le daim aux poils de sanglier durs pour les semelles. Chaque brosse est approuvée par le lab.',
       note:'En ajoutant une brosse, tu reviens à la boutique avec l\'article dans ton panier.', add:'+ Panier', badge:'Meilleur prix',
       set:'Les trois types de poils — l\'arsenal complet dans une boîte.', soft:'Douce pour le daim, le nubuck et les mailles.',
       medium:'La polyvalente pour le cuir et le mesh.', stiff:'Récurage en profondeur pour semelles et caoutchouc.',
       applicator:'Fait pénétrer la solution au cœur des semelles.', flat:'Nettoyage de précision pour coutures et empiècements.',
       dauber:'Application uniforme de cirages et crèmes.' },
-    es:{ back:'← Volver a la tienda', eyebrow:'Acabado a mano · Haya y nogal', title:'Catálogo de cepillos',
+    es:{ soon:"Próximamente", soonNote:"Nuestra tienda abre pronto. Mientras tanto, estos son los cepillos que usamos en el estudio.", back:'← Volver a la tienda', eyebrow:'Acabado a mano · Haya y nogal', title:'Catálogo de cepillos',
       sub:'Elige tus cerdas — desde suaves para ante hasta rígidas para suelas. Cada cepillo está aprobado por el lab.',
       note:'Al añadir un cepillo vuelves a la tienda con él en tu carrito.', add:'+ Carrito', badge:'Mejor precio',
       set:'Las tres cerdas — el arsenal completo en una caja.', soft:'Suave con ante, nobuk y tejidos.',
@@ -145,15 +151,20 @@ footer a{color:var(--red);}
     var v=T[el.getAttribute('data-t')]; if(v) el.textContent=v;
   });
 
+  // not selling yet (js/shop-status.js): no prices, no cart, no badge
+  var open = window.SHOP_OPEN !== false;
+  if(!open){ var note=document.querySelector('[data-t="note"]'); if(note) note.textContent=T.soonNote; }
+
   var grid=document.getElementById('grid');
   grid.innerHTML = ITEMS.map(function(b){
     return '<div class="card">'
-      +'<div class="card-img">'+(b.badge?'<span class="badge">'+T.badge+'</span>':'')
+      +'<div class="card-img">'+(b.badge&&open?'<span class="badge">'+T.badge+'</span>':'')
       +'<img src="'+b.img+'" alt="'+b.name+'" loading="lazy"/></div>'
       +'<div class="card-body"><div class="name">'+b.name+'</div>'
       +'<div class="desc">'+(T[b.d]||'')+'</div>'
-      +'<div class="row"><span class="price">€'+b.price.toFixed(2)+'</span>'
-      +'<button class="add" data-id="'+b.id+'">'+T.add+'</button></div></div></div>';
+      +'<div class="row">'+(open
+        ? '<span class="price">€'+b.price.toFixed(2)+'</span><button class="add" data-id="'+b.id+'">'+T.add+'</button>'
+        : '<span class="soon">'+T.soon+'</span>')+'</div></div></div>';
   }).join('');
   grid.querySelectorAll('.add').forEach(function(btn){
     btn.addEventListener('click', function(){
