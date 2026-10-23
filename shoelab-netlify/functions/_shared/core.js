@@ -61,6 +61,8 @@ const TABLES = [
     reason TEXT NOT NULL, created_at TEXT NOT NULL
   )`,
   'CREATE INDEX IF NOT EXISTS mail_failures_created ON mail_failures(created_at)',
+  // when an email last went out: failures before it are history, not a warning
+  'CREATE TABLE IF NOT EXISTS mail_ok (id INTEGER PRIMARY KEY CHECK (id = 1), at TEXT NOT NULL)',
 ];
 
 export async function addMissingColumns(env, columns) {

@@ -2,7 +2,7 @@
 // GET /api/health  →  human-readable JSON: is the key valid, which models
 // respond, and the exact Anthropic error if not. Costs ~1 token per model.
 
-import { notifyAddress } from '../_shared/util.js';
+import { notifyAddress, mailTrouble } from '../_shared/util.js';
 import { ensureCore } from '../_shared/core.js';
 import { sendStudio } from '../_shared/mail.js';
 import { connectOn } from '../_shared/vault.js';
@@ -41,7 +41,8 @@ export async function onRequestGet(context) {
   };
 
   // Emails that did not go out in the last 7 days. This page is public, so
-  // it shows when and why, never who they were for.
+  // it shows when and why, never who they were for. Only failures since the
+  // last email that did go out make the verdict a warning.
   if (env.DB) {
     try {
       await ensureCore(env);
@@ -50,9 +51,12 @@ export async function onRequestGet(context) {
       const latest = await env.DB.prepare('SELECT reason, created_at FROM mail_failures WHERE created_at > ? ORDER BY id DESC LIMIT 3').bind(since).all();
       out.email.failedLast7Days = (n && n.n) || 0;
       out.email.latestFailures = (latest.results || []).map((f) => ({ at: f.created_at, reason: f.reason }));
-      if (out.email.failedLast7Days && env.RESEND_API_KEY) {
-        const f = out.email.latestFailures[0];
-        out.email.verdict = '⚠️ ' + out.email.failedLast7Days + ' email(s) could not be sent in the last 7 days. Latest (' + f.at + '): ' + f.reason +
+      const trouble = await mailTrouble(env);
+      out.email.lastSent = trouble.lastSent;
+      out.email.failingSinceLastSent = trouble.failing;
+      if (trouble.failing && env.RESEND_API_KEY) {
+        const f = trouble.last;
+        out.email.verdict = '⚠️ ' + trouble.failing + ' email(s) could not be sent' + (trouble.lastSent ? ' since the last one that went out' : ' in the last 7 days') + '. Latest (' + f.created_at + '): ' + f.reason +
           '. Check RESEND_API_KEY and MAIL_FROM under Settings → Variables and Secrets (Production), then retry the deployment.';
       }
     } catch (e) { /* the rest of the report still stands */ }

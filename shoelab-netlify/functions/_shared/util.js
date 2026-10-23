@@ -179,6 +179,32 @@ async function mailFailed(env, to, subject, reason) {
   } catch (e) { /* the send already failed; nothing more to do */ }
 }
 
+// ...and so is the last one that did go out, so the warning ends by itself
+// as soon as email works again.
+async function mailSent(env) {
+  if (!env.DB) return;
+  try {
+    await ensureCore(env);
+    await env.DB.prepare('INSERT INTO mail_ok (id, at) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET at = excluded.at')
+      .bind(new Date().toISOString()).run();
+  } catch (e) { /* the email went out; the note is only for the warning */ }
+}
+
+// Emails that failed in the last 7 days and have not been followed by one
+// that went out: what the health check and the lab console warn about.
+export async function mailTrouble(env) {
+  await ensureCore(env);
+  const ok = await env.DB.prepare('SELECT at FROM mail_ok WHERE id = 1').first();
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  const since = ok && ok.at > weekAgo ? ok.at : weekAgo;
+  const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM mail_failures WHERE created_at > ?').bind(since).first();
+  const failing = (n && n.n) || 0;
+  const last = failing
+    ? await env.DB.prepare('SELECT reason, created_at FROM mail_failures WHERE created_at > ? ORDER BY id DESC LIMIT 1').bind(since).first()
+    : null;
+  return { failing, last, lastSent: ok ? ok.at : null };
+}
+
 export async function sendEmail(env, { to, subject, text, html, replyTo }) {
   if (!env.RESEND_API_KEY) {
     await mailFailed(env, to, subject, 'RESEND_API_KEY is not set');
@@ -202,7 +228,7 @@ export async function sendEmail(env, { to, subject, text, html, replyTo }) {
         reply_to: replyTo || env.REPLY_TO || notifyAddress(env),
       }),
     });
-    if (r.ok) return { ok: true };
+    if (r.ok) { await mailSent(env); return { ok: true }; }
     const body = await r.json().catch(() => ({}));
     const reason = 'Resend ' + r.status + (body && (body.message || body.name) ? ': ' + (body.message || body.name) : '');
     await mailFailed(env, to, subject, reason);
