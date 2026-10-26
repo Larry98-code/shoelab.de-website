@@ -15,22 +15,25 @@
 
 /* ── sticky stage ─────────────────────────────────────────────── */
 .dc-stage{
-  position:sticky; top:0; height:100vh; width:100%;
+  /* one small-viewport tall: the phone's toolbar sliding away never
+     changes it, so nothing is re-measured mid-scroll */
+  position:sticky; top:0; height:100vh; height:100svh; width:100%;
   overflow:hidden; display:grid; place-items:center;
+  contain:layout paint;
   background:
     radial-gradient(120% 90% at 50% 42%, #191919 0%, #0a0a0a 55%, #000 100%);
 }
 
-/* a spotlight that blooms as the shoe comes together */
+/* a spotlight that blooms as the shoe comes together. Drawn once at full
+   strength (soft enough without a blur filter); the script only fades it */
 .dc-glow{
   position:absolute; left:50%; top:50%; width:min(120vh,120vw); aspect-ratio:1;
   translate:-50% -50%; pointer-events:none; z-index:0;
   background:radial-gradient(circle,
-    rgba(204,17,17,calc(0.16 * var(--p,0))) 0%,
-    rgba(204,17,17,calc(0.05 * var(--p,0))) 32%,
-    transparent 62%);
-  filter:blur(26px);
-  opacity:calc(0.35 + 0.65 * var(--p,0));
+    rgba(204,17,17,.16) 0%, rgba(204,17,17,.115) 14%, rgba(204,17,17,.075) 26%,
+    rgba(204,17,17,.045) 38%, rgba(204,17,17,.02) 50%, rgba(204,17,17,.006) 60%,
+    transparent 68%);
+  opacity:0; will-change:opacity;
 }
 
 /* film grain, very light — keeps the big black areas from banding */
@@ -49,13 +52,14 @@
 .dc-shoe{
   position:relative; z-index:2;
   width:min(76vw, 760px);
-  height:100vh;
+  height:100%;
   display:block;
 }
 .dc-layer{
   position:absolute; left:50%; top:50%;
-  will-change:transform,opacity,filter;
+  will-change:transform,opacity;
   transform-origin:50% 50%;
+  backface-visibility:hidden;
 }
 .dc-layer img{
   display:block; width:100%; height:auto;
@@ -67,10 +71,12 @@
   position:absolute; inset:0; z-index:3; pointer-events:none; overflow:hidden;
 }
 .dc-sweep i{
-  position:absolute; top:-30%; left:var(--sx,-40%); width:28%; height:160%;
-  background:linear-gradient(100deg, transparent, rgba(255,255,255,.17) 44%,
-             rgba(255,255,255,.30) 50%, rgba(255,255,255,.17) 56%, transparent);
-  filter:blur(14px); transform:rotate(9deg); opacity:var(--so,0);
+  position:absolute; top:-30%; left:0; width:28%; height:160%;
+  background:linear-gradient(100deg, transparent 8%, rgba(255,255,255,.05) 26%,
+             rgba(255,255,255,.15) 40%, rgba(255,255,255,.26) 50%,
+             rgba(255,255,255,.15) 60%, rgba(255,255,255,.05) 74%, transparent 92%);
+  transform:translate3d(-140%,0,0) rotate(9deg); opacity:0;
+  will-change:transform,opacity;
 }
 
 /* ── liquid glass ─────────────────────────────────────────────── */
@@ -144,7 +150,8 @@
   background:rgba(255,255,255,.12); overflow:hidden;
 }
 .dc-rail i{
-  position:absolute; left:0; top:0; width:100%; height:calc(var(--p,0) * 100%);
+  position:absolute; left:0; top:0; width:100%; height:100%;
+  transform-origin:50% 0; transform:scaleY(0); will-change:transform;
   background:linear-gradient(180deg,#FF2020,var(--dc-red));
   box-shadow:0 0 14px rgba(204,17,17,.75);
 }
@@ -174,6 +181,17 @@
   .dc-copy{bottom:1rem; width:min(96vw,560px); padding:.85rem 4rem;}
   .dc-line{font-size:.76rem;}
   .dc-kicker{font-size:.54rem;}
+}
+
+/* On a touch screen the glass is frosted, not live: a live backdrop blur
+   re-blurs every part moving behind it, every frame. The grain sits on top
+   without a blend mode for the same reason. */
+@media (hover:none), (pointer:coarse){
+  #deconstruct .lg{
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+    background:linear-gradient(135deg, rgba(44,44,48,.9), rgba(20,20,22,.9));
+  }
+  #deconstruct .dc-grain{ mix-blend-mode:normal; opacity:.05; }
 }
 
 /* Someone who asked for less motion gets the assembled shoe, no scroll

@@ -11,8 +11,8 @@
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
 <!-- is the product shop selling yet? one switch, in js/shop-status.js -->
 <script src="/js/shop-status.js?v=1"></script>
-<link rel="stylesheet" href="/css/deconstruct.css?v=3"/>
-<link rel="stylesheet" href="/css/hero-showcase.css?v=3"/>
+<link rel="stylesheet" href="/css/deconstruct.css?v=4"/>
+<link rel="stylesheet" href="/css/hero-showcase.css?v=4"/>
 <link rel="stylesheet" href="/css/vault-teaser.css?v=1"/>
 <link rel="canonical" href="https://shoelabonline.de/"/>
 <meta name="geo.region" content="DE-HB"/>
@@ -2197,11 +2197,12 @@ section[id], [id]{ scroll-margin-top: 90px; }
   position:relative; overflow:hidden;
 }
 .scroll-cue-line::after{
-  content:''; position:absolute; top:-50%; left:0; width:100%; height:50%;
-  background:var(--white);
+  content:''; position:absolute; top:0; left:0; width:100%; height:50%;
+  background:var(--white); transform:translateY(-100%);
   animation:scrollCue 2.2s cubic-bezier(0.7,0,0.3,1) infinite;
 }
-@keyframes scrollCue{ 0%{top:-50%} 60%,100%{top:100%} }
+/* moved with a transform: animating top re-laid out the page every frame */
+@keyframes scrollCue{ 0%{transform:translateY(-100%)} 60%,100%{transform:translateY(200%)} }
 @media (max-width:760px){ .scroll-cue{ display:none; } }
 
 /* ============================================================
@@ -2230,9 +2231,10 @@ section[id], [id]{ scroll-margin-top: 90px; }
 
 /* — scroll progress bar — */
 .fx-progress{
-  position:fixed; top:0; left:0; height:3px; width:0%;
+  position:fixed; top:0; left:0; height:3px; width:100%;
+  transform:scaleX(0); transform-origin:0 50%;
   background:linear-gradient(90deg,var(--red),var(--red-bright));
-  z-index:9999; box-shadow:0 0 14px var(--red-bright); will-change:width;
+  z-index:9999; box-shadow:0 0 14px var(--red-bright); will-change:transform;
 }
 
 /* — custom glowing cursor (fine-pointer only) — */
@@ -2297,6 +2299,8 @@ section[id], [id]{ scroll-margin-top: 90px; }
   background-size:220% auto; animation:fxShimmer 4.5s linear infinite;
 }
 @keyframes fxShimmer{ to{ background-position:220% center; } }
+/* the shimmer repaints the headline every frame: a phone keeps the gradient, still */
+@media (hover:none), (pointer:coarse){ .hero-title .red{ animation:none; } }
 
 /* — graceful degradation — */
 @media (prefers-reduced-motion: reduce){
@@ -2398,7 +2402,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
 </style>
 <script src="https://js.stripe.com/v3/"></script>
 <script src="/js/sl-geo.js?v=2"></script>
-<script src="/js/deconstruct.js?v=4" defer></script>
+<script src="/js/deconstruct.js?v=5" defer></script>
 <script src="/js/hero-showcase.js?v=5" defer></script>
 </head>
 <body>
@@ -4134,7 +4138,17 @@ try {
 
 
 const navbar=document.getElementById('navbar');
-window.addEventListener('scroll',()=>navbar.classList.toggle('scrolled',scrollY>60));
+// The bar turns solid once the page is 60px down. An observer on a marker
+// at 60px tells us, so no code runs (and nothing is re-measured) on scroll.
+if('IntersectionObserver' in window){
+  const navMark=document.createElement('div');
+  navMark.setAttribute('aria-hidden','true');
+  navMark.style.cssText='position:absolute;top:60px;left:0;width:1px;height:1px;pointer-events:none;visibility:hidden;';
+  document.body.appendChild(navMark);
+  new IntersectionObserver(es=>navbar.classList.toggle('scrolled',!es[es.length-1].isIntersecting)).observe(navMark);
+}else{
+  window.addEventListener('scroll',()=>navbar.classList.toggle('scrolled',scrollY>60),{passive:true});
+}
 document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('mobMenu').classList.add('open'));
 document.getElementById('mobClose').addEventListener('click',closeMob);
 function closeMob(){document.getElementById('mobMenu').classList.remove('open');}
@@ -5585,17 +5599,23 @@ const _origHandleUserMessage = handleUserMessage;
     window.addEventListener('mouseup',   function(){ ring.classList.remove('down'); }, {passive:true});
   }
 
-  /* scroll progress bar */
+  /* scroll progress bar. It grows with a transform, once per frame, and the
+     page length is measured only when it changes: a width set on every
+     scroll event re-laid out and repainted the page while scrolling. */
   function fxProgress(){
     var bar=fxEl('fx-progress'); document.body.appendChild(bar);
-    function upd(){
-      var d=document.documentElement;
-      var max=(d.scrollHeight-d.clientHeight)||1;
-      bar.style.width=(((d.scrollTop||window.pageYOffset)/max)*100)+'%';
+    var d=document.documentElement, max=1, raf=0, last=-1;
+    function size(){ max=(d.scrollHeight-d.clientHeight)||1; }
+    function draw(){
+      raf=0;
+      var v=Math.min(1, Math.max(0, (window.pageYOffset||d.scrollTop||0)/max));
+      if(v!==last){ last=v; bar.style.transform='scaleX('+v.toFixed(4)+')'; }
     }
+    function upd(){ if(!raf) raf=requestAnimationFrame(draw); }
     window.addEventListener('scroll', upd, {passive:true});
-    window.addEventListener('resize', upd, {passive:true});
-    upd();
+    window.addEventListener('resize', function(){ size(); upd(); }, {passive:true});
+    if('ResizeObserver' in window) new ResizeObserver(function(){ size(); upd(); }).observe(document.body);
+    size(); draw();
   }
 
   /* animated count-up on the stat strip */

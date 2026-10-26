@@ -16,6 +16,12 @@
   var HERO_END = 1.07;                   // the whole shoe grows this much on the final beat
   var reduce = false;
   try { reduce = w.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  // Depth-of-field blur redraws every part on every frame. A laptop does that
+  // easily; a phone drops frames, so touch screens get the motion without it.
+  var richFx = false;
+  try { richFx = w.matchMedia('(hover: hover) and (pointer: fine)').matches; } catch (e) {}
+  // how closely the parts follow the scroll (ms): see the frame loop
+  var TAU = 110;
 
   /* ── copy, per chapter ──────────────────────────────────────────── */
   var COPY = {
@@ -108,7 +114,31 @@
   }
 
   /* ── build ──────────────────────────────────────────────────────── */
-  var root, stage, shoeBox, els = [], shoe, geom = null, raf = 0, lastP = -1;
+  var root, stage, shoeBox, glowEl, railEl, sweepEl, hintEl, els = [], shoe, geom = null;
+  var stageW = 0, stageH = 0, lastW = 0;
+
+  // Every layer is fetched and decoded before it is shown, and that decoded
+  // element is what goes into the page, so nothing decodes mid-motion.
+  var imgs = {};
+  function decoded(file) {
+    var c = imgs[file];
+    if (!c) {
+      var im = new Image();
+      im.decoding = 'async';
+      im.alt = '';                       // decorative; the section has its own label
+      im.draggable = false;
+      im.src = BASE + file;
+      c = imgs[file] = {
+        im: im,
+        ready: (im.decode ? im.decode() : new Promise(function (res) { im.onload = im.onerror = res; }))
+          .then(null, function () {})
+      };
+    }
+    return c;
+  }
+  function preload(s) {
+    return Promise.all(s.l.map(function (L) { return decoded(L[0]).ready; }));
+  }
 
   // Auto-advance. tx is the transition: 0 = settled, 1 = blown apart and
   // gone. The outgoing pair explodes to 1, the next is built at 1 and
@@ -125,23 +155,15 @@
     s.l.forEach(function (L, i) {
       var div = d.createElement('div');
       div.className = 'dc-layer';
-      var img = d.createElement('img');
-      img.src = BASE + L[0];
-      img.alt = '';                      // decorative; the label carries meaning
-      img.decoding = 'async';
-      img.draggable = false;
-      // the first layer is the hero frame — load it eagerly, rest can wait
-      img.loading = i === 0 ? 'eager' : 'lazy';
-      div.appendChild(img);
+      div.appendChild(decoded(L[0]).im);
       // the whole shoe sits above its parts
       div.style.zIndex = String(100 - i);
-      div.style.transformOrigin = '50% 50%';
       shoeBox.appendChild(div);
       els.push(div);
     });
     geom = null;
     measure();
-    render(lastP < 0 ? 0 : lastP, true);
+    render(shown < 0 ? 0 : shown, true);
   }
 
   /* Work out where every layer sits when exploded and when assembled.
@@ -150,8 +172,14 @@
      same time and nothing would appear to move. */
   function measure() {
     if (!shoe) return;
+    // The stage is one small-viewport tall (CSS svh), which the browser's
+    // toolbar sliding in and out never changes, so nothing is re-measured
+    // (and nothing jumps) in the middle of a scroll on a phone.
+    stageH = stage.clientHeight || w.innerHeight;
+    stageW = stage.clientWidth || d.documentElement.clientWidth || w.innerWidth;
+    lastW = d.documentElement.clientWidth || w.innerWidth;
     var boxW = shoeBox.clientWidth;
-    var vh = w.innerHeight;
+    var vh = stageH;
     var k = boxW / shoe.w;               // photo space -> screen space
 
     var hs = shoe.l.map(function (L) { return L[4] * k; });
@@ -181,23 +209,30 @@
     if (!isFinite(push) || push < 1) push = 1;
     // ...and so the finished shoe, heel to toe, stays on screen: on a phone
     // the push-in (and the hero's last 7%) would carry it past the edges
-    var r = shoeBox.getBoundingClientRect(), vw = d.documentElement.clientWidth || w.innerWidth;
+    var r = shoeBox.getBoundingClientRect(), vw = lastW;
     var mid = r.left + r.width / 2, margin = Math.max(10, vw * 0.035), half = ws[0] * HERO_END / 2;
     var fitR = cx[0] + half > 0 ? (vw - margin - mid) / (cx[0] + half) : Infinity;
     var fitL = half - cx[0] > 0 ? (mid - margin) / (half - cx[0]) : Infinity;
     var fit = Math.min(fitR, fitL) / base;
     if (isFinite(fit) && fit > 0) push = Math.min(push, fit);
 
-    els.forEach(function (el, j) { el.style.width = ws[j].toFixed(1) + 'px'; });
+    els.forEach(function (el, j) { el.style.width = ws[j].toFixed(1) + 'px'; el._s = {}; });
 
     geom = { hs: hs, ws: ws, cx: cx, eCen: eCen, aCen: aCen, base: base, push: push };
   }
 
+  // Write a style only when it changed: an unchanged value still costs the
+  // browser a style pass, and this runs every frame.
+  function put(el, prop, v) {
+    var s = el._s || (el._s = {});
+    if (s[prop] !== v) { s[prop] = v; el.style[prop] = v; }
+  }
+
+  var lastP = -1;
   function render(p, force) {
     if (!geom || (!force && p === lastP)) return;
     lastP = p;
     var n = shoe.l.length, g = geom;
-    root.style.setProperty('--p', p.toFixed(4));
 
     var ep = ease(p);
     var posScale = g.base * lerp(1, g.push, ep);
@@ -244,23 +279,25 @@
       }
 
       var el = els[i];
-      el.style.transform =
+      put(el, 'transform',
         'translate3d(' + (xc - g.ws[i] / 2).toFixed(2) + 'px,' +
                          (yc - g.hs[i] / 2).toFixed(2) + 'px,0)' +
-        ' scale(' + sc.toFixed(4) + ') rotate(' + rot.toFixed(2) + 'deg)';
-      el.style.opacity = op.toFixed(3);
-      el.style.filter = blur > 0.05 ? 'blur(' + blur.toFixed(2) + 'px)' : '';
+        ' scale(' + sc.toFixed(4) + ') rotate(' + rot.toFixed(2) + 'deg)');
+      put(el, 'opacity', op.toFixed(3));
+      // depth of field: cheap for a laptop, a dropped frame on a phone
+      if (richFx) put(el, 'filter', blur > 0.05 ? 'blur(' + blur.toFixed(2) + 'px)' : 'none');
     }
 
-    var sweep = d.getElementById('dcSweep');
-    if (sweep) {
+    // Around the shoe, only opacity and transform move: both are done by the
+    // graphics chip, so nothing is repainted while scrolling.
+    if (glowEl) put(glowEl, 'opacity', (p * (0.35 + 0.65 * p)).toFixed(3));
+    if (railEl) put(railEl, 'transform', 'scaleY(' + p.toFixed(4) + ')');
+    if (sweepEl) {
       var sp = clamp((p - 0.6) / 0.32, 0, 1);
-      sweep.style.setProperty('--sx', (-40 + sp * 180) + '%');
-      sweep.style.setProperty('--so', (sp > 0 && sp < 1 ? Math.sin(sp * Math.PI) : 0).toFixed(3));
+      put(sweepEl, 'transform', 'translate3d(' + ((-0.4 + sp * 1.8) * stageW).toFixed(1) + 'px,0,0) rotate(9deg)');
+      put(sweepEl, 'opacity', (sp > 0 && sp < 1 ? Math.sin(sp * Math.PI) : 0).toFixed(3));
     }
-
-    var hint = d.getElementById('dcHint');
-    if (hint) hint.style.opacity = p > 0.04 ? '0' : '1';
+    if (hintEl) put(hintEl, 'opacity', p > 0.04 ? '0' : '1');
 
     var ch = p < 0.3 ? 0 : p < 0.66 ? 1 : 2;
     if (ch !== chapter) { chapter = ch; paintCopy(); }
@@ -277,43 +314,68 @@
     }, 220);
   }
 
-  /* ── scroll ─────────────────────────────────────────────────────── */
-  function onScroll() {
-    lastScroll = Date.now();
-    if (raf) return;
-    raf = w.requestAnimationFrame(function () {
-      raf = 0;
-      var r = root.getBoundingClientRect();
-      var travel = root.offsetHeight - w.innerHeight;
-      var p = travel > 0 ? clamp(-r.top / travel, 0, 1) : 1;
-      render(p);
-    });
+  /* ── the frame loop ─────────────────────────────────────────────── */
+  // The scroll sets where the animation should be; the parts glide there on
+  // a time constant instead of jumping to every scroll event. Phones deliver
+  // those events unevenly (and mouse wheels in steps), so this is what makes
+  // the motion even. It runs only while something still moves.
+  var target = 0, shown = -1, raf = 0, lastT = 0;
+  var swap = null;                       // a transition in progress: { from, to, ms, easeFn, wait, done }
+
+  function readTarget() {
+    var r = root.getBoundingClientRect();
+    var travel = r.height - stageH;
+    return travel > 0 ? clamp(-r.top / travel, 0, 1) : 1;
+  }
+  function kick() { if (!raf) raf = w.requestAnimationFrame(frame); }
+  function frame(now) {
+    raf = 0;
+    target = readTarget();
+    // real elapsed time, uncapped: a slow frame moves further, so the glide
+    // takes the same time on a busy phone as on a fast laptop
+    var dt = lastT ? Math.max(0, now - lastT) : 1000 / 60;
+    lastT = now;
+    if (shown < 0) shown = target;
+    shown += (target - shown) * (1 - Math.exp(-dt / TAU));
+    if (Math.abs(target - shown) < 0.0004) shown = target;
+
+    var force = false;
+    if (swap) {
+      force = true;
+      if (swap.wait > 0) swap.wait--;      // let a freshly built pair reach the screen first
+      else {
+        if (!swap.t0) swap.t0 = now;
+        var k = Math.min(1, (now - swap.t0) / swap.ms);
+        tx = swap.from + (swap.to - swap.from) * swap.easeFn(k);
+        if (k >= 1) { var done = swap.done; swap = null; if (done) done(); }
+      }
+    }
+    render(shown, force);
+    if (shown !== target || swap) kick(); else lastT = 0;
+  }
+
+  function onScroll() { lastScroll = Date.now(); kick(); }
+
+  // Only a real change of size re-measures: a different width, or the stage
+  // itself changing height (turning the phone). The toolbar is ignored.
+  function onResize() {
+    if (!shoe) return;
+    var wNow = d.documentElement.clientWidth || w.innerWidth;
+    if (wNow === lastW && stage.clientHeight === stageH) return;
+    measure();
+    render(shown < 0 ? 0 : shown, true);
+    kick();
   }
 
   /* ── auto-advance ───────────────────────────────────────────────── */
-  function preload(s) {
-    return Promise.all(s.l.map(function (L) {
-      return new Promise(function (res) {
-        var im = new Image();
-        im.onload = im.onerror = function () { res(); };
-        im.src = BASE + L[0];
-      });
-    }));
-  }
-
-  function tween(from, to, ms, easeFn, done) {
-    var t0 = 0;
-    function step(now) {
-      if (!t0) t0 = now;
-      var k = Math.min(1, (now - t0) / ms);
-      tx = from + (to - from) * easeFn(k);
-      render(lastP < 0 ? 0 : lastP, true);
-      if (k < 1) w.requestAnimationFrame(step); else if (done) done();
-    }
-    w.requestAnimationFrame(step);
+  function tween(from, to, ms, easeFn, done, wait) {
+    swap = { from: from, to: to, ms: ms, easeFn: easeFn, done: done, wait: wait || 0 };
+    kick();
   }
   function easeIn(k) { return k * k * k; }
   function easeOut(k) { return 1 - Math.pow(1 - k, 3); }
+
+  function prefetchNext() { if (ring.length > 1) preload(ring[(ringAt + 1) % ring.length]); }
 
   function schedule(ms) {
     clearTimeout(timer);
@@ -331,7 +393,7 @@
     preload(nxt).then(function () {
       tween(0, 1, 560, easeIn, function () {
         buildShoe(nxt);
-        tween(1, 0, 950, easeOut, function () { swapping = false; schedule(); });
+        tween(1, 0, 950, easeOut, function () { swapping = false; prefetchNext(); schedule(); }, 2);
       });
     });
   }
@@ -342,19 +404,35 @@
     if (!root || !SHOES.length) return;
     stage = root.querySelector('.dc-stage');
     shoeBox = d.getElementById('dcShoe');
+    glowEl = root.querySelector('.dc-glow');
+    railEl = root.querySelector('.dc-rail i');
+    sweepEl = root.querySelector('#dcSweep i');
+    hintEl = d.getElementById('dcHint');
     copyEls.kicker = d.getElementById('dcKicker');
     copyEls.line = d.getElementById('dcLine');
 
+    // Nothing loads until the section is two screens away: most visitors
+    // never scroll this far, and anyone who does finds it ready.
+    if ('IntersectionObserver' in w) {
+      var near = new IntersectionObserver(function (es) {
+        if (es[0].isIntersecting) { near.disconnect(); start(); }
+      }, { rootMargin: '200% 0px 200% 0px' });
+      near.observe(root);
+    } else start();
+  }
+
+  function start() {
     buildShoe(pickShoe());
 
     if (reduce) { render(1, true); return; }
 
     w.addEventListener('scroll', onScroll, { passive: true });
-    w.addEventListener('resize', function () { measure(); render(lastP, true); }, { passive: true });
-    onScroll();
+    w.addEventListener('resize', onResize, { passive: true });
+    if ('ResizeObserver' in w) new w.ResizeObserver(onResize).observe(stage);
+    kick();
 
     // specular highlight follows the pointer across every glass panel
-    stage.addEventListener('pointermove', function (ev) {
+    if (richFx) stage.addEventListener('pointermove', function (ev) {
       var panels = stage.querySelectorAll('.lg');
       for (var i = 0; i < panels.length; i++) {
         var b = panels[i].getBoundingClientRect();
@@ -366,6 +444,7 @@
     // every pair once per cycle, the opening pair first, the rest shuffled
     ring = [shoe].concat(shuffled(SHOES.filter(function (s) { return s.id !== shoe.id; })));
     ringAt = 0;
+    prefetchNext();
     if ('IntersectionObserver' in w) {
       new IntersectionObserver(function (es) {
         visible = es[0].isIntersecting;
