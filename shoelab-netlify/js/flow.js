@@ -51,7 +51,7 @@
       n1: 'Bring your pair to the lab at your chosen slot — or message us on WhatsApp to arrange a pickup.',
       n2: 'We inspect, photograph and treat them. You get an update when work begins.',
       n3: 'Collect them fresh, or we deliver them back. Most treatments are done within 48 hours.',
-      backHome: 'Back to ShoeLab', questions: 'Questions? Message us on WhatsApp'
+      backHome: 'Back to ShoeLab', questions: 'Questions? Contact the team'
     },
     de: {
       back: '← Zurück zur Seite', step1: 'Service', step2: 'Zahlung', step3: 'Bestätigt',
@@ -86,7 +86,7 @@
       n1: 'Bring dein Paar zum gewählten Termin ins Lab — oder schreib uns auf WhatsApp für eine Abholung.',
       n2: 'Wir prüfen, fotografieren und behandeln sie. Du bekommst eine Nachricht, sobald wir starten.',
       n3: 'Hol sie frisch ab oder wir bringen sie zurück. Die meisten Behandlungen sind in 48 Stunden fertig.',
-      backHome: 'Zurück zu ShoeLab', questions: 'Fragen? Schreib uns auf WhatsApp'
+      backHome: 'Zurück zu ShoeLab', questions: 'Fragen? Kontaktiere das Team'
     },
     pl: {
       back: '← Powrót do strony', step1: 'Usługa', step2: 'Płatność', step3: 'Potwierdzone',
@@ -121,7 +121,7 @@
       n1: 'Przynieś swoją parę do labu w wybranym terminie — albo napisz do nas na WhatsAppie, żebyśmy ją odebrali.',
       n2: 'Sprawdzamy je, fotografujemy i bierzemy się do pracy. Dostaniesz wiadomość, gdy zaczniemy.',
       n3: 'Odbierzesz je świeże albo odwieziemy ci je z powrotem. Większość zabiegów kończymy w ciągu 48 godzin.',
-      backHome: 'Powrót do ShoeLab', questions: 'Pytania? Napisz do nas na WhatsAppie'
+      backHome: 'Powrót do ShoeLab', questions: 'Pytania? Skontaktuj się z zespołem'
     },
     ru: {
       back: '← Назад на сайт',
@@ -199,7 +199,7 @@
       n2: 'Мы осматриваем, фотографируем и обрабатываем их. Как только начнём работу, пришлём тебе сообщение.',
       n3: 'Забери их свежими или мы привезём их обратно. Большинство обработок готовы за 48 часов.',
       backHome: 'Назад в ShoeLab',
-      questions: 'Вопросы? Напиши нам в WhatsApp'
+      questions: 'Вопросы? Свяжись с командой'
     },
     uk: {
       back: '← Назад на сайт', step1: 'Послуга', step2: 'Оплата', step3: 'Підтверджено',
@@ -234,7 +234,7 @@
       n1: 'Принеси свою пару до лабораторії у вибраний час — або напиши нам у WhatsApp, і ми заберемо її самі.',
       n2: 'Ми оглядаємо, фотографуємо та обробляємо їх. Щойно почнемо — отримаєш повідомлення.',
       n3: 'Забереш їх свіжими — або ми привеземо назад. Більшість обробок готові протягом 48 годин.',
-      backHome: 'Назад до ShoeLab', questions: 'Питання? Напиши нам у WhatsApp'
+      backHome: 'Назад до ShoeLab', questions: 'Питання? Зв’яжися з командою'
     },
     it: {
       back: '← Torna al sito',
@@ -312,7 +312,7 @@
       n2: 'Le controlliamo, le fotografiamo e le trattiamo. Ti avvisiamo appena iniziamo.',
       n3: 'Le ritiri fresche, o te le riportiamo noi. La maggior parte dei trattamenti è pronta in 48 ore.',
       backHome: 'Torna a ShoeLab',
-      questions: 'Domande? Scrivici su WhatsApp'
+      questions: 'Domande? Contatta il team'
     },
     es: {
       back: '← Volver al sitio',
@@ -390,7 +390,7 @@
       n2: 'Las revisamos, fotografiamos y tratamos. Te avisamos en cuanto empezamos.',
       n3: 'Recógelas recién hechas o te las llevamos de vuelta. La mayoría de los tratamientos están listos en 48 horas.',
       backHome: 'Volver a ShoeLab',
-      questions: '¿Preguntas? Escríbenos por WhatsApp'
+      questions: '¿Preguntas? Contacta con el equipo'
     },
     fr: {
       back: '← Retour au site', step1: 'Service', step2: 'Paiement', step3: 'Confirmé',
@@ -425,7 +425,7 @@
       n1: 'Apporte ta paire au lab au créneau choisi — ou écris-nous sur WhatsApp pour qu\'on vienne la chercher.',
       n2: 'On les inspecte, on les photographie et on les traite. Tu reçois un message dès qu\'on commence.',
       n3: 'Récupère-les toutes fraîches, ou on te les rapporte. La plupart des traitements sont terminés en 48 heures.',
-      backHome: 'Retour à ShoeLab', questions: 'Des questions ? Écris-nous sur WhatsApp'
+      backHome: 'Retour à ShoeLab', questions: 'Des questions ? Contacte l’équipe'
     }
   };
 

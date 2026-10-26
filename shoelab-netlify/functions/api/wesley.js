@@ -92,7 +92,7 @@ export async function onRequestPost(context) {
 
     const type = (last && last.data && last.data.error && last.data.error.type) || '';
     let msg = "Sorry, I'm having a brief issue. Please try again in a moment!";
-    if (last && last.status === 401) msg = "I'm being reconnected by the team — please try again shortly, or WhatsApp us at +49 177 2258878!";
+    if (last && last.status === 401) msg = "I'm being reconnected by the team — please try again shortly, or reach the team through the Contact section on the site!";
     if (last && (last.status === 429 || type === 'overloaded_error')) msg = "I'm getting a lot of questions right now! 😅 Give me a few seconds and try again.";
     return json({ content: [{ type: 'text', text: msg }] }, 200, {
       'X-Wesley-Error': String(last && last.status) + ':' + type,

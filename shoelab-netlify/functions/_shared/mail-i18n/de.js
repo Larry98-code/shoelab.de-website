@@ -8,7 +8,7 @@ export default {
     footer: 'ShoeLab · Studio für Sneaker-Pflege · Bremen',
     footerVault: 'ShoeLab Vault · Sneaker-Resale mit Echtheitsprüfung von ShoeLab, Bremen',
     replyHint: 'Fragen? Antworte einfach auf diese E-Mail.',
-    whatsapp: 'Du kannst uns auch auf WhatsApp schreiben: +49 177 2258878.',
+    whatsapp: 'Du kannst uns auch auf WhatsApp schreiben: https://wa.me/491772258878.',
     dropoffTitle: 'Abgabeadresse:', dropoffLater: 'Die genaue Abgabeadresse schicken wir dir vor deinem Termin per WhatsApp.',
     // table labels
     ref: 'Buchungsnummer', when: 'Termin', service: 'Leistung', plan: 'Abrechnung', amount: 'Betrag', toPay: 'Im Studio zu zahlen', paid: 'Bezahlt',
@@ -43,7 +43,7 @@ export default {
   bookingReserved: {
     s: 'Deine ShoeLab-Buchung ist reserviert — {ref}',
     b: ['Hallo {name},', 'dein Termin bei ShoeLab ist reserviert.', '%rows', '%dropoff',
-      'Möchtest du etwas ändern? Antworte einfach auf diese E-Mail oder schreib uns auf WhatsApp unter +49 177 2258878.', '{signoff}'],
+      'Möchtest du etwas ändern? Antworte einfach auf diese E-Mail oder schreib uns auf WhatsApp: https://wa.me/491772258878.', '{signoff}'],
   },
   bookingRequested: {
     s: 'Deine Buchungsanfrage bei ShoeLab — {ref}',
@@ -54,7 +54,7 @@ export default {
   bookingPaid: {
     s: 'Zahlung bestätigt — dein ShoeLab-Termin {ref}',
     b: ['Hallo {name},', 'deine Zahlung ist eingegangen und dein Termin ist bestätigt.', '%rows', '%dropoff',
-      'Die meisten Behandlungen sind innerhalb von 48 Stunden fertig.', 'Fragen? Antworte einfach hier oder schreib uns auf WhatsApp: +49 177 2258878.', '{signoff}'],
+      'Die meisten Behandlungen sind innerhalb von 48 Stunden fertig.', 'Fragen? Antworte einfach hier oder schreib uns auf WhatsApp: https://wa.me/491772258878.', '{signoff}'],
   },
 
   /* ── account ──────────────────────────────────────────────────────── */

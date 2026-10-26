@@ -673,7 +673,7 @@
             '<a href="/impressum.html">' + esc(t('footImprint')) + '</a>' +
           '</nav>' +
         '</div>' +
-        '<div class="v-foot-in" style="margin-top:1rem;"><small>© ' + new Date().getFullYear() + ' ShoeLab · Bremen · ' + esc(t('footTag')) + '</small></div>';
+        '<div class="v-foot-in" style="margin-top:1rem;"><small>© 2025–' + new Date().getFullYear() + ' ShoeLab · Bremen · ' + esc(t('footTag')) + '</small></div>';
     }
   }
   var openMenu = null;

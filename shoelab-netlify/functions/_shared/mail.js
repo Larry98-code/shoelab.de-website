@@ -62,6 +62,18 @@ function fill(str, lang, words, params, depth) {
   });
 }
 
+// A web address in an (already escaped) paragraph becomes a link, in one pass
+// so a link is never rewritten twice. 'on WhatsApp: https://wa.me/…' reads
+// 'on WhatsApp' with the word itself the link; a full stop after an address
+// stays text.
+const LINK = 'style="color:#CC1111;font-weight:600;"';
+function linkify(h) {
+  return h.replace(/(WhatsApp[\p{L}]*)(?:\u00a0| )?: (https:\/\/wa\.me\/\d+)|(https:\/\/[^\s<"]+?)([.,!?)]*)(?=\s|$|<)/gu,
+    (m, word, wa, url, tail) => word
+      ? '<a href="' + wa + '" ' + LINK + '>' + word + '</a>'
+      : '<a href="' + url + '" ' + LINK + '>' + url.replace(/^https:\/\//, '') + '</a>' + tail);
+}
+
 // → { subject, text, html }
 export function renderMail(lang, key, params, opts) {
   lang = pickLang(lang) || 'en';
@@ -75,7 +87,7 @@ export function renderMail(lang, key, params, opts) {
   const para = (t) => {
     if (!t) return;
     text.push(t);
-    html.push('<p style="margin:0 0 16px;">' + esc(t).replace(/\n/g, '<br>') + '</p>');
+    html.push('<p style="margin:0 0 16px;">' + linkify(esc(t)).replace(/\n/g, '<br>') + '</p>');
   };
   const quote = (t) => {
     if (!t) return;

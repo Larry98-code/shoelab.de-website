@@ -33,7 +33,7 @@ Refunds: a Lab Verified pair that fails inspection is refunded in full; a proble
 Accounts: anyone can browse. Bidding, buying, offers and selling need an account with a confirmed email address (a link is emailed on sign-up; "Resend" is in the banner on every Vault page). Passwords are reset from the account page (/account.html).
 Listings: sizes are EU (e.g. 42, 42.5, 42 2/3). Conditions: New, Like new, Good, Fair. A listing without bids can be withdrawn; an ended or withdrawn listing that was once live can be relisted with new terms without a new review. Members can watch pairs (heart icon), see "Recently sold" prices, and leave feedback (positive, neutral, negative) after delivery.
 Pages: Browse /vault.html · Sell /vault-sell.html · My Vault /vault-me.html (orders, bids, offers, listings, watchlist, payouts) · Terms /vault-terms.html · Privacy /datenschutz.html.
-Contact: a ShoeLab specialist (through you, or the "Talk to a specialist" form in this chat), email ${notifyAddress(env)}, WhatsApp +49 177 2258878.
+Contact: a ShoeLab specialist (through you, or the "Talk to a specialist" form in this chat); for anything about the studio, the Contact section of shoelabonline.de (WhatsApp or email). Never write out a phone number or an email address.
 </vault_rules>
 
 <how_to_help>

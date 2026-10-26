@@ -15,7 +15,7 @@ export default {
     footer: 'ShoeLab · Sneaker care studio · Bremen',
     footerVault: 'ShoeLab Vault · authenticated sneaker resale by ShoeLab, Bremen',
     replyHint: 'Questions? Just reply to this email.',
-    whatsapp: 'You can also message us on WhatsApp: +49 177 2258878.',
+    whatsapp: 'You can also message us on WhatsApp: https://wa.me/491772258878.',
     dropoffTitle: 'Drop-off address:', dropoffLater: 'We will send you the exact drop-off address on WhatsApp before your appointment.',
     // table labels
     ref: 'Reference', when: 'When', service: 'Service', plan: 'Plan', amount: 'Amount', toPay: 'To pay at the studio', paid: 'Paid',
@@ -50,7 +50,7 @@ export default {
   bookingReserved: {
     s: 'Your ShoeLab booking is reserved — {ref}',
     b: ['Hi {name},', 'Your slot at ShoeLab is reserved.', '%rows', '%dropoff',
-      'Need to change anything? Just reply to this email or message us on WhatsApp at +49 177 2258878.', '{signoff}'],
+      'Need to change anything? Just reply to this email or message us on WhatsApp: https://wa.me/491772258878.', '{signoff}'],
   },
   bookingRequested: {
     s: 'Your ShoeLab booking request — {ref}',
@@ -61,7 +61,7 @@ export default {
   bookingPaid: {
     s: 'Payment confirmed — your ShoeLab appointment {ref}',
     b: ['Hi {name},', 'Your payment went through and your appointment is confirmed.', '%rows', '%dropoff',
-      'Most treatments are done within 48 hours.', 'Questions? Reply here or WhatsApp +49 177 2258878.', '{signoff}'],
+      'Most treatments are done within 48 hours.', 'Questions? Reply here or message us on WhatsApp: https://wa.me/491772258878.', '{signoff}'],
   },
 
   /* ── account ──────────────────────────────────────────────────────── */

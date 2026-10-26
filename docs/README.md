@@ -44,6 +44,18 @@ takes effect. `/api/health` then shows what the live site can see.
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Card payments and the payment webhook |
 | `VAULT_STRIPE_CONNECT`, `VAULT_SPECIALISTS`, `DROPOFF_ADDRESS`, `STUDIO_LANG`, `REPLY_TO`, `SITE_URL` | The Vault (see VAULT.md) |
 
+## Contact details: one place only
+
+The studio's contact details appear only in the homepage's Contact section
+(`#contact`): the street and postcode, a **WhatsApp** button (`wa.me` link,
+the number itself is not shown), the email and the hours. Every other page,
+Wesley and the error messages point to that section ("Contact the team",
+`/#contact`) instead of showing a number or address. The exceptions are the
+legal pages (Impressum, Datenschutz, Widerruf, AGB, Vault terms), where the
+law requires the contact details, and the private emails to customers, which
+link to WhatsApp. ShoeLab is dated from 2025 (copyright lines, and
+`foundingDate` in the data for Google).
+
 ## The product shop: "Coming soon"
 
 Until stock arrives, the shop shows every product with a **Coming soon** tag:

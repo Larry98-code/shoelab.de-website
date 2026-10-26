@@ -7,7 +7,7 @@ export default {
     footer: 'ShoeLab · Studio di cura delle sneaker · Brema',
     footerVault: 'ShoeLab Vault · rivendita di sneaker autenticate di ShoeLab, Brema',
     replyHint: 'Domande? Rispondi pure a questa email.',
-    whatsapp: 'Puoi anche scriverci su WhatsApp: +49 177 2258878.',
+    whatsapp: 'Puoi anche scriverci su WhatsApp: https://wa.me/491772258878.',
     dropoffTitle: 'Dove portare le scarpe:', dropoffLater: 'Prima dell’appuntamento ti invieremo su WhatsApp l’indirizzo esatto dove portare le scarpe.',
     // table labels
     ref: 'Riferimento', when: 'Quando', service: 'Servizio', plan: 'Piano', amount: 'Importo', toPay: 'Da pagare in studio', paid: 'Pagato',
@@ -42,7 +42,7 @@ export default {
   bookingReserved: {
     s: 'Prenotazione ShoeLab effettuata — {ref}',
     b: ['Ciao {name},', 'Abbiamo riservato il tuo appuntamento da ShoeLab.', '%rows', '%dropoff',
-      'Vuoi cambiare qualcosa? Rispondi pure a questa email o scrivici su WhatsApp al +49 177 2258878.', '{signoff}'],
+      'Vuoi cambiare qualcosa? Rispondi pure a questa email o scrivici su WhatsApp: https://wa.me/491772258878.', '{signoff}'],
   },
   bookingRequested: {
     s: 'La tua richiesta di prenotazione ShoeLab — {ref}',
@@ -53,7 +53,7 @@ export default {
   bookingPaid: {
     s: 'Pagamento confermato — il tuo appuntamento ShoeLab {ref}',
     b: ['Ciao {name},', 'Il pagamento è andato a buon fine e il tuo appuntamento è confermato.', '%rows', '%dropoff',
-      'La maggior parte dei trattamenti si conclude entro 48 ore.', 'Domande? Rispondi qui o scrivici su WhatsApp al +49 177 2258878.', '{signoff}'],
+      'La maggior parte dei trattamenti si conclude entro 48 ore.', 'Domande? Rispondi qui o scrivici su WhatsApp: https://wa.me/491772258878.', '{signoff}'],
   },
 
   /* ── account ──────────────────────────────────────────────────────── */
