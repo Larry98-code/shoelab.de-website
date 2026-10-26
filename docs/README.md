@@ -47,7 +47,7 @@ takes effect. `/api/health` then shows what the live site can see.
 ## Contact details: one place only
 
 The studio's contact details appear only in the homepage's Contact section
-(`#contact`): the street and postcode, a **WhatsApp** button (`wa.me` link,
+(`#contact`, its own section just above the footer): the street and postcode, a **WhatsApp** button (`wa.me` link,
 the number itself is not shown), the email and the hours. Every other page,
 Wesley and the error messages point to that section ("Contact the team",
 `/#contact`) instead of showing a number or address. The exceptions are the
