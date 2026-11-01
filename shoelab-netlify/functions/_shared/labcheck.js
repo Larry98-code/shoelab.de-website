@@ -124,6 +124,7 @@ The verdict:
 
 Requests:
 - If anything would change or firm up your verdict, ask for it: a specific photo (say exactly what to photograph, the angle, how close and the light, for example "the size tag inside the left shoe, straight on, filling the frame, in daylight, without flash") or a short fact (for example where and when the pair was bought, with a photo of the receipt if they have one; when you ask for a receipt, tell them they may cover their address and payment details).
+- To prove the seller has the pair now, you may ask for a photo with a handwritten note next to the shoes saying "ShoeLab", the listing's item number and today's date (for example "ShoeLab #12 – 1 Nov 2026"), written out in full in the instructions. Never ask for a username: the Vault has none, and the item number is what identifies the listing.
 - Ask only for what you need, most important first, at most ${MAX_ITEMS} things. Never ask again for something the seller already sent or said they cannot provide; never ask for a photo that is already there and sharp.
 - Write "title" and "instructions" in the seller's language, short and friendly, addressed to the seller. Write "title_en", "instructions_en" and "why" in English for the specialist.
 - With a verdict of authentic at 95 or more, requests can be empty.
@@ -176,6 +177,7 @@ export function requestView(row) {
 function facts(l, seller, prior, req) {
   const lines = [
     'The listing:',
+    '- Item number: #' + l.id,
     '- Brand (as typed by the seller): ' + l.brand,
     '- Model (as typed by the seller): ' + l.model,
     '- Size: EU ' + l.size,
