@@ -445,6 +445,13 @@
   ar_photos: 'Fotos', ar_other: 'Otros', cs_pass: 'OK',
   cs_concern: 'Revisar', cs_fail: 'Incorrecto', cs_not_visible: 'No visible',
   lcNeeds: 'Qué necesita para estar seguro', lcCant: 'El vendedor no puede aportarlo', lcSentPhoto: 'Foto enviada',
+  // the photo viewer of the Lab console
+  vwPhotos: 'Fotos', vwViewAll: 'Ver y ampliar', vwCount: 'Foto {n} de {total}', vwZoomIn: 'Ampliar (+)',
+  vwZoomOut: 'Reducir (−)', vwFit: 'Ajustar a la pantalla (0)', vwRotate: 'Girar (R)', vwEnhance: 'Más contraste (E)',
+  vwCompare: 'Comparar dos fotos (C)', vwNotes: 'Notas del Lab Check (I)', vwOriginal: 'Abrir el original en una pestaña nueva', vwPrev: 'Foto anterior',
+  vwNext: 'Foto siguiente', vwStrip: 'Todas las fotos de este anuncio', vwNotesT: 'Lo que el Lab Check vio aquí', vwNoNotes: 'El Lab Check no anotó nada en esta foto.',
+  vwNoCheck: 'Aún no hay resultado del Lab Check.', vwRes: '{w} × {h} px', vwLowRes: 'Resolución baja: si un detalle importa, pide al vendedor una foto más nítida.', vwFailed: 'No se pudo cargar esta foto.',
+  vwPick: 'Comparando: el lado dorado muestra la foto que eliges abajo. Haz clic en un lado para cambiar.', vwKeys: '← → fotos · rueda para ampliar · arrastra para mover · doble clic para ampliar · R girar · E contraste · C comparar · Esc cerrar', vwTouch: 'Pellizca o toca dos veces para ampliar · desliza para la siguiente foto', vwFlag: 'Señal de alarma',
   lcAskedOld: 'El vendedor aún tiene una solicitud abierta de una revisión anterior (enviada {when}). Pedirlo ahora la sustituye.',
   lcAsked: 'Se pidió al vendedor {when}', lcAnswered: 'El vendedor respondió {when}', lcAsk: 'Pedírselo al vendedor',
   lcAskHint: 'Ante una sospecha de falsificación nunca se pide automáticamente: decide si das una oportunidad al vendedor.', lcCost: 'coste {usd}', lcAutoToast: 'El Lab Check ha aprobado el anuncio: ya está publicado.',

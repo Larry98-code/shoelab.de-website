@@ -448,6 +448,13 @@
   ar_photos: 'Photos', ar_other: 'Other', cs_pass: 'OK',
   cs_concern: 'Look closer', cs_fail: 'Wrong', cs_not_visible: 'Not visible',
   lcNeeds: 'What it needs to be sure', lcCant: 'The seller cannot provide this', lcSentPhoto: 'Photo sent',
+  // the photo viewer of the Lab console
+  vwPhotos: 'Photos', vwViewAll: 'View and zoom', vwCount: 'Photo {n} of {total}', vwZoomIn: 'Zoom in (+)',
+  vwZoomOut: 'Zoom out (−)', vwFit: 'Fit to screen (0)', vwRotate: 'Rotate (R)', vwEnhance: 'More contrast (E)',
+  vwCompare: 'Compare two photos (C)', vwNotes: 'Lab Check notes (I)', vwOriginal: 'Open the original in a new tab', vwPrev: 'Previous photo',
+  vwNext: 'Next photo', vwStrip: 'All photos of this listing', vwNotesT: 'What the Lab Check saw here', vwNoNotes: 'The Lab Check made no notes on this photo.',
+  vwNoCheck: 'No Lab Check result yet.', vwRes: '{w} × {h} px', vwLowRes: 'Low resolution: if a detail matters, ask the seller for a sharper photo.', vwFailed: 'This photo could not be loaded.',
+  vwPick: 'Comparing: the gold side shows the photo you pick in the strip. Click a side to switch.', vwKeys: '← → photos · scroll to zoom · drag to move · double-click to zoom · R rotate · E contrast · C compare · Esc close', vwTouch: 'Pinch or double-tap to zoom · swipe for the next photo', vwFlag: 'Red flag',
   lcAskedOld: 'The seller still has an open request from an earlier check (sent {when}). Asking now replaces it.',
   lcAsked: 'Asked the seller {when}', lcAnswered: 'The seller answered {when}', lcAsk: 'Ask the seller for these',
   lcAskHint: 'Suspected fakes are never asked automatically: decide whether to give the seller a chance.', lcCost: 'cost {usd}', lcAutoToast: 'The Lab Check approved this listing: it is live.',

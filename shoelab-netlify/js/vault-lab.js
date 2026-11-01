@@ -41,11 +41,26 @@
       [1, 2, 3, 4, 5, 6].map(function (i) { return '<li><i>' + i + '</i><span>' + esc(t(key + i)) + '</span></li>'; }).join('') +
       '</ul></div></details>';
   }
-  function photosHtml(list) {
-    return '<div class="v-review-photos">' + (list || []).map(function (p) {
-      var label = p.kind === 'extra' ? (p.note || t('kind_extra')) : t('kind_' + p.kind);
-      return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener"' + (p.kind === 'extra' ? ' class="extra"' : '') + '><img src="' + esc(p.url) + '" alt="" loading="lazy"/><span>' + esc(label) + '</span></a>';
-    }).join('') + '</div>';
+  // The seller's photos, numbered as the Lab Check numbers them, with a dot
+  // where it noted something; each opens the photo viewer.
+  function photosHtml(l) {
+    var list = l.photos || [], VW = w.SLVViewer, mk = VW ? VW.marks(l.check, list.length) : [];
+    return '<div class="v-rp-head"><b>' + esc(t('vwPhotos')) + '<small>' + S.num(list.length) + '</small></b>' +
+        (list.length ? '<button type="button" class="v-btn ghost xs" data-view="' + l.id + ':1">' + S.ico('search') + esc(t('vwViewAll')) + '</button>' : '') + '</div>' +
+      '<div class="v-review-photos">' + list.map(function (p, i) {
+        var label = p.kind === 'extra' ? (p.note || t('kind_extra')) : t('kind_' + p.kind);
+        return '<button type="button" class="v-rp-tile' + (p.kind === 'extra' ? ' extra' : '') + '" data-view="' + l.id + ':' + (i + 1) + '" aria-label="' + esc(t('vwCount', { n: i + 1, total: list.length }) + ': ' + label) + '">' +
+          '<img src="' + esc(p.url) + '&amp;s=t" alt="" loading="lazy"/><b>' + (i + 1) + '</b><span>' + esc(label) + '</span>' +
+          (mk[i] ? '<em class="v-dot ' + mk[i] + '"></em>' : '') + '<i>' + S.ico('search') + '</i></button>';
+      }).join('') + '</div>';
+  }
+  // "Photo 4" in the Lab Check's text opens that photo
+  function refs(html, l) { return w.SLVViewer ? w.SLVViewer.linkRefs(html, l.id, (l.photos || []).length) : html; }
+  function openViewer(key) {
+    var id = +key.split(':')[0], n = +key.split(':')[1];
+    var l = data && data.review.filter(function (x) { return x.id === id; })[0];
+    if (!l || !w.SLVViewer) return;
+    w.SLVViewer.open({ photos: l.photos, index: n - 1, title: l.title, id: l.id, check: l.check });
   }
 
   function sellerChips(sl) {
@@ -56,7 +71,7 @@
   function reviewHtml(l) {
     var auction = l.format === 'auction';
     return '<article class="v-review" id="rv-' + l.id + '">' +
-      '<div>' + photosHtml(l.photos) + '</div>' +
+      '<div>' + photosHtml(l) + '</div>' +
       '<div>' +
         '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">' + S.tierBadge(l.tier) +
           '<span class="v-chip">' + esc(t(auction ? 'fAuction1' : 'fFixed')) + '</span>' +
@@ -103,17 +118,17 @@
       '<div class="v-lc-verdict"><span class="v-chip ' + (VD_TONE[r.verdict] || '') + '">' + esc(t('vd_' + r.verdict)) + '</span>' +
         '<div class="v-lc-meter" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + r.confidence + '" aria-label="' + esc(t('lcConf', { n: r.confidence })) + '"><i style="width:' + r.confidence + '%;"></i></div>' +
         '<b class="v-lc-pct">' + esc(t('lcConf', { n: r.confidence })) + '</b></div>' +
-      (r.summary ? '<p class="v-lc-sum">' + esc(r.summary) + '</p>' : '') +
+      (r.summary ? '<p class="v-lc-sum">' + refs(esc(r.summary), l) + '</p>' : '') +
       '<dl class="v-kv v-lc-id">' +
         kv(t('lcIdent'), esc(ident || '—') + ' <span class="v-chip ' + (id.matches_listing ? 'ok' : 'bad') + '">' + esc(t(id.matches_listing ? 'lcMatch' : 'lcNoMatch')) + '</span>') +
         kv(t('lcStyle'), id.style_code ? '<code>' + esc(id.style_code) + '</code>' : '') +
         kv(t('lcTagSize'), esc(id.size_on_tag || '')) +
-        kv(t('lcCond'), '<span class="v-chip ' + (r.condition.matches ? 'ok' : 'warn') + '">' + esc(t(r.condition.matches ? 'lcCondOk' : 'lcCondOff')) + '</span> ' + esc(r.condition.note || '')) +
+        kv(t('lcCond'), '<span class="v-chip ' + (r.condition.matches ? 'ok' : 'warn') + '">' + esc(t(r.condition.matches ? 'lcCondOk' : 'lcCondOff')) + '</span> ' + refs(esc(r.condition.note || ''), l)) +
       '</dl>' +
-      (r.red_flags.length ? '<div class="v-state bad v-lc-flags">' + S.ico('flag') + '<div><b>' + esc(t('lcFlags')) + '</b><ul>' + r.red_flags.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul></div></div>' : '') +
+      (r.red_flags.length ? '<div class="v-state bad v-lc-flags">' + S.ico('flag') + '<div><b>' + esc(t('lcFlags')) + '</b><ul>' + r.red_flags.map(function (f) { return '<li>' + refs(esc(f), l) + '</li>'; }).join('') + '</ul></div></div>' : '') +
       '<ul class="v-lc-checks">' + r.checks.map(function (k) {
         var cs = CS[k.status] || CS.not_visible;
-        return '<li class="' + cs[0] + '">' + S.ico(cs[1]) + '<div><b>' + esc(t('ar_' + k.area)) + '</b> <span class="v-chip ' + cs[0] + '">' + esc(t('cs_' + k.status)) + '</span><p>' + esc(k.finding) + '</p></div></li>';
+        return '<li class="' + cs[0] + '">' + S.ico(cs[1]) + '<div><b>' + esc(t('ar_' + k.area)) + '</b> <span class="v-chip ' + cs[0] + '">' + esc(t('cs_' + k.status)) + '</span><p>' + refs(esc(k.finding), l) + '</p></div></li>';
       }).join('') + '</ul>';
     if (r.requests.length) {
       // q is the listing's latest request; it belongs to this run only if this run made it
@@ -122,7 +137,7 @@
       html += '<div class="v-lc-req"><b>' + esc(t('lcNeeds')) + '</b><ol>' + r.requests.map(function (x, i) {
         var a = q && q.status === 'answered' ? (q.answers || []).filter(function (y) { return y.i === i; })[0] : null;
         return '<li><span>' + S.ico(x.type === 'photo' ? 'camera' : 'chat') + esc(x.title_en) + '</span>' +
-          (x.instructions_en ? '<small>' + esc(x.instructions_en) + '</small>' : '') + (x.why ? '<small class="why">' + esc(x.why) + '</small>' : '') +
+          (x.instructions_en ? '<small>' + esc(x.instructions_en) + '</small>' : '') + (x.why ? '<small class="why">' + refs(esc(x.why), l) + '</small>' : '') +
           (a ? '<small class="ans">' + esc(a.none ? t('lcCant') : a.text ? '“' + a.text + '”' : t('lcSentPhoto')) + '</small>' : '') + '</li>';
       }).join('') + '</ol>' +
         (q && q.status === 'open' ? '<p class="v-note">' + esc(t('lcAsked', { when: S.ago(q.at) })) + '</p>'
@@ -370,6 +385,8 @@
       try { w.history.replaceState(null, '', w.location.pathname + '#' + tb); } catch (e2) {}
       return;
     }
+    var vw = el.getAttribute('data-view');
+    if (vw) { openViewer(vw); return; }
     var id = +el.getAttribute('data-id');
     var tk = el.getAttribute('data-ticket');
     if (tk) { answer(el, tk, id); return; }

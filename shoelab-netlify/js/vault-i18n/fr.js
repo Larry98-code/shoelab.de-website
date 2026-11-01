@@ -445,6 +445,13 @@
   ar_photos: 'Photos', ar_other: 'Autre', cs_pass: 'OK',
   cs_concern: 'À examiner', cs_fail: 'Incorrect', cs_not_visible: 'Non visible',
   lcNeeds: 'Ce qu’il faut pour en être sûr', lcCant: 'Le vendeur ne peut pas le fournir', lcSentPhoto: 'Photo envoyée',
+  // the photo viewer of the Lab console
+  vwPhotos: 'Photos', vwViewAll: 'Voir et zoomer', vwCount: 'Photo {n} sur {total}', vwZoomIn: 'Zoomer (+)',
+  vwZoomOut: 'Dézoomer (−)', vwFit: 'Ajuster à l’écran (0)', vwRotate: 'Pivoter (R)', vwEnhance: 'Plus de contraste (E)',
+  vwCompare: 'Comparer deux photos (C)', vwNotes: 'Notes du Lab Check (I)', vwOriginal: 'Ouvrir l’original dans un nouvel onglet', vwPrev: 'Photo précédente',
+  vwNext: 'Photo suivante', vwStrip: 'Toutes les photos de cette annonce', vwNotesT: 'Ce que le Lab Check a vu ici', vwNoNotes: 'Le Lab Check n’a rien noté sur cette photo.',
+  vwNoCheck: 'Pas encore de résultat du Lab Check.', vwRes: '{w} × {h} px', vwLowRes: 'Basse résolution : si un détail compte, demande au vendeur une photo plus nette.', vwFailed: 'Impossible de charger cette photo.',
+  vwPick: 'Comparaison : le côté doré affiche la photo que tu choisis en bas. Clique sur un côté pour changer.', vwKeys: '← → photos · molette pour zoomer · glisser pour déplacer · double-clic pour zoomer · R pivoter · E contraste · C comparer · Échap fermer', vwTouch: 'Pince ou touche deux fois pour zoomer · balaie pour la photo suivante', vwFlag: 'Signal d’alerte',
   lcAskedOld: 'Le vendeur a encore une demande ouverte d’une vérification précédente (envoyée {when}). Une nouvelle demande la remplace.',
   lcAsked: 'Demande envoyée au vendeur {when}', lcAnswered: 'Le vendeur a répondu {when}', lcAsk: 'Demander au vendeur',
   lcAskHint: 'En cas de soupçon de contrefaçon, rien n’est demandé automatiquement : à toi de décider si tu donnes une chance au vendeur.', lcCost: 'coût {usd}', lcAutoToast: 'Le Lab Check a approuvé l’annonce : elle est en ligne.',

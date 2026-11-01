@@ -445,6 +445,13 @@
   ar_photos: 'Zdjęcia', ar_other: 'Inne', cs_pass: 'OK',
   cs_concern: 'Do sprawdzenia', cs_fail: 'Niezgodne', cs_not_visible: 'Niewidoczne',
   lcNeeds: 'Czego potrzeba, by mieć pewność', lcCant: 'Sprzedawca nie może tego dostarczyć', lcSentPhoto: 'Zdjęcie wysłane',
+  // the photo viewer of the Lab console
+  vwPhotos: 'Zdjęcia', vwViewAll: 'Oglądaj i powiększaj', vwCount: 'Zdjęcie {n} z {total}', vwZoomIn: 'Powiększ (+)',
+  vwZoomOut: 'Pomniejsz (−)', vwFit: 'Dopasuj do ekranu (0)', vwRotate: 'Obróć (R)', vwEnhance: 'Więcej kontrastu (E)',
+  vwCompare: 'Porównaj dwa zdjęcia (C)', vwNotes: 'Uwagi Lab Check (I)', vwOriginal: 'Otwórz oryginał w nowej karcie', vwPrev: 'Poprzednie zdjęcie',
+  vwNext: 'Następne zdjęcie', vwStrip: 'Wszystkie zdjęcia tego ogłoszenia', vwNotesT: 'Co Lab Check zauważył tutaj', vwNoNotes: 'Lab Check nie zanotował nic przy tym zdjęciu.',
+  vwNoCheck: 'Brak jeszcze wyniku Lab Check.', vwRes: '{w} × {h} px', vwLowRes: 'Niska rozdzielczość: jeśli szczegół ma znaczenie, poproś sprzedawcę o ostrzejsze zdjęcie.', vwFailed: 'Nie udało się wczytać tego zdjęcia.',
+  vwPick: 'Porównanie: złota strona pokazuje zdjęcie wybrane poniżej. Kliknij stronę, aby przełączyć.', vwKeys: '← → zdjęcia · kółko powiększa · przeciągnij, aby przesunąć · dwuklik powiększa · R obróć · E kontrast · C porównaj · Esc zamknij', vwTouch: 'Rozsuń palce lub stuknij dwa razy, aby powiększyć · przesuń do następnego zdjęcia', vwFlag: 'Sygnał ostrzegawczy',
   lcAskedOld: 'Sprzedawca ma jeszcze otwartą prośbę z wcześniejszego sprawdzenia (wysłaną {when}). Nowa prośba ją zastąpi.',
   lcAsked: 'Poproszono sprzedawcę {when}', lcAnswered: 'Sprzedawca odpowiedział {when}', lcAsk: 'Poproś sprzedawcę o to',
   lcAskHint: 'Przy podejrzeniu podróbki prośba nigdy nie jest wysyłana automatycznie: zdecyduj, czy dać sprzedawcy szansę.', lcCost: 'koszt {usd}', lcAutoToast: 'Lab Check zatwierdził ogłoszenie: jest już widoczne.',

@@ -445,6 +445,13 @@
   ar_photos: 'Fotos', ar_other: 'Sonstiges', cs_pass: 'OK',
   cs_concern: 'Genauer ansehen', cs_fail: 'Falsch', cs_not_visible: 'Nicht sichtbar',
   lcNeeds: 'Was noch fehlt, um sicher zu sein', lcCant: 'Der Verkäufer kann das nicht liefern', lcSentPhoto: 'Foto gesendet',
+  // the photo viewer of the Lab console
+  vwPhotos: 'Fotos', vwViewAll: 'Ansehen und zoomen', vwCount: 'Foto {n} von {total}', vwZoomIn: 'Vergrößern (+)',
+  vwZoomOut: 'Verkleinern (−)', vwFit: 'An den Bildschirm anpassen (0)', vwRotate: 'Drehen (R)', vwEnhance: 'Mehr Kontrast (E)',
+  vwCompare: 'Zwei Fotos vergleichen (C)', vwNotes: 'Hinweise des Lab Checks (I)', vwOriginal: 'Original in neuem Tab öffnen', vwPrev: 'Vorheriges Foto',
+  vwNext: 'Nächstes Foto', vwStrip: 'Alle Fotos dieser Anzeige', vwNotesT: 'Was der Lab Check hier gesehen hat', vwNoNotes: 'Der Lab Check hat zu diesem Foto nichts angemerkt.',
+  vwNoCheck: 'Noch kein Ergebnis des Lab Checks.', vwRes: '{w} × {h} px', vwLowRes: 'Geringe Auflösung: Wenn es auf ein Detail ankommt, bitte den Verkäufer um ein schärferes Foto.', vwFailed: 'Dieses Foto konnte nicht geladen werden.',
+  vwPick: 'Vergleich: Die goldene Seite zeigt das Foto, das du unten auswählst. Klicke auf eine Seite, um zu wechseln.', vwKeys: '← → Fotos · Scrollen zoomt · Ziehen verschiebt · Doppelklick zoomt · R drehen · E Kontrast · C vergleichen · Esc schließen', vwTouch: 'Zum Zoomen auseinanderziehen oder doppelt tippen · Wischen für das nächste Foto', vwFlag: 'Warnzeichen',
   lcAskedOld: 'Der Verkäufer hat noch eine offene Anfrage aus einer früheren Prüfung (gesendet {when}). Eine neue Anfrage ersetzt sie.',
   lcAsked: 'Verkäufer angefragt {when}', lcAnswered: 'Der Verkäufer hat geantwortet {when}', lcAsk: 'Beim Verkäufer anfragen',
   lcAskHint: 'Bei Fälschungsverdacht wird nie automatisch angefragt: entscheide, ob du dem Verkäufer eine Chance gibst.', lcCost: 'Kosten {usd}', lcAutoToast: 'Der Lab Check hat die Anzeige freigegeben: sie ist online.',

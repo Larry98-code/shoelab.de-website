@@ -445,6 +445,13 @@
   ar_photos: 'Foto', ar_other: 'Altro', cs_pass: 'OK',
   cs_concern: 'Da guardare meglio', cs_fail: 'Non corretto', cs_not_visible: 'Non visibile',
   lcNeeds: 'Cosa serve per esserne sicuri', lcCant: 'Il venditore non può fornirlo', lcSentPhoto: 'Foto inviata',
+  // the photo viewer of the Lab console
+  vwPhotos: 'Foto', vwViewAll: 'Guarda e ingrandisci', vwCount: 'Foto {n} di {total}', vwZoomIn: 'Ingrandisci (+)',
+  vwZoomOut: 'Riduci (−)', vwFit: 'Adatta allo schermo (0)', vwRotate: 'Ruota (R)', vwEnhance: 'Più contrasto (E)',
+  vwCompare: 'Confronta due foto (C)', vwNotes: 'Note del Lab Check (I)', vwOriginal: 'Apri l’originale in una nuova scheda', vwPrev: 'Foto precedente',
+  vwNext: 'Foto successiva', vwStrip: 'Tutte le foto di questo annuncio', vwNotesT: 'Cosa ha visto qui il Lab Check', vwNoNotes: 'Il Lab Check non ha annotato nulla su questa foto.',
+  vwNoCheck: 'Ancora nessun risultato del Lab Check.', vwRes: '{w} × {h} px', vwLowRes: 'Risoluzione bassa: se un dettaglio conta, chiedi al venditore una foto più nitida.', vwFailed: 'Impossibile caricare questa foto.',
+  vwPick: 'Confronto: il lato dorato mostra la foto che scegli sotto. Clicca su un lato per cambiare.', vwKeys: '← → foto · rotella per ingrandire · trascina per spostare · doppio clic per ingrandire · R ruota · E contrasto · C confronta · Esc chiudi', vwTouch: 'Pizzica o tocca due volte per ingrandire · scorri per la foto successiva', vwFlag: 'Campanello d’allarme',
   lcAskedOld: 'Il venditore ha ancora una richiesta aperta da un controllo precedente (inviata {when}). Chiedere ora la sostituisce.',
   lcAsked: 'Richiesta inviata al venditore {when}', lcAnswered: 'Il venditore ha risposto {when}', lcAsk: 'Chiedi al venditore',
   lcAskHint: 'In caso di sospetto falso non si chiede mai in automatico: decidi tu se dare una possibilità al venditore.', lcCost: 'costo {usd}', lcAutoToast: 'Il Lab Check ha approvato l\'annuncio: è online.',

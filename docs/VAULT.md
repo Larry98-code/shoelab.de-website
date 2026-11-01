@@ -162,6 +162,26 @@ The console's header line shows the current state ("Lab Check: on · you
 approve every listing") and, with automatic approval on, the last pairs it
 approved.
 
+### Looking at the photos
+
+Each listing's photos are numbered the way the Lab Check numbers them, with a
+dot where it noted something (red: wrong or a red flag, amber: look closer or
+not visible, green: checked and fine). "Photo 4" in its findings is a link.
+A photo, a link or **View and zoom** opens the viewer:
+
+- zoom with the wheel, a pinch, a double-click/double-tap or + and −
+  (100% is the photo's own pixels), drag to move around, 0 to fit;
+- **R** rotates a sideways photo, **E** adds contrast for dark photos;
+- **C** compares two photos side by side (the size tag opens next to the box
+  label); the gold side shows what you pick in the strip, 1 and 2 switch sides;
+- on the right (on a phone, behind the ⓘ button): the photo's resolution, a
+  warning when it is too small to judge, and what the Lab Check noted on it;
+- ← → move between photos (swipe on a phone), Esc or Back closes, and the
+  arrow-box button opens the original in a new tab.
+
+Photos the seller sent on request are marked "Sent on request" and named after
+what was asked.
+
 ## Emails in everyone's own language
 
 Every email goes out in the recipient's language: the one they picked on the
@@ -325,6 +345,7 @@ Vault takes real money:
 | `functions/_shared/vault.js` | Fees, tables, orders, payouts, refunds, emails, housekeeping (auction endings, expiries, auto-delivery, retention) |
 | `functions/_shared/support.js` | Wesley in the Vault and support requests |
 | `functions/_shared/labcheck.js` | The Lab Check: the prompt, the report format, asking the seller, automatic approval |
+| `js/vault-viewer.js` | The console's photo viewer (zoom, compare, the Lab Check's notes per photo) |
 | `functions/_shared/mail.js`, `mail-i18n/*.js` | Every email, in eight languages, and `/api/mail` for the language links |
 | `functions/_shared/core.js` | Languages and the account tables |
 | `functions/api/account/verify.js`, `resend-verification.js` | Email confirmation |
