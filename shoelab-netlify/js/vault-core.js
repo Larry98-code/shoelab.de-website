@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '4';   // bump together with the ?v= of the translation files
+  var V = '5';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },
@@ -240,6 +240,48 @@
     }
     if (res && res.status === 503) return t('e_offline');
     return dt.error || t('e_generic');
+  }
+
+  /* ── photos: shrunk on the phone before they are sent ──────────────── */
+  // A listing's photos and the ones the Lab Check asks for later go through
+  // the same compression: up to 1600 px and 600 KB, plus a small copy for grids.
+  var MAX_SIDE = 1600, MAX_BYTES = 600 * 1024;
+  // a small copy for listing grids: quick on a phone, sharp enough to tell pairs apart
+  function thumbnail(img, wd, ht) {
+    var k = Math.min(1, 480 / Math.max(wd, ht)), cw = Math.round(wd * k), ch = Math.round(ht * k);
+    var c = d.createElement('canvas'); c.width = cw; c.height = ch;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch);
+    ctx.drawImage(img, 0, 0, cw, ch);
+    var out = c.toDataURL('image/jpeg', 0.74);
+    return out.length * 0.75 <= 110 * 1024 ? out : c.toDataURL('image/jpeg', 0.55);
+  }
+  function compressPhoto(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var wd = img.naturalWidth, ht = img.naturalHeight;
+        if (!wd || !ht) { reject(new Error('empty')); return; }
+        var thumb = thumbnail(img, wd, ht);
+        var side = MAX_SIDE, data = null;
+        for (var round = 0; round < 4; round++) {
+          var k = Math.min(1, side / Math.max(wd, ht)), cw = Math.round(wd * k), ch = Math.round(ht * k);
+          var c = d.createElement('canvas'); c.width = cw; c.height = ch;
+          var ctx = c.getContext('2d');
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch);   // transparent PNGs get a white floor
+          ctx.drawImage(img, 0, 0, cw, ch);
+          for (var q = 0.86; q >= 0.5; q -= 0.08) {
+            data = c.toDataURL('image/jpeg', q);
+            if (data.length * 0.75 <= MAX_BYTES) { resolve({ data: data, thumb: thumb }); return; }
+          }
+          side = Math.round(side * 0.75);
+        }
+        if (data && data.length * 0.75 <= 740 * 1024) resolve({ data: data, thumb: thumb }); else reject(new Error('large'));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('format')); };
+      img.src = url;
+    });
   }
 
   /* ── member ─────────────────────────────────────────────────────────── */
@@ -998,7 +1040,7 @@
     t: t, tn: tn, has: has, lang: function () { return lang; }, locale: loc, started: function () { return started; },
     money: money, num: num, fmtDate: fmtDate, fmtDateTime: fmtDateTime, fmtShort: fmtShort, ago: ago, left: left,
     esc: esc, initials: initials, firstName: firstName, qs: qs, parseEuro: parseEuro, centsOf: centsOf, amountText: amountText,
-    titleOf: titleOf, ico: ico,
+    titleOf: titleOf, ico: ico, compressPhoto: compressPhoto,
     api: api, market: market, errText: errText,
     me: function () { return me; }, config: function () { return config; }, reloadConfig: loadConfig,
     requireAuth: requireAuth, requireVerified: requireVerified, signOut: signOut, verifyPrompt: verifyPrompt, resendVerification: resendVerification,

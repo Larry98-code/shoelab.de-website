@@ -50,6 +50,9 @@
   /* ── what needs doing ─────────────────────────────────────────────── */
   function todos() {
     var out = [], b = data.buying, s = data.selling;
+    s.listings.forEach(function (l) {
+      if (l.request) out.push({ icon: 'camera', text: t('todoPhotos', { title: l.title }), go: t('nmGo'), need: l.id });
+    });
     b.orders.forEach(function (o) {
       if (o.status === 'awaiting_payment' && o.payMode !== 'manual') out.push({ icon: 'euro', text: t('todoPay', { title: o.title }), go: t('payNow'), order: o.id, pay: o.id });
       if (o.status === 'shipped') out.push({ icon: 'truck', text: t('todoReceive', { title: o.title }), go: t('open'), order: o.id });
@@ -247,6 +250,63 @@
       '<div class="side"><span class="amt"><small>' + esc(t(live ? 'currentBid' : 'finalPrice')) + '</small>' + money(l.price) + '</span>' +
         (live && !l.leading ? '<div class="acts"><a class="v-btn xs" href="' + S.itemHref(l) + '">' + esc(t('bidAgain')) + '</a></div>' : '') + '</div></div>';
   }
+  /* ── what the authenticity check needs (a photo, a short answer, or "I can't") ── */
+  var need = {};                            // listing id → item index → { data, thumb }
+  function needsHtml(l) {
+    var q = l.request;
+    if (!q) return '';
+    return '<div class="v-needs" id="need-' + l.id + '">' +
+      '<div class="v-needs-head">' + S.ico('camera') + '<b>' + esc(t('nmT')) + '</b></div>' +
+      '<p class="v-note">' + esc(t('nmP')) + '</p>' +
+      '<ol>' + q.items.map(function (x, i) {
+        var got = need[l.id] && need[l.id][i];
+        return '<li>' +
+          '<b>' + esc(x.title) + '</b>' + (x.instructions ? '<small>' + esc(x.instructions) + '</small>' : '') +
+          '<div class="v-needs-in">' +
+            (x.type === 'text'
+              ? '<textarea class="v-textarea" rows="2" maxlength="600" id="nt' + l.id + '-' + i + '" placeholder="' + esc(t('nmTextPh')) + '"></textarea>'
+              : '<label class="v-btn ghost xs v-needs-pick">' + S.ico('upload') + '<span>' + esc(t(got ? 'nmChange' : 'nmAdd')) + '</span>' +
+                  '<input type="file" accept="image/*" hidden data-need-photo="' + l.id + ':' + i + '"/></label>' +
+                (got ? '<img class="v-needs-thumb" src="' + got.thumb + '" alt=""/>' : '')) +
+            '<label class="v-needs-none"><input type="checkbox" id="nn' + l.id + '-' + i + '"/> ' + esc(t('nmNone')) + '</label>' +
+          '</div></li>';
+      }).join('') + '</ol>' +
+      '<div class="v-msg" role="alert" id="nmMsg' + l.id + '"></div>' +
+      '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn gold sm" data-need-send="' + l.id + '">' + esc(t('nmSend')) + '</button></div>' +
+    '</div>';
+  }
+  function sendNeeds(btn, id) {
+    var l = data.selling.listings.filter(function (x) { return x.id === id; })[0];
+    if (!l || !l.request) return;
+    var answers = [], missing = false;
+    l.request.items.forEach(function (x, i) {
+      if (($('nn' + id + '-' + i) || {}).checked) { answers.push({ i: i, none: true }); return; }
+      if (x.type === 'text') {
+        var v = (($('nt' + id + '-' + i) || {}).value || '').trim();
+        if (v) answers.push({ i: i, text: v }); else missing = true;
+        return;
+      }
+      var p = need[id] && need[id][i];
+      if (p) answers.push({ i: i, photo: { data: p.data, thumb: p.thumb } }); else missing = true;
+    });
+    var msg = $('nmMsg' + id);
+    if (missing) { msg.textContent = t('nmMissing'); msg.className = 'v-msg bad'; return; }
+    msg.textContent = t('uploading'); msg.className = 'v-msg';
+    S.busy(btn, true);
+    S.market('listing/answer', { body: { id: id, request: l.request.id, answers: answers } }).then(function (res) {
+      if (!res.ok) { S.busy(btn, false); msg.textContent = S.errText(res); msg.className = 'v-msg bad'; return; }
+      delete need[id];
+      msg.innerHTML = '<span class="v-lc-spin"></span> ' + esc(t('nmChecking'));
+      // the check looks again straight away; the seller only hears whether more is needed
+      return S.market('check', { body: { id: id } }).then(function (r2) {
+        S.busy(btn, false);
+        var out = r2.ok ? r2.data.outcome : 'done';
+        S.toast(t(out === 'asked' ? 'nmMore' : out === 'approved' ? 'nmLive' : 'nmDone'), 'ok');
+        load();
+      });
+    });
+  }
+
   function listingRowHtml(l) {
     var acts = '<a class="v-btn ghost xs" href="' + S.itemHref(l) + '">' + esc(t('view')) + '</a>';
     if ((l.status === 'review' || l.status === 'live') && !l.bids) acts += '<button type="button" class="v-btn danger xs" data-withdraw="' + l.id + '">' + esc(t('withdraw')) + '</button>';
@@ -261,7 +321,7 @@
           (l.status === 'live' && l.format === 'auction' && l.endsAt ? S.countdownHtml(l.endsAt) : '') + '</div>' +
         (l.status === 'rejected' && l.reviewNote ? '<small style="color:#ff9a9a;margin-top:0.45rem;">' + esc(l.reviewNote) + '</small>' : '') + '</div>' +
       '<div class="side"><span class="amt"><small>' + esc(t(l.format === 'auction' ? (l.bids ? 'currentBid' : 'startingBid') : 'price')) + '</small>' + money(l.price) + '</span>' +
-        '<div class="acts">' + acts + '</div></div></div>';
+        '<div class="acts">' + acts + '</div></div></div>' + needsHtml(l);
   }
 
   /* ── payouts (Stripe Connect) ─────────────────────────────────────── */
@@ -335,7 +395,7 @@
     var h = '';
     if (td.length) {
       h += '<div class="v-todo" role="list" aria-label="' + esc(t('todoTitle')) + '">' + td.map(function (x) {
-        return '<button type="button" class="v-todo-item" role="listitem" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '" data-todo-payouts="' + (x.payouts || '') + '">' +
+        return '<button type="button" class="v-todo-item" role="listitem" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '" data-todo-payouts="' + (x.payouts || '') + '" data-todo-need="' + (x.need || '') + '">' +
           S.ico(x.icon) + '<span>' + esc(x.text) + '</span><span class="go">' + esc(x.go) + ' →</span></button>';
       }).join('') + '</div>';
     }
@@ -374,7 +434,7 @@
   function pickTab() {
     var h = (w.location.hash || '').slice(1);
     if (h === 'selling' || h === 'buying' || h === 'watching') return h;
-    if (h === 'payouts') return 'selling';
+    if (h === 'payouts' || /^need-\d+$/.test(h)) return 'selling';
     var m = /^order-(\d+)$/.exec(h);
     if (m) {
       var id = +m[1];
@@ -393,11 +453,11 @@
   // scroll to the card a link (or an email) pointed at
   function jump() {
     var h = (w.location.hash || '').slice(1);
-    var el = /^order-\d+$/.test(h) ? $(h) : (h === 'offers' || h === 'payouts') ? $(h) : null;
+    var el = /^(order|need)-\d+$/.test(h) ? $(h) : (h === 'offers' || h === 'payouts') ? $(h) : null;
     if (!el) return;
     setTimeout(function () {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      var card = el.classList.contains('v-order') ? el : null;
+      var card = el.classList.contains('v-order') || el.classList.contains('v-needs') ? el : null;
       if (card) { card.classList.add('flash'); setTimeout(function () { card.classList.remove('flash'); }, 2400); }
     }, 120);
   }
@@ -434,6 +494,7 @@
       if (g('data-todo-pay')) { pay(+g('data-todo-pay')); return; }
       if (g('data-todo-offers')) { setTab(g('data-todo-offers'), true); w.location.hash = 'offers'; jump(); return; }
       if (g('data-todo-payouts')) { setTab('selling', true); w.location.hash = 'payouts'; jump(); return; }
+      if (g('data-todo-need')) { setTab('selling', true); w.location.hash = 'need-' + g('data-todo-need'); jump(); return; }
       if (g('data-todo-order')) {
         var o = findOrder(+g('data-todo-order'));
         if (o) { tab = o.role === 'seller' ? 'selling' : 'buying'; render(); w.location.hash = 'order-' + o.id; jump(); }
@@ -468,6 +529,7 @@
       act(el, 'order/feedback', { orderId: orderId, rating: +g('data-rate'), comment: comment.trim() }, 'ratedToast');
       return;
     }
+    if (g('data-need-send')) { sendNeeds(el, +g('data-need-send')); return; }
     if (g('data-withdraw')) {
       var lid = +g('data-withdraw');
       S.confirm(t('withdrawT'), t('withdrawQ'), t('withdraw'), true).then(function (y) {
@@ -542,6 +604,27 @@
   }
 
   d.addEventListener('click', function (e) { if ($('meBody').contains(e.target)) onClick(e); });
+  // once the seller starts filling in, an earlier "fill in every point" goes away
+  function needTouched(e) {
+    var box = e.target && e.target.closest && e.target.closest('.v-needs'), msg = box && box.querySelector('.v-msg.bad');
+    if (msg) { msg.textContent = ''; msg.className = 'v-msg'; }
+  }
+  d.addEventListener('input', needTouched);
+  d.addEventListener('change', function (e) {
+    needTouched(e);
+    var inp = e.target, key = inp && inp.getAttribute && inp.getAttribute('data-need-photo');
+    if (!key || !inp.files || !inp.files[0]) return;
+    var id = +key.split(':')[0], i = +key.split(':')[1];
+    S.compressPhoto(inp.files[0]).then(function (out) {
+      (need[id] = need[id] || {})[i] = out;
+      // just this item, so answers typed next to it stay
+      var box = inp.closest('.v-needs-in'), img = box.querySelector('.v-needs-thumb');
+      if (!img) { img = d.createElement('img'); img.className = 'v-needs-thumb'; img.alt = ''; inp.closest('label').insertAdjacentElement('afterend', img); }
+      img.src = out.thumb;
+      inp.closest('label').querySelector('span').textContent = t('nmChange');
+      inp.value = '';
+    }, function (err) { S.toast(t(err && err.message === 'large' ? 'e_photo_big' : 'e_photo_bad'), 'bad'); });
+  });
   w.addEventListener('hashchange', function () {
     if (!data) return;
     var k = pickTab();

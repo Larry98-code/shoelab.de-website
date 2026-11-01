@@ -5,14 +5,16 @@
 //        listing/relist | order/pay | order/ship | order/received | order/problem
 //        order/feedback | payouts/setup | payouts/dashboard | support/chat
 //        support/ticket | support/answer | review | lab | lab/photos-to-r2
+//        check | check/ask | listing/answer   (the Lab Check, see _shared/labcheck.js)
 import { json, preflight, clean, currentUser, stripeApi, sessionSecret, mailTrouble } from '../../_shared/util.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
   siteUrl, isSpecialist, onSpecialistList, shortName, maskName, fees, ensureSchema, logEvent, userById,
   listingTitle, tell, tellStudio, createOrder, markPaid, shipTo, housekeeping, settleAuction,
-  orderDelivered, releasePayout, releaseWaiting, refundOrder, connectOn, sellerRow, refreshSeller, LAB,
+  orderDelivered, releasePayout, releaseWaiting, refundOrder, connectOn, sellerRow, refreshSeller, LAB, approveListing,
 } from '../../_shared/vault.js';
 import { supportChat, supportTicket, supportAnswer, ticketsForQueue } from '../../_shared/support.js';
+import { runCheck, mayRun, checkView, requestView, latestCheck, latestRequest, askSeller, checkSettings } from '../../_shared/labcheck.js';
 
 // Errors carry a stable code next to the English message, so the pages can
 // show them in the visitor's language; extra fields (an amount) fill the gaps.
@@ -65,7 +67,7 @@ function cents(v) {
 function intParam(v) { const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; }
 
 const CARD_COLS = `l.*,
-  (SELECT id FROM mk_photos p WHERE p.listing_id = l.id ORDER BY idx LIMIT 1) AS photo_id,
+  (SELECT id FROM mk_photos p WHERE p.listing_id = l.id AND COALESCE(p.kind, '') != 'extra' ORDER BY idx LIMIT 1) AS photo_id,
   (SELECT COUNT(*) FROM mk_watch w WHERE w.listing_id = l.id) AS watchers`;
 
 function card(l) {
@@ -187,7 +189,7 @@ async function getListing({ request, env }) {
     fail(404, 'This listing does not exist or is no longer available', 'gone');
   }
 
-  const photos = await env.DB.prepare('SELECT id, kind FROM mk_photos WHERE listing_id = ? ORDER BY idx').bind(id).all();
+  const photos = await env.DB.prepare("SELECT id, kind FROM mk_photos WHERE listing_id = ? AND COALESCE(kind, '') != 'extra' ORDER BY idx").bind(id).all();
   const seller = await env.DB.prepare('SELECT name, created_at FROM users WHERE id = ?').bind(l.seller_id).first();
   const sales = await env.DB.prepare(
     "SELECT COUNT(*) AS n FROM mk_orders WHERE seller_id = ? AND status IN ('delivered','shipped','verified')"
@@ -278,13 +280,19 @@ async function storePhoto(env, listingId, idx, p) {
 async function getPhoto({ request, env }) {
   const q = new URL(request.url).searchParams;
   const id = intParam(q.get('id'));
-  const p = id && await env.DB.prepare('SELECT mime, data, thumb FROM mk_photos WHERE id = ?').bind(id).first();
+  const p = id && await env.DB.prepare('SELECT p.mime, p.data, p.thumb, p.kind, l.seller_id FROM mk_photos p LEFT JOIN mk_listings l ON l.id = p.listing_id WHERE p.id = ?').bind(id).first();
   if (!p) return new Response('Not found', { status: 404 });
+  // a photo sent on request (it may be a receipt) is shown only to the seller and to specialists
+  const privy = p.kind === 'extra';
+  if (privy) {
+    const u = await currentUser(request, env);
+    if (!u || (u.id !== p.seller_id && !isSpecialist(env, u))) return new Response('Not found', { status: 404 });
+  }
   const small = q.get('s') === 't' && p.thumb;
   const src = small ? p.thumb : p.data;
   const headers = {
     'Content-Type': small ? 'image/jpeg' : p.mime,
-    'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': privy ? 'private, no-store' : 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff',
   };
   if (String(src).slice(0, 3) === 'r2:') {
     const obj = env.VAULT_PHOTOS && await env.VAULT_PHOTOS.get(src.slice(3));
@@ -848,7 +856,14 @@ async function getMe({ request, env }) {
     connect: connectOn(env),
     seller: await sellerState(env, me.id),
     selling: {
-      listings: (mine.results || []).map((l) => Object.assign(card(l), { openOffers: l.open_offers, reviewNote: l.review_note })),
+      listings: await Promise.all((mine.results || []).map(async (l) => {
+        const c = Object.assign(card(l), { openOffers: l.open_offers, reviewNote: l.review_note });
+        if (l.status === 'review') {
+          const q = requestView(await latestRequest(env, l.id));
+          if (q && q.status === 'open') c.request = { id: q.id, items: q.items.map((x) => ({ type: x.type, title: x.title, instructions: x.instructions })) };
+        }
+        return c;
+      })),
       offers: (received.results || []).map(offerView),
       orders: ov.filter((o) => o.role === 'seller'),
     },
@@ -872,11 +887,12 @@ async function getQueue({ request, env }) {
   ).all();
   const items = [];
   for (const l of review.results || []) {
-    const ph = await env.DB.prepare('SELECT id, kind FROM mk_photos WHERE listing_id = ? ORDER BY idx').bind(l.id).all();
+    const ph = await env.DB.prepare('SELECT id, kind, note FROM mk_photos WHERE listing_id = ? ORDER BY idx, id').bind(l.id).all();
     items.push(Object.assign(card(l), {
       description: l.description, startPrice: l.start_price, duration: l.duration_days, minOffer: l.min_offer,
       seller: { name: l.seller_name, email: l.seller_email, emailVerifiedAt: l.seller_verified }, sellerId: l.seller_id,
-      photos: (ph.results || []).map((p) => ({ url: '/api/market/photo?id=' + p.id, kind: p.kind })),
+      photos: (ph.results || []).map((p) => ({ id: p.id, url: '/api/market/photo?id=' + p.id, kind: p.kind, note: p.note || null })),
+      check: checkView(await latestCheck(env, l.id)), request: requestView(await latestRequest(env, l.id)),
     }));
   }
   const active = await env.DB.prepare(
@@ -910,6 +926,15 @@ async function getQueue({ request, env }) {
   }
   stats.r2 = !!env.VAULT_PHOTOS;
   stats.connect = connectOn(env);
+  stats.labCheck = checkSettings(env);
+  // pairs the Lab Check put live by itself lately, so a person still sees them
+  const auto = await env.DB.prepare(
+    `SELECT e.listing_id AS id, e.created_at AS at, l.brand, l.model, l.size, c.confidence FROM mk_events e
+       JOIN mk_listings l ON l.id = e.listing_id
+       LEFT JOIN mk_checks c ON c.id = (SELECT MAX(id) FROM mk_checks WHERE listing_id = e.listing_id AND status = 'done')
+     WHERE e.kind = 'auto_approved' ORDER BY e.id DESC LIMIT 10`
+  ).all();
+  stats.autoApproved = (auto.results || []).map((x) => ({ id: x.id, at: x.at, title: listingTitle(x), size: x.size, confidence: x.confidence }));
   // emails that did not go out this week: the console warns until one goes out again
   const trouble = await mailTrouble(env);
   stats.mail_failures = trouble.failing;
@@ -925,13 +950,7 @@ async function review({ request, env }) {
   const at = nowIso(), note = clean(b.note || '', 500);
   const seller = await userById(env, l.seller_id);
   if (b.decision === 'approve') {
-    const ends = l.format === 'auction' ? isoIn(l.duration_days * 86400000) : null;
-    await env.DB.prepare("UPDATE mk_listings SET status = 'live', live_at = ?, ends_at = ?, review_note = ?, updated_at = ? WHERE id = ? AND status = 'review'")
-      .bind(at, ends, note || null, at, l.id).run();
-    await logEvent(env, { listingId: l.id, kind: 'approved', note });
-    await tell(env, seller, 'listingLive', {
-      title: listingTitle(l), url: '/vault-item.html?id=' + l.id, note: { k: l.tier === 'photo' ? 'livePhoto' : 'liveLab' },
-    });
+    await approveListing(env, l, note, 'approved');
   } else if (b.decision === 'reject') {
     if (!note) fail(400, 'Tell the seller why', 'note_needed');
     await env.DB.prepare("UPDATE mk_listings SET status = 'rejected', review_note = ?, updated_at = ? WHERE id = ? AND status = 'review'")
@@ -1085,6 +1104,92 @@ async function supportAnswerRoute({ request, env }) {
   return json(r.body, r.status);
 }
 
+// ── POST check — run the Lab Check on a listing waiting for review ─────────
+// The seller's page starts it right after a listing is sent (and again after
+// they answer a request); the console starts it for any listing without a
+// current result. The seller only learns whether more is needed, never the
+// verdict or the findings: those would teach a forger what to fix.
+async function checkRoute({ request, env }) {
+  const me = await needUser(request, env);
+  const b = await body(request);
+  const l = await env.DB.prepare('SELECT * FROM mk_listings WHERE id = ?').bind(intParam(b.id)).first();
+  if (!l) fail(404, 'Listing not found', 'not_found');
+  const spec = isSpecialist(env, me);
+  if (!spec && l.seller_id !== me.id) fail(404, 'Listing not found', 'not_found');
+  const why = await mayRun(env, l, spec && !!b.force);
+  const forSeller = (outcome, req) => ({ ok: true, outcome: outcome === 'approved' ? 'approved' : req && req.status === 'open' ? 'asked' : 'done' });
+  if (why === 'running' || why === 'up_to_date') {
+    const req = requestView(await latestRequest(env, l.id));
+    return json(spec ? { ok: true, running: why === 'running', check: checkView(await latestCheck(env, l.id)), request: req }
+      : Object.assign(forSeller(why === 'running' ? 'running' : 'done', req), why === 'running' ? { outcome: 'running' } : {}));
+  }
+  if (why === 'wrong_step') fail(409, 'This listing is not waiting for review', 'wrong_step');
+  if (why === 'check_off') fail(409, 'The Lab Check is switched off', 'check_off');
+  if (why === 'check_limit') fail(429, 'This listing has been checked often enough today', 'check_limit');
+  const ran = await runCheck(env, l, spec ? 'specialist' : 'seller');
+  const req = requestView(await latestRequest(env, l.id));
+  if (!ran) return json(spec ? { ok: true, running: true, check: checkView(await latestCheck(env, l.id)), request: req } : { ok: true, outcome: 'running' });
+  return json(spec ? { ok: true, check: ran.check, request: req, outcome: ran.outcome } : forSeller(ran.outcome, req));
+}
+
+// ── POST check/ask — a specialist sends the check's requests to the seller ──
+// For a suspected fake the check never asks by itself; this is the button.
+async function checkAsk({ request, env }) {
+  await needSpecialist(request, env);
+  const b = await body(request);
+  const l = await env.DB.prepare('SELECT * FROM mk_listings WHERE id = ?').bind(intParam(b.id)).first();
+  if (!l || l.status !== 'review') fail(409, 'This listing is not waiting for review', 'wrong_step');
+  const c = checkView(await latestCheck(env, l.id));
+  const items = c && c.result && c.result.requests;
+  if (!items || !items.length) fail(409, 'The check has nothing to ask for', 'nothing_to_ask');
+  if (!await askSeller(env, l, await userById(env, l.seller_id), c.id, items, true)) fail(409, 'The seller has an open request already', 'request_open');
+  return json({ ok: true, request: requestView(await latestRequest(env, l.id)) });
+}
+
+// ── POST listing/answer — the seller sends what the check asked for ────────
+// One answer per item: a photo, a short text, or "I can't provide this".
+async function answerRequest({ request, env }) {
+  const me = await needUser(request, env);
+  const b = await body(request);
+  const l = await env.DB.prepare('SELECT * FROM mk_listings WHERE id = ?').bind(intParam(b.id)).first();
+  if (!l || l.seller_id !== me.id) fail(404, 'Listing not found', 'not_found');
+  const q = await env.DB.prepare("SELECT * FROM mk_requests WHERE listing_id = ? AND status = 'open' ORDER BY id DESC LIMIT 1").bind(l.id).first();
+  if (!q || l.status !== 'review') fail(409, 'There is nothing to answer for this listing', 'no_request');
+  // the specialist sent a newer list while this page was open
+  if (b.request && +b.request !== q.id) fail(409, 'The request has changed: reload the page', 'request_changed');
+  const items = JSON.parse(q.items || '[]');
+  const given = Array.isArray(b.answers) ? b.answers : [];
+  const answers = [], photos = [];
+  items.forEach((it, i) => {
+    const a = given.find((x) => x && +x.i === i) || {};
+    if (a.none) { answers.push({ i, none: true }); return; }
+    if (it.type === 'text') {
+      const text = clean(String(a.text || ''), 600);
+      if (!text) fail(400, 'Answer every point, or tick that you cannot provide it', 'answer_missing');
+      answers.push({ i, text });
+      return;
+    }
+    const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(a.photo && a.photo.data || ''));
+    if (!m) fail(400, 'Answer every point, or tick that you cannot provide it', 'answer_missing');
+    if (m[2].length * 0.75 > VAULT.maxPhotoBytes) fail(400, 'A photo is too large — keep each under 750 KB', 'photo_big');
+    const t = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String(a.photo.thumb || ''));
+    photos.push({ i, mime: m[1], data: m[2], thumb: t && t[1].length * 0.75 <= VAULT.maxThumbBytes ? t[1] : null, note: it.title_en || it.title });
+    answers.push({ i, photo: true });
+  });
+  const at = nowIso();
+  const top = await env.DB.prepare('SELECT COALESCE(MAX(idx), -1) AS n FROM mk_photos WHERE listing_id = ?').bind(l.id).first();
+  for (let k = 0; k < photos.length; k++) {
+    const p = photos[k], idx = top.n + 1 + k;
+    const stored = await storePhoto(env, l.id, idx, p);
+    await env.DB.prepare('INSERT INTO mk_photos (listing_id, idx, kind, note, mime, data, thumb, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(l.id, idx, 'extra', clean(p.note, 120), p.mime, stored.data, stored.thumb, at).run();
+  }
+  await env.DB.prepare("UPDATE mk_requests SET answers = ?, status = 'answered', answered_at = ? WHERE id = ? AND status = 'open'")
+    .bind(JSON.stringify(answers), at, q.id).run();
+  await logEvent(env, { listingId: l.id, kind: 'info_sent', note: answers.length + ' answer(s)' });
+  return json({ ok: true });
+}
+
 const ROUTES = {
   'GET config': getConfig,
   'GET listings': getListings,
@@ -1106,6 +1211,9 @@ const ROUTES = {
   'POST order/problem': reportProblem,
   'POST order/feedback': leaveFeedback,
   'POST review': review,
+  'POST check': checkRoute,
+  'POST check/ask': checkAsk,
+  'POST listing/answer': answerRequest,
   'POST lab': lab,
   'POST lab/photos-to-r2': photosToR2,
   'POST payouts/setup': payoutsSetup,

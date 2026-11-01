@@ -1,6 +1,8 @@
 // ShoeLab emails — Italiano: the Italian translation of en.js (format and rules in en.js's header).
 export default {
   _: {
+    // the Lab Check (authenticity check) in studio emails
+    verdict: 'Esito', confidence: 'Sicurezza', vd_authentic: 'Autentico', vd_likely_authentic: 'Probabilmente autentico', vd_inconclusive: 'Non determinabile', vd_likely_counterfeit: 'Probabilmente falso', vd_counterfeit: 'Falso',
     hi: 'Ciao {name},', hiAll: 'Ciao,',
     signoff: 'A presto,\nShoeLab', team: 'Il team ShoeLab', vaultTeam: 'Il team di ShoeLab Vault',
     readIn: 'Leggi questa email in un’altra lingua:',
@@ -80,6 +82,11 @@ export default {
     s: 'Il tuo paio di {title} è online',
     b: ['Ciao {name},', 'Ottime notizie: il tuo paio di {title} ora è online su ShoeLab Vault.', '{note}'],
     c: 'Guarda il tuo annuncio',
+  },
+  listingNeedsMore: {
+    s: 'Ancora qualche foto per verificare: {title}',
+    b: ['Ciao {name},', 'prima che uno specialista approvi il tuo annuncio, il nostro controllo di autenticità ha bisogno di qualcosa in più:', '%message', 'Aggiungilo in Il mio Vault — ci vuole un minuto. Appena arriva, controlliamo di nuovo.'],
+    c: 'Aggiungi in Il mio Vault',
   },
   listingRejected: {
     s: 'Non abbiamo potuto approvare il tuo annuncio: {title}',
@@ -266,6 +273,11 @@ export default {
   sReview: {
     s: 'Nuova recensione da approvare — {customer} ({rating}★)',
     b: ['{customer} ha lasciato una recensione da {rating}★:', '%message'],
+  },
+  sCheckFlag: {
+    s: '[VAULT] Il Lab Check ha segnalato un annuncio: {title}',
+    b: ['Il Lab Check ha trovato dettagli che non corrispondono a un paio originale. Guarda con attenzione prima di decidere.', '%rows', '%message'],
+    c: 'Apri la console del lab',
   },
   sListingReview: {
     s: '[VAULT] Nuovo annuncio da controllare: {title}',

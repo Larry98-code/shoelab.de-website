@@ -14,7 +14,6 @@
   var CONDS = ['new', 'like_new', 'good', 'fair'];
   var SLOTS = ['side_out', 'side_in', 'sole', 'size_tag', 'box_label', 'insole', 'heel', 'toe'];
   var REQ = { photo: ['side_out', 'side_in', 'sole', 'size_tag', 'box_label', 'insole'], lab: ['side_out', 'sole', 'size_tag'] };
-  var MAX_SIDE = 1600, MAX_BYTES = 600 * 1024;
 
   var st = { cond: '', tier: 'photo', format: 'auction', photos: {}, busy: {} };
   var cfg = null, pickFor = null, sent = false;
@@ -77,43 +76,6 @@
   }
 
   /* ── photos: pick, compress, store ────────────────────────────────── */
-  // a small copy for listing grids: quick on a phone, sharp enough to tell pairs apart
-  function thumbnail(img, wd, ht) {
-    var k = Math.min(1, 480 / Math.max(wd, ht)), cw = Math.round(wd * k), ch = Math.round(ht * k);
-    var c = d.createElement('canvas'); c.width = cw; c.height = ch;
-    var ctx = c.getContext('2d');
-    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch);
-    ctx.drawImage(img, 0, 0, cw, ch);
-    var out = c.toDataURL('image/jpeg', 0.74);
-    return out.length * 0.75 <= 110 * 1024 ? out : c.toDataURL('image/jpeg', 0.55);
-  }
-  function compress(file) {
-    return new Promise(function (resolve, reject) {
-      var url = URL.createObjectURL(file), img = new Image();
-      img.onload = function () {
-        URL.revokeObjectURL(url);
-        var wd = img.naturalWidth, ht = img.naturalHeight;
-        if (!wd || !ht) { reject(new Error('empty')); return; }
-        var thumb = thumbnail(img, wd, ht);
-        var side = MAX_SIDE, data = null;
-        for (var round = 0; round < 4; round++) {
-          var k = Math.min(1, side / Math.max(wd, ht)), cw = Math.round(wd * k), ch = Math.round(ht * k);
-          var c = d.createElement('canvas'); c.width = cw; c.height = ch;
-          var ctx = c.getContext('2d');
-          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch);   // transparent PNGs get a white floor
-          ctx.drawImage(img, 0, 0, cw, ch);
-          for (var q = 0.86; q >= 0.5; q -= 0.08) {
-            data = c.toDataURL('image/jpeg', q);
-            if (data.length * 0.75 <= MAX_BYTES) { resolve({ data: data, thumb: thumb }); return; }
-          }
-          side = Math.round(side * 0.75);
-        }
-        if (data && data.length * 0.75 <= 740 * 1024) resolve({ data: data, thumb: thumb }); else reject(new Error('large'));
-      };
-      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('format')); };
-      img.src = url;
-    });
-  }
   function photoErr(text) {
     var e = $('sPhotoErr');
     e.textContent = text || '';
@@ -130,7 +92,7 @@
       var k = targets[i];
       if (!/^image\//.test(f.type || 'image/')) { photoErr(t('e_photo_bad')); return; }
       st.busy[k] = true; renderPhotos();
-      compress(f).then(function (out) {
+      S.compressPhoto(f).then(function (out) {
         st.photos[k] = out;
         delete st.busy[k];
         renderPhotos(); refresh();
@@ -321,6 +283,7 @@
         '<ol class="v-flow" style="text-align:left;max-width:460px;margin:1.6rem auto 0;">' +
           ['sentS1', lab ? 'sentS2Lab' : 'sentS2Photo', 'sentS3'].map(function (k, i) { return '<li><i>' + (i + 1) + '</i><span>' + esc(t(k)) + '</span></li>'; }).join('') +
         '</ol>' +
+        '<p class="v-note v-sent-check" id="sCheck" role="status"><span class="v-lc-spin"></span> ' + esc(t('chkRun')) + '</p>' +
         '<div class="v-btn-row" style="justify-content:center;margin-top:1.8rem;">' +
           '<a class="v-btn" href="/vault-item.html?id=' + id + '">' + esc(t('viewListing')) + '</a>' +
           '<a class="v-btn ghost" href="/vault-me.html#selling">' + esc(t('navMine')) + '</a>' +
@@ -328,6 +291,16 @@
         '</div>' +
       '</div>';
     w.scrollTo({ top: 0, behavior: 'smooth' });
+    // the authenticity check starts now; the seller hears only whether more is needed
+    S.market('check', { body: { id: id } }).then(function (res) {
+      var el = $('sCheck');
+      if (!el) return;
+      var out = res.ok && res.data.outcome;
+      if (!res.ok || out === 'running') { el.remove(); return; }
+      el.innerHTML = out === 'asked'
+        ? S.ico('camera') + ' ' + esc(t('chkMore')) + ' <a class="v-link-btn" href="/vault-me.html#need-' + id + '">' + esc(t('nmGo')) + ' →</a>'
+        : S.ico('check') + ' ' + esc(t(out === 'approved' ? 'chkLive' : 'chkDone'));
+    });
   }
 
   /* ── wiring ───────────────────────────────────────────────────────── */

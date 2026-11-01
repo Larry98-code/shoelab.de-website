@@ -2,6 +2,8 @@
 // Same keys, same {placeholders}, same %blocks; [TAGS] in subjects stay English.
 export default {
   _: {
+    // the Lab Check (authenticity check) in studio emails
+    verdict: 'Ergebnis', confidence: 'Sicherheit', vd_authentic: 'Echt', vd_likely_authentic: 'Wahrscheinlich echt', vd_inconclusive: 'Nicht eindeutig', vd_likely_counterfeit: 'Wahrscheinlich gefälscht', vd_counterfeit: 'Gefälscht',
     hi: 'Hallo {name},', hiAll: 'Hallo,',
     signoff: 'Bis bald\nDein ShoeLab-Team', team: 'Dein ShoeLab-Team', vaultTeam: 'Dein ShoeLab-Vault-Team',
     readIn: 'Diese E-Mail in einer anderen Sprache lesen:',
@@ -81,6 +83,11 @@ export default {
     s: 'Deine Anzeige ist live: {title}',
     b: ['Hallo {name},', 'gute Nachrichten: Dein Paar {title} ist jetzt live im ShoeLab Vault.', '{note}'],
     c: 'Deine Anzeige ansehen',
+  },
+  listingNeedsMore: {
+    s: 'Noch ein paar Fotos für die Echtheitsprüfung: {title}',
+    b: ['Hallo {name},', 'bevor ein Spezialist deine Anzeige freigibt, braucht unsere Echtheitsprüfung noch etwas mehr:', '%message', 'Lade es in Mein Vault hoch — das dauert eine Minute. Sobald es da ist, prüfen wir erneut.'],
+    c: 'In Mein Vault hochladen',
   },
   listingRejected: {
     s: 'Wir konnten deine Anzeige nicht freigeben: {title}',
@@ -267,6 +274,11 @@ export default {
   sReview: {
     s: 'Neue Bewertung wartet auf Freigabe — {customer} ({rating}★)',
     b: ['{customer} hat eine {rating}-Sterne-Bewertung abgegeben:', '%message'],
+  },
+  sCheckFlag: {
+    s: '[VAULT] Lab Check hat eine Anzeige markiert: {title}',
+    b: ['Der Lab Check hat Details gefunden, die nicht zu einem echten Paar passen. Bitte sieh genau hin, bevor du entscheidest.', '%rows', '%message'],
+    c: 'Lab-Konsole öffnen',
   },
   sListingReview: {
     s: '[VAULT] Neue Anzeige zu prüfen: {title}',

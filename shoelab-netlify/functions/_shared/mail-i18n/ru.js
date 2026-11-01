@@ -2,6 +2,8 @@
 // Keys, % blocks, [TAGS] and {placeholders} stay exactly as in en.js.
 export default {
   _: {
+    // the Lab Check (authenticity check) in studio emails
+    verdict: 'Вердикт', confidence: 'Уверенность', vd_authentic: 'Оригинал', vd_likely_authentic: 'Вероятно, оригинал', vd_inconclusive: 'Неясно', vd_likely_counterfeit: 'Вероятно, подделка', vd_counterfeit: 'Подделка',
     hi: 'Здравствуйте, {name}!', hiAll: 'Здравствуйте!',
     signoff: 'До скорой встречи!\nВаш ShoeLab', team: 'Команда ShoeLab', vaultTeam: 'Команда ShoeLab Vault',
     readIn: 'Прочитать это письмо на другом языке:',
@@ -81,6 +83,11 @@ export default {
     s: 'Ваша пара {title} уже в продаже',
     b: ['Здравствуйте, {name}!', 'Хорошие новости: ваша пара {title} теперь в продаже в ShoeLab Vault.', '{note}'],
     c: 'Посмотреть объявление',
+  },
+  listingNeedsMore: {
+    s: 'Ещё несколько фото для проверки подлинности: {title}',
+    b: ['Здравствуйте, {name}!', 'Прежде чем специалист одобрит ваше объявление, нашей проверке подлинности нужно ещё немного:', '%message', 'Добавьте это в «Мой Vault» — это займёт минуту. Как только всё будет на месте, мы проверим снова.'],
+    c: 'Добавить в «Мой Vault»',
   },
   listingRejected: {
     s: 'Мы не смогли принять объявление: {title}',
@@ -267,6 +274,11 @@ export default {
   sReview: {
     s: 'Новый отзыв ждёт одобрения — {customer} ({rating}★)',
     b: ['Отзыв от {customer} с оценкой {rating}★:', '%message'],
+  },
+  sCheckFlag: {
+    s: '[VAULT] Lab Check отметил объявление: {title}',
+    b: ['Lab Check нашёл детали, которые не соответствуют оригинальной паре. Посмотрите внимательно, прежде чем решать.', '%rows', '%message'],
+    c: 'Открыть консоль лаборатории',
   },
   sListingReview: {
     s: '[VAULT] Новое объявление на проверку: {title}',

@@ -2,6 +2,8 @@
 // Same keys, same paragraph order, same {placeholders}; en.js explains the format.
 export default {
   _: {
+    // the Lab Check (authenticity check) in studio emails
+    verdict: 'Resultado', confidence: 'Seguridad', vd_authentic: 'Auténtico', vd_likely_authentic: 'Probablemente auténtico', vd_inconclusive: 'No concluyente', vd_likely_counterfeit: 'Probablemente falso', vd_counterfeit: 'Falso',
     hi: 'Hola, {name}:', hiAll: 'Hola:',
     signoff: '¡Hasta pronto!\nShoeLab', team: 'El equipo de ShoeLab', vaultTeam: 'El equipo de ShoeLab Vault',
     readIn: 'Lee este correo en otro idioma:',
@@ -81,6 +83,11 @@ export default {
     s: 'Tu anuncio de {title} ya está publicado',
     b: ['Hola, {name}:', '¡Buenas noticias! Tu anuncio de {title} ya está publicado en el ShoeLab Vault.', '{note}'],
     c: 'Ver tu anuncio',
+  },
+  listingNeedsMore: {
+    s: 'Unas fotos más para verificar tu {title}',
+    b: ['Hola, {name}:', 'Antes de que un especialista apruebe tu anuncio, nuestra comprobación de autenticidad necesita un poco más:', '%message', 'Añádelo en Mi Vault: tarda un minuto. En cuanto llegue, volvemos a comprobarlo.'],
+    c: 'Añadir en Mi Vault',
   },
   listingRejected: {
     s: 'No hemos podido aceptar tu anuncio de {title}',
@@ -267,6 +274,11 @@ export default {
   sReview: {
     s: 'Nueva reseña pendiente de aprobación — {customer} ({rating}★)',
     b: ['{customer} ha dejado una reseña con {rating} de 5 estrellas:', '%message'],
+  },
+  sCheckFlag: {
+    s: '[VAULT] Lab Check ha marcado un anuncio: {title}',
+    b: ['Lab Check ha encontrado detalles que no encajan con un par auténtico. Revísalo con atención antes de decidir.', '%rows', '%message'],
+    c: 'Abrir la consola del lab',
   },
   sListingReview: {
     s: '[VAULT] Nuevo anuncio por revisar: {title}',

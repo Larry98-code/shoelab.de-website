@@ -9,6 +9,8 @@
 // Subject tags in [BRACKETS] stay English in every language (inbox filters).
 export default {
   _: {
+    // the Lab Check (authenticity check) in studio emails
+    verdict: 'Verdict', confidence: 'Confidence', vd_authentic: 'Authentic', vd_likely_authentic: 'Likely authentic', vd_inconclusive: 'Inconclusive', vd_likely_counterfeit: 'Likely counterfeit', vd_counterfeit: 'Counterfeit',
     hi: 'Hi {name},', hiAll: 'Hello,',
     signoff: 'See you soon,\nShoeLab', team: 'The ShoeLab team', vaultTeam: 'The ShoeLab Vault team',
     readIn: 'Read this email in another language:',
@@ -88,6 +90,11 @@ export default {
     s: 'Your {title} is live',
     b: ['Hi {name},', 'Good news: your {title} is now live in the ShoeLab Vault.', '{note}'],
     c: 'See your listing',
+  },
+  listingNeedsMore: {
+    s: 'A few more photos to verify your {title}',
+    b: ['Hi {name},', 'Before a specialist approves your listing, our authenticity check needs a little more:', '%message', 'Add it in My Vault — it takes a minute. As soon as it is in, we check again.'],
+    c: 'Add it in My Vault',
   },
   listingRejected: {
     s: 'We could not accept your {title}',
@@ -274,6 +281,11 @@ export default {
   sReview: {
     s: 'New review pending approval — {customer} ({rating}★)',
     b: ['{customer} left a {rating}-star review:', '%message'],
+  },
+  sCheckFlag: {
+    s: '[VAULT] Lab Check flagged a listing: {title}',
+    b: ['The Lab Check found details that do not match a genuine pair. Please look closely before you decide.', '%rows', '%message'],
+    c: 'Open the lab console',
   },
   sListingReview: {
     s: '[VAULT] New listing to review: {title}',

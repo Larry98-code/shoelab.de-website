@@ -107,6 +107,61 @@ specialist form only.
 Daily limits keep costs down: 40 messages per member, 15 per guest, 5 support
 requests per person.
 
+## Lab Check: the AI authenticity check
+
+Every listing waiting for review gets a **Lab Check**: Claude (Anthropic)
+looks at all its photos, works out which model it is (style code, size tag,
+box label) and checks the details fakes get wrong: the size tag, the box
+label, logos, stitching, shape, materials, the sole and insole, and whether
+everything belongs to the same pair. It also checks the photos themselves
+(stock images, screenshots, two different pairs).
+
+In the lab console each listing shows the result above the checklist:
+
+- a **verdict**: *Authentic*, *Likely authentic*, *Inconclusive*,
+  *Likely counterfeit* or *Counterfeit*, and how sure it is (0–100%);
+- what it identified, each detail it checked (OK / look closer / wrong / not
+  visible) with the photo it saw it on, and any red flags;
+- **what it needs to be sure**: the extra photos or answers it would want.
+
+**It asks the seller by itself.** When it cannot be sure, the seller gets an
+email ("A few more photos to verify your …") and a panel in My Vault where
+they add each photo, type an answer, or tick that they can't provide it.
+The check then runs again with the new material. Photos sent this way
+(receipts, close-ups) are seen only by the seller and the specialists and are
+never shown on the listing. Sellers never see the verdict, only that more is
+needed or that a specialist will confirm shortly. At most two automatic
+rounds per listing.
+
+**It never rejects.** A suspected fake is never asked automatically: you get
+`[VAULT] Lab Check flagged a listing` by email, and in the console you decide
+whether to reject or give the seller a chance with **Ask the seller for
+these** (one click; it replaces an older open request).
+
+**When it runs:** right after the seller submits, again after they answer,
+and whenever the console finds a listing without a current result. **Check
+again** runs it on demand. A listing is checked at most 8 times a day, one
+run at a time; if nothing changed since the last run, the last result stands.
+
+**100% is not possible from photos.** The check is strict and says
+*Inconclusive* rather than guess, but it is an assistant: the specialist makes
+the call. 95%+ is only given when the size tag and at least two other
+critical details were verified.
+
+**Cost:** about $0.15–0.25 per run (Claude Opus, all photos at full size),
+shown under each result.
+
+| Variable | What it does |
+|---|---|
+| `VAULT_LAB_CHECK` | `off` turns the Lab Check off. On by default whenever `ANTHROPIC_API_KEY` is set. |
+| `VAULT_AUTO_APPROVE` | `on`: a listing the check finds **authentic** at or above the minimum, with no red flags, nothing wrong and no doubt about the size tag, box, style code, logos, consistency or photos, goes live without a specialist. **Off by default.** Before turning it on, change the Vault terms (§ 4) and the privacy policy (section 7), which say a specialist decides, and the Vault page's promise that a specialist checks every pair (`heroLead` in every language and the description in `vault.html`). |
+| `VAULT_AUTO_APPROVE_MIN` | The minimum for automatic approval, 80–100. Default 95. |
+| `VAULT_CHECK_MODEL` | The Claude model. Default `claude-opus-5-5`. |
+
+The console's header line shows the current state ("Lab Check: on · you
+approve every listing") and, with automatic approval on, the last pairs it
+approved.
+
 ## Emails in everyone's own language
 
 Every email goes out in the recipient's language: the one they picked on the
@@ -137,6 +192,7 @@ language of the account with the `NOTIFY_EMAIL` address.
 | `Refunded order #N` | For your records: Stripe refunded the buyer |
 | `Refund failed for order #N` | Refund the buyer by hand in Stripe |
 | `Support request #N` | Lab console → Support |
+| `Lab Check flagged a listing: …` | Lab console → Review queue: read the red flags, then reject, or **Ask the seller for these** |
 
 ## Turn it on
 
@@ -155,7 +211,8 @@ secrets are always kept:
 | `STRIPE_SECRET_KEY` | Card payments through Stripe Checkout | Recommended |
 | `STRIPE_WEBHOOK_SECRET` | Marks orders paid. Card orders are only ever marked paid by a signed Stripe event. | With Stripe |
 | `VAULT_STRIPE_CONNECT` | `on`: Stripe holds the money and pays sellers (below) | Recommended |
-| `ANTHROPIC_API_KEY` | Wesley (the same key as the site chat) | For Wesley |
+| `ANTHROPIC_API_KEY` | Wesley and the Lab Check (the same key as the site chat) | For Wesley and the Lab Check |
+| `VAULT_LAB_CHECK`, `VAULT_AUTO_APPROVE`, `VAULT_AUTO_APPROVE_MIN`, `VAULT_CHECK_MODEL` | The Lab Check (above) | Optional |
 | `STUDIO_LANG` | Language of studio emails, e.g. `de` | Optional |
 | `REPLY_TO` | Where replies to emails go; defaults to `NOTIFY_EMAIL` | Optional |
 | `SITE_URL` | Base for links in emails; defaults to `https://shoelabonline.de` | Optional |
@@ -267,6 +324,7 @@ Vault takes real money:
 | `functions/api/market/[[route]].js` | Every `/api/market/*` endpoint |
 | `functions/_shared/vault.js` | Fees, tables, orders, payouts, refunds, emails, housekeeping (auction endings, expiries, auto-delivery, retention) |
 | `functions/_shared/support.js` | Wesley in the Vault and support requests |
+| `functions/_shared/labcheck.js` | The Lab Check: the prompt, the report format, asking the seller, automatic approval |
 | `functions/_shared/mail.js`, `mail-i18n/*.js` | Every email, in eight languages, and `/api/mail` for the language links |
 | `functions/_shared/core.js` | Languages and the account tables |
 | `functions/api/account/verify.js`, `resend-verification.js` | Email confirmation |

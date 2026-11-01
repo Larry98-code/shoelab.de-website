@@ -195,6 +195,20 @@ const SCHEMA = [
     body TEXT NOT NULL, created_at TEXT NOT NULL
   )`,
   'CREATE INDEX IF NOT EXISTS mk_tm_ticket ON mk_ticket_msgs(ticket_id, id)',
+  // the Lab Check: one row per run of the AI authenticity check of a listing
+  `CREATE TABLE IF NOT EXISTS mk_checks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, listing_id INTEGER NOT NULL,
+    status TEXT NOT NULL, verdict TEXT, confidence INTEGER, result TEXT, photo_ids TEXT,
+    model TEXT, cost INTEGER, error TEXT, by_whom TEXT, created_at TEXT NOT NULL, done_at TEXT
+  )`,
+  'CREATE INDEX IF NOT EXISTS mk_c_listing ON mk_checks(listing_id, id)',
+  // what the Lab Check asked the seller for (photos, facts), and their answers
+  `CREATE TABLE IF NOT EXISTS mk_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, listing_id INTEGER NOT NULL, check_id INTEGER,
+    items TEXT NOT NULL, answers TEXT, status TEXT NOT NULL DEFAULT 'open',
+    created_at TEXT NOT NULL, answered_at TEXT
+  )`,
+  'CREATE INDEX IF NOT EXISTS mk_r_listing ON mk_requests(listing_id, id)',
   // daily message counts that keep the support assistant from being abused
   `CREATE TABLE IF NOT EXISTS support_usage (
     k TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (k, day)
@@ -202,7 +216,7 @@ const SCHEMA = [
 ];
 // columns added after the first release
 const LATER = [
-  ['mk_photos', 'thumb', 'TEXT'],
+  ['mk_photos', 'thumb', 'TEXT'], ['mk_photos', 'note', 'TEXT'],
   ['mk_orders', 'stripe_pi', 'TEXT'], ['mk_orders', 'payout_status', 'TEXT'],
   ['mk_orders', 'payout_ref', 'TEXT'], ['mk_orders', 'payout_at', 'TEXT'], ['mk_orders', 'refund_ref', 'TEXT'],
 ];
@@ -251,6 +265,20 @@ export async function tellStudio(env, key, params, replyTo) {
 }
 const orderUrl = (id) => '/vault-me.html#order-' + id;
 const LAB = '/vault-lab.html';
+
+// One way to put a listing live, whether a specialist approves it or the Lab
+// Check does (kind 'auto_approved'); false if it was no longer waiting.
+export async function approveListing(env, l, note, kind) {
+  const at = nowIso(), ends = l.format === 'auction' ? isoIn(l.duration_days * 86400000) : null;
+  const r = await env.DB.prepare("UPDATE mk_listings SET status = 'live', live_at = ?, ends_at = ?, review_note = ?, updated_at = ? WHERE id = ? AND status = 'review'")
+    .bind(at, ends, note || null, at, l.id).run();
+  if (!r.meta.changes) return false;
+  await logEvent(env, { listingId: l.id, kind: kind || 'approved', note: note || null });
+  await tell(env, await userById(env, l.seller_id), 'listingLive', {
+    title: listingTitle(l), url: '/vault-item.html?id=' + l.id, note: { k: l.tier === 'photo' ? 'livePhoto' : 'liveLab' },
+  });
+  return true;
+}
 
 // ── orders ──────────────────────────────────────────────────────────────────
 // One place turns a finished sale (auction win, buy now, accepted offer) into

@@ -6,6 +6,7 @@ import { notifyAddress, mailTrouble } from '../_shared/util.js';
 import { ensureCore } from '../_shared/core.js';
 import { sendStudio } from '../_shared/mail.js';
 import { connectOn } from '../_shared/vault.js';
+import { checkSettings } from '../_shared/labcheck.js';
 import { MODEL as SUPPORT_MODEL } from '../_shared/support.js';
 
 // the site chat's fallback chain, then the model behind Vault support
@@ -80,6 +81,11 @@ export async function onRequestGet(context) {
         : 'by hand from the emails',
     photoStorage: env.VAULT_PHOTOS ? 'R2 bucket (VAULT_PHOTOS)' : 'the database (bind an R2 bucket as VAULT_PHOTOS for room to grow)',
     support: env.ANTHROPIC_API_KEY ? 'Wesley answers and hands over to a specialist when needed' : 'no ANTHROPIC_API_KEY: the help button opens the specialist form',
+    labCheck: (() => {
+      const c = checkSettings(env);
+      if (!c.on) return env.ANTHROPIC_API_KEY ? 'off (VAULT_LAB_CHECK=off)' : 'off: no ANTHROPIC_API_KEY';
+      return c.auto ? 'on, approving pairs it finds authentic at ' + c.min + '% or more' : 'on: checks every listing, a specialist approves';
+    })(),
     labAddress: env.DROPOFF_ADDRESS ? 'set (sent privately to sellers of Lab Verified pairs)' : 'not set: sellers of Lab Verified pairs are told the address follows by email',
     emailLanguage: 'each member’s own language, with links to the other seven',
     siteUrl: env.SITE_URL || 'https://shoelabonline.de (default)',

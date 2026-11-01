@@ -2,7 +2,9 @@
  * The review queue (approve or reject new listings from their photos), every
  * order that needs the lab (manual payments, parcels arriving for inspection,
  * the pass/fail call, shipping on, reported problems, payouts to retry), and
- * the support requests Wesley or the help form handed over.
+ * the support requests Wesley or the help form handed over, and the Lab Check:
+ * the AI authenticity check's verdict on each listing, started here for any
+ * listing that has no current result.
  * Access is decided by the server (VAULT_SPECIALISTS); this page only asks. */
 (function (w, d) {
   'use strict';
@@ -41,7 +43,8 @@
   }
   function photosHtml(list) {
     return '<div class="v-review-photos">' + (list || []).map(function (p) {
-      return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener"><img src="' + esc(p.url) + '" alt="" loading="lazy"/><span>' + esc(t('kind_' + p.kind)) + '</span></a>';
+      var label = p.kind === 'extra' ? (p.note || t('kind_extra')) : t('kind_' + p.kind);
+      return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener"' + (p.kind === 'extra' ? ' class="extra"' : '') + '><img src="' + esc(p.url) + '" alt="" loading="lazy"/><span>' + esc(label) + '</span></a>';
     }).join('') + '</div>';
   }
 
@@ -69,12 +72,93 @@
           kv(t('itemNo'), '#' + l.id) +
         '</dl>' +
         (l.description ? '<p class="v-desc" style="font-size:0.82rem;">' + esc(l.description) + '</p>' : '') +
+        labCheckHtml(l) +
         checklist(l.tier === 'lab' ? 'ckQuick' : 'ckPhoto') +
         '<div class="v-field"><label class="v-label" for="note' + l.id + '"><span>' + esc(t('noteSeller')) + '</span><small>' + esc(t('noteSellerHint')) + '</small></label>' +
           '<textarea class="v-textarea" id="note' + l.id + '" rows="2" maxlength="500"></textarea></div>' +
         '<div class="v-btn-row"><button type="button" class="v-btn ok sm" data-review="approve" data-id="' + l.id + '">' + esc(t('approve')) + '</button>' +
           '<button type="button" class="v-btn danger sm" data-review="reject" data-id="' + l.id + '">' + esc(t('reject')) + '</button></div>' +
       '</div></article>';
+  }
+
+  /* ── Lab Check ───────────────────────────────────────────────────────── */
+  var VD_TONE = { authentic: 'ok', likely_authentic: 'ok', inconclusive: 'warn', likely_counterfeit: 'bad', counterfeit: 'bad' };
+  var CS = { pass: ['ok', 'check'], concern: ['warn', 'alert'], fail: ['bad', 'x'], not_visible: ['', 'eye'] };
+  var checking = {}, tried = {};          // listing id → a run in progress / started from this page
+  function labCheckHtml(l) {
+    var st = (data.stats && data.stats.labCheck) || {}, c = l.check, q = l.request;
+    var head = '<div class="v-lc-head">' + S.ico('sparkle') + '<b>' + esc(t('lcTitle')) + '</b><small>' + esc(t('lcAi')) + '</small></div>';
+    if (!st.on) return '<section class="v-lc">' + head + '<p class="v-note">' + esc(t('lcOff')) + '</p></section>';
+    if (checking[l.id] || (c && c.status === 'running')) {
+      return '<section class="v-lc">' + head + '<div class="v-lc-run"><span class="v-lc-spin"></span>' + esc(t('lcRunning')) + '</div></section>';
+    }
+    var again = '<button type="button" class="v-btn ghost xs" data-lc="again" data-id="' + l.id + '">' + S.ico('refresh') + esc(t('lcAgain')) + '</button>';
+    if (!c) return '<section class="v-lc">' + head + '<p class="v-note">' + esc(t('lcNone')) + '</p><div class="v-btn-row">' + again + '</div></section>';
+    if (c.status === 'error' || !c.result) {
+      return '<section class="v-lc">' + head + '<div class="v-state bad">' + S.ico('alert') + '<div>' + esc(t('lcError', { reason: c.error || '' })) + '</div></div><div class="v-btn-row">' + again + '</div></section>';
+    }
+    var r = c.result, id = r.identified || {}, suspicious = r.verdict === 'likely_counterfeit' || r.verdict === 'counterfeit';
+    var ident = [id.brand, id.model, id.colorway].filter(Boolean).join(' · ');
+    var html = '<section class="v-lc v-lc-' + (VD_TONE[r.verdict] || 'warn') + '">' + head +
+      '<div class="v-lc-verdict"><span class="v-chip ' + (VD_TONE[r.verdict] || '') + '">' + esc(t('vd_' + r.verdict)) + '</span>' +
+        '<div class="v-lc-meter" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + r.confidence + '" aria-label="' + esc(t('lcConf', { n: r.confidence })) + '"><i style="width:' + r.confidence + '%;"></i></div>' +
+        '<b class="v-lc-pct">' + esc(t('lcConf', { n: r.confidence })) + '</b></div>' +
+      (r.summary ? '<p class="v-lc-sum">' + esc(r.summary) + '</p>' : '') +
+      '<dl class="v-kv v-lc-id">' +
+        kv(t('lcIdent'), esc(ident || '—') + ' <span class="v-chip ' + (id.matches_listing ? 'ok' : 'bad') + '">' + esc(t(id.matches_listing ? 'lcMatch' : 'lcNoMatch')) + '</span>') +
+        kv(t('lcStyle'), id.style_code ? '<code>' + esc(id.style_code) + '</code>' : '') +
+        kv(t('lcTagSize'), esc(id.size_on_tag || '')) +
+        kv(t('lcCond'), '<span class="v-chip ' + (r.condition.matches ? 'ok' : 'warn') + '">' + esc(t(r.condition.matches ? 'lcCondOk' : 'lcCondOff')) + '</span> ' + esc(r.condition.note || '')) +
+      '</dl>' +
+      (r.red_flags.length ? '<div class="v-state bad v-lc-flags">' + S.ico('flag') + '<div><b>' + esc(t('lcFlags')) + '</b><ul>' + r.red_flags.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul></div></div>' : '') +
+      '<ul class="v-lc-checks">' + r.checks.map(function (k) {
+        var cs = CS[k.status] || CS.not_visible;
+        return '<li class="' + cs[0] + '">' + S.ico(cs[1]) + '<div><b>' + esc(t('ar_' + k.area)) + '</b> <span class="v-chip ' + cs[0] + '">' + esc(t('cs_' + k.status)) + '</span><p>' + esc(k.finding) + '</p></div></li>';
+      }).join('') + '</ul>';
+    if (r.requests.length) {
+      // q is the listing's latest request; it belongs to this run only if this run made it
+      var old = q && q.checkId !== c.id ? q : null;
+      if (old) q = null;
+      html += '<div class="v-lc-req"><b>' + esc(t('lcNeeds')) + '</b><ol>' + r.requests.map(function (x, i) {
+        var a = q && q.status === 'answered' ? (q.answers || []).filter(function (y) { return y.i === i; })[0] : null;
+        return '<li><span>' + S.ico(x.type === 'photo' ? 'camera' : 'chat') + esc(x.title_en) + '</span>' +
+          (x.instructions_en ? '<small>' + esc(x.instructions_en) + '</small>' : '') + (x.why ? '<small class="why">' + esc(x.why) + '</small>' : '') +
+          (a ? '<small class="ans">' + esc(a.none ? t('lcCant') : a.text ? '“' + a.text + '”' : t('lcSentPhoto')) + '</small>' : '') + '</li>';
+      }).join('') + '</ol>' +
+        (q && q.status === 'open' ? '<p class="v-note">' + esc(t('lcAsked', { when: S.ago(q.at) })) + '</p>'
+          : q && q.status === 'answered' ? '<p class="v-note">' + esc(t('lcAnswered', { when: S.ago(q.answeredAt) })) + '</p>'
+          : '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn gold xs" data-lc="ask" data-id="' + l.id + '">' + esc(t('lcAsk')) + '</button></div>' +
+            (old && old.status === 'open' ? '<p class="v-note">' + esc(t('lcAskedOld', { when: S.ago(old.at) })) + '</p>' : '') +
+            (suspicious ? '<p class="v-note">' + esc(t('lcAskHint')) + '</p>' : '')) +
+        '</div>';
+    }
+    html += '<div class="v-lc-foot"><small>' + esc([c.model, c.cost != null ? t('lcCost', { usd: '$' + (c.cost / 100).toFixed(2) }) : '', S.ago(c.doneAt || c.at)].filter(Boolean).join(' · ')) + '</small>' + again + '</div></section>';
+    return html;
+  }
+  // Starts the check for listings without a current result, one at a time.
+  function autoCheck() {
+    var st = (data.stats && data.stats.labCheck) || {};
+    if (!st.on || Object.keys(checking).length) return;
+    var next = data.review.filter(function (l) {
+      if (tried[l.id]) return false;
+      var c = l.check, q = l.request;
+      if (!c) return true;
+      if (c.status !== 'done') return false;
+      var ids = l.photos.map(function (p) { return p.id; }).join(','), seen = (c.photoIds || []).join(',');
+      return ids !== seen || !!(q && q.status === 'answered' && q.answeredAt > c.at);
+    })[0];
+    if (next) runCheck(next.id, false);
+  }
+  function runCheck(id, force) {
+    checking[id] = true; tried[id] = true;
+    if (tab === 'review') { keepDrafts(); render(); }
+    S.market('check', { body: { id: id, force: !!force } }).then(function (res) {
+      delete checking[id];
+      if (!res.ok) S.toast(S.errText(res), 'bad');
+      else if (res.data.outcome === 'approved') S.toast(t('lcAutoToast'), 'ok');
+      if (res.ok && res.data.running) setTimeout(function () { load(); }, 8000);
+      else load();
+    });
   }
 
   var TONE = { awaiting_payment: 'warn', paid: 'gold', to_lab: 'gold', in_lab: 'gold', verified: 'ok', disputed: 'bad', delivered: 'ok' };
@@ -219,6 +303,7 @@
       '</div>' +
       storageHtml(s) +
       '<div class="v-tabs" role="tablist">' + tb('review', t('tabReview'), data.review.length) + tb('orders', t('tabOrders'), needs) + tb('support', t('tabSupport'), openTickets) + '</div>' +
+      (tab === 'review' ? labStateHtml(s) : '') +
       '<div class="v-rows">' + (tab === 'review'
         ? (data.review.length ? data.review.map(reviewHtml).join('') : '<div class="v-empty">' + S.ico('check') + '<h3>' + esc(t('queueEmptyT')) + '</h3><p>' + esc(t('queueEmpty')) + '</p></div>')
         : tab === 'orders'
@@ -226,8 +311,20 @@
         : (tickets.length ? tickets.map(ticketHtml).join('') : '<div class="v-empty">' + S.ico('chat') + '<h3>' + esc(t('ticketsEmptyT')) + '</h3><p>' + esc(t('ticketsEmpty')) + '</p></div>')) +
       '</div>';
     restoreDrafts();
+    autoCheck();
     var r2 = $('labToR2');
     if (r2) r2.onclick = function () { moveToR2(r2); };
+  }
+
+  function labStateHtml(s) {
+    var st = s.labCheck || {};
+    var line = '<p class="v-note v-lc-state">' + S.ico('sparkle') + esc(t('lcTitle')) + ': ' + esc(t(st.on ? 'lcStateOn' : 'lcStateOff')) +
+      (st.on ? ' · ' + esc(st.auto ? t('lcAutoOn', { n: st.min }) : t('lcAutoOff')) : '') + '</p>';
+    var auto = s.autoApproved || [];
+    if (!auto.length) return line;
+    return line + '<details class="v-faq" style="margin:0 0 1rem;"><summary>' + esc(t('lcAutoList', { n: auto.length })) + '</summary><div><ul class="v-events">' +
+      auto.map(function (x) { return '<li><time>' + esc(S.fmtShort(x.at)) + '</time><span><a href="/vault-item.html?id=' + x.id + '">' + esc(x.title) + '</a> · EU ' + esc(x.size) + (x.confidence != null ? ' · ' + esc(t('lcConf', { n: x.confidence })) : '') + '</span></li>'; }).join('') +
+      '</ul></div></details>';
   }
 
   /* ── actions ──────────────────────────────────────────────────────── */
@@ -276,6 +373,12 @@
     var id = +el.getAttribute('data-id');
     var tk = el.getAttribute('data-ticket');
     if (tk) { answer(el, tk, id); return; }
+    var lc = el.getAttribute('data-lc');
+    if (lc === 'again') { runCheck(id, true); return; }
+    if (lc === 'ask') {
+      S.confirm(t('lcAskT'), t('lcAskQ'), t('lcAsk'), false).then(function (y) { if (y) post(el, 'check/ask', { id: id }, 'lcAskedToast'); });
+      return;
+    }
     var rv = el.getAttribute('data-review');
     if (rv) {
       var note = ($('note' + id).value || '').trim();
