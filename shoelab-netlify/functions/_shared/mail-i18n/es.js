@@ -2,6 +2,19 @@
 // Same keys, same paragraph order, same {placeholders}; en.js explains the format.
 export default {
   _: {
+    // the Legit Check, and the cleaning a buyer adds to a Lab Verified order
+    mode: 'Comprobación para', modeBuy: 'Compra', modeSell: 'Venta (certificado)', platform: 'Plataforma', asked: 'Precio pedido', customer: 'Cliente',
+    cleaning: 'Limpieza antes del envío', addon_refresh: 'The ShoeLab Refresh', addon_revival: 'The ShoeLab Revival',
+    legitTipBuy: 'Consejo: en Mi Vault encontrarás un mensaje listo para el vendedor que se lo pide todo de una vez.',
+    lr_authentic: 'Resultado: auténtico. Nuestro especialista no encontró nada que contradiga que sea un par original.',
+    lr_not_authentic: 'Resultado: no auténtico. Nuestro especialista encontró detalles que no encajan con un par original.',
+    lr_inconclusive: 'Con las fotos que tenemos no pudimos llegar a un resultado seguro.',
+    lrCert: 'Tu certificado está listo en Mi Vault: añade su imagen o su enlace a tu anuncio para que los compradores puedan comprobarlo.',
+    lrBuyOk: 'Por las fotos, nada desaconseja la compra. Cuando llegue, compáralo con estas fotos.',
+    lrBuyNo: 'Te desaconsejamos comprar este par. Si ya has pagado, usa la protección al comprador de la app donde lo compraste.',
+    lrSellNo: 'No podemos emitir un certificado para este par.',
+    lrRefund: 'Te hemos devuelto el pago.',
+    lrRefundManual: 'Te devolveremos el pago en unos días laborables.',
     // the Lab Check (authenticity check) in studio emails
     verdict: 'Resultado', confidence: 'Seguridad', vd_authentic: 'Auténtico', vd_likely_authentic: 'Probablemente auténtico', vd_inconclusive: 'No concluyente', vd_likely_counterfeit: 'Probablemente falso', vd_counterfeit: 'Falso',
     hi: 'Hola, {name}:', hiAll: 'Hola:',
@@ -333,6 +346,40 @@ export default {
     s: '[VAULT] Solicitud de soporte n.º {ticket}: {topic}',
     b: ['{customer} necesita a un especialista.', '%rows', 'Resumen:', '%message', '%transcript', 'Responde a este correo o contesta desde la consola del lab.'],
     c: 'Abrir la consola del lab',
+  },
+  // ── the Legit Check ──
+  legitPayManual: {
+    s: 'Pago de tu Legit Check: {title}',
+    b: ['Hola, {name}:', 'Gracias por tu Legit Check. Te enviaremos por correo los datos de pago de {amount} en un plazo de un día laborable; la comprobación empieza en cuanto recibamos el pago.'],
+  },
+  legitPaid: {
+    s: 'Estamos comprobando tu {title}',
+    b: ['Hola, {name}:', 'Gracias: tu Legit Check {ref} ha empezado. Nuestra comprobación de autenticidad está revisando tus fotos y un especialista de ShoeLab te dará la respuesta, normalmente en menos de 24 horas.', 'Si necesitamos otra foto, te escribiremos.'],
+    c: 'Abrir Mi Vault',
+  },
+  legitNeedsMore: {
+    s: 'Unas fotos más para tu Legit Check: {title}',
+    b: ['Hola, {name}:', 'Para darte una respuesta segura, nuestra comprobación de autenticidad necesita un poco más:', '%message', '{tip}', 'Añádelo en Mi Vault. En cuanto llegue, volvemos a comprobarlo.'],
+    c: 'Añadir en Mi Vault',
+  },
+  legitResult: {
+    s: 'Resultado de tu Legit Check: {title}',
+    b: ['Hola, {name}:', 'Tu Legit Check {ref} está terminado.', '{verdictLine}', '%message', '{next}'],
+    c: 'Ver el resultado',
+  },
+  sLegitNew: {
+    s: '[VAULT] Legit Check {ref}: {title}',
+    b: ['Se ha pagado un Legit Check. Primero lo revisa el Lab Check; después espera tu respuesta en la consola del lab.', '%rows'],
+    c: 'Abrir la consola del lab',
+  },
+  sLegitPayment: {
+    s: '[VAULT] Hay que enviar los datos de pago del Legit Check {ref}',
+    b: ['Los pagos con tarjeta no están activados, así que envía por correo a {email} los datos para pagar {amount} ({title}). Cuando llegue el dinero, márcalo como pagado en la consola del lab (Legit Checks); entonces empieza la comprobación.'],
+    c: 'Abrir la consola del lab',
+  },
+  sLegitRefund: {
+    s: '[VAULT] Reembolsar el Legit Check {ref}',
+    b: ['La comprobación no pudo llegar a un resultado, así que reembolsa manualmente {amount} a {email} ({title}).'],
   },
   sTest: {
     s: '[TEST] Prueba de correo de ShoeLab',

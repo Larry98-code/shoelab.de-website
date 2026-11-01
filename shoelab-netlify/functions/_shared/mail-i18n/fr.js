@@ -3,6 +3,19 @@
 // (invisible) characters: U+00A0 before : and after n°, U+202F before ; ? !
 export default {
   _: {
+    // the Legit Check, and the cleaning a buyer adds to a Lab Verified order
+    mode: 'Contrôle pour', modeBuy: 'Achat', modeSell: 'Vente (certificat)', platform: 'Plateforme', asked: 'Prix demandé', customer: 'Client',
+    cleaning: 'Nettoyage avant l’envoi', addon_refresh: 'The ShoeLab Refresh', addon_revival: 'The ShoeLab Revival',
+    legitTipBuy: 'Astuce : dans Mon Vault, tu trouveras un message tout prêt pour le vendeur, qui lui demande tout d’un coup.',
+    lr_authentic: 'Verdict : authentique. Notre spécialiste n’a rien trouvé qui contredise une paire authentique.',
+    lr_not_authentic: 'Verdict : pas authentique. Notre spécialiste a trouvé des détails qui ne correspondent pas à une paire authentique.',
+    lr_inconclusive: 'Les photos dont nous disposons ne nous ont pas permis d’arriver à un verdict sûr.',
+    lrCert: 'Ton certificat est prêt dans Mon Vault : ajoute son image ou son lien à ton annonce pour que les acheteurs puissent le vérifier.',
+    lrBuyOk: 'D’après les photos, rien ne s’oppose à l’achat. À la réception, compare la paire avec ces photos.',
+    lrBuyNo: 'Nous te déconseillons d’acheter cette paire. Si tu as déjà payé, utilise la protection acheteur de l’app sur laquelle tu l’as achetée.',
+    lrSellNo: 'Nous ne pouvons pas émettre de certificat pour cette paire.',
+    lrRefund: 'Nous t’avons remboursé.',
+    lrRefundManual: 'Nous te rembourserons sous quelques jours ouvrés.',
     // the Lab Check (authenticity check) in studio emails
     verdict: 'Verdict', confidence: 'Certitude', vd_authentic: 'Authentique', vd_likely_authentic: 'Probablement authentique', vd_inconclusive: 'Pas concluant', vd_likely_counterfeit: 'Probablement contrefaite', vd_counterfeit: 'Contrefaçon',
     hi: 'Bonjour {name},', hiAll: 'Bonjour,',
@@ -334,6 +347,40 @@ export default {
     s: '[VAULT] Demande de support n° {ticket} : {topic}',
     b: ['{customer} a besoin d’un spécialiste.', '%rows', 'Résumé :', '%message', '%transcript', 'Réponds à cet e-mail, ou directement depuis la console du lab.'],
     c: 'Ouvrir la console du lab',
+  },
+  // ── the Legit Check ──
+  legitPayManual: {
+    s: 'Paiement de ton Legit Check : {title}',
+    b: ['Bonjour {name},', 'Merci pour ton Legit Check. Nous t’enverrons par e-mail les informations de paiement pour {amount} sous un jour ouvré ; le contrôle commence dès réception du paiement.'],
+  },
+  legitPaid: {
+    s: 'Nous vérifions ta paire : {title}',
+    b: ['Bonjour {name},', 'Merci — ton Legit Check {ref} a commencé. Notre contrôle d’authenticité examine tes photos, et un spécialiste ShoeLab te donnera la réponse, généralement sous 24 heures.', 'S’il nous faut une autre photo, nous t’écrirons.'],
+    c: 'Ouvrir Mon Vault',
+  },
+  legitNeedsMore: {
+    s: 'Quelques photos de plus pour ton Legit Check : {title}',
+    b: ['Bonjour {name},', 'Pour te donner une réponse sûre, notre contrôle d’authenticité a besoin d’un peu plus :', '%message', '{tip}', 'Ajoute-le dans Mon Vault. Dès que c’est fait, on vérifie à nouveau.'],
+    c: 'Ajouter dans Mon Vault',
+  },
+  legitResult: {
+    s: 'Résultat de ton Legit Check : {title}',
+    b: ['Bonjour {name},', 'Ton Legit Check {ref} est terminé.', '{verdictLine}', '%message', '{next}'],
+    c: 'Voir le résultat',
+  },
+  sLegitNew: {
+    s: '[VAULT] Legit Check {ref} : {title}',
+    b: ['Un Legit Check a été payé. Le Lab Check l’examine d’abord, puis la demande attend ta réponse dans la console du lab.', '%rows'],
+    c: 'Ouvrir la console du lab',
+  },
+  sLegitPayment: {
+    s: '[VAULT] Informations de paiement à envoyer : Legit Check {ref}',
+    b: ['Le paiement par carte n’est pas activé : envoie par e-mail à {email} les informations de paiement pour {amount} ({title}). Marque-le comme payé dans la console du lab (Legit Checks) dès que l’argent est arrivé ; le contrôle commence alors.'],
+    c: 'Ouvrir la console du lab',
+  },
+  sLegitRefund: {
+    s: '[VAULT] Remboursement à effectuer : Legit Check {ref}',
+    b: ['Le contrôle n’a pas pu aboutir à un verdict : merci de rembourser manuellement {amount} à {email} ({title}).'],
   },
   sTest: {
     s: '[TEST] Vérification des e-mails ShoeLab',
