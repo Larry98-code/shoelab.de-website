@@ -182,6 +182,55 @@ A photo, a link or **View and zoom** opens the viewer:
 Photos the seller sent on request are marked "Sent on request" and named after
 what was asked.
 
+## Legit Check: pairs from other apps (€9.90)
+
+`legit.html` sells the Lab Check outside the Vault, to anyone with a pair from
+Vinted, Kleinanzeigen, eBay or any other app:
+
+- **Buying:** the customer uploads the seller's photos or screenshots (at
+  least 3), with the listing's link and price if they have them. If the check
+  needs more, they get the list plus a ready-made **message for the seller**,
+  in the seller's language, to copy into the app's chat.
+- **Selling:** the owner uploads the six standard photos. If the pair is
+  authentic they get a **certificate** `SL-XXXX-XXXX`: a public page
+  (`/verified.html?c=…`), a picture to add as the last photo of their listing
+  (links are often not allowed on those apps; a photo with a number is), and a
+  text to paste. Buyers type the number at shoelabonline.de/verified.
+- **Linking from the apps:** paste the link (the app is recognised), the Paste
+  button, or on Android *Share → ShoeLab* once the site is added to the home
+  screen (`manifest.webmanifest`, `share_target`).
+
+**The flow:** paid → the Lab Check runs (by itself when the console is open,
+or when the customer comes back from paying) → it may ask the customer for
+more (up to two rounds) → **you answer** in the console, tab **Legit Checks**:
+*Authentic*, *Not authentic* (with a note) or *Can't verify — refund*. The
+customer is emailed; a certificate is made for an owner's authentic pair. You
+can **withdraw** a certificate later (its page then says so). Without card
+payments, the studio gets "Payment details needed for Legit Check LC-N": email
+the details, then **Mark as paid** — the check starts.
+
+The price is `VAULT.legit` in `functions/_shared/vault.js` (in cents; `0`
+makes it free, e.g. for a launch week).
+
+## Cleaning before shipping, featured listings, and the care tips
+
+- **Fresh for delivery:** when paying for a **Lab Verified** pair, the buyer
+  can add *The ShoeLab Refresh* (€18) or *Revival* (€35). The order shows a gold
+  "+ Revival" chip in the console: clean it after authentication, before
+  shipping. The seller's payout is unchanged; if the pair fails, the cleaning
+  is refunded with everything else. Prices: `VAULT.addons`.
+- **Featured listings:** sellers pay €2.99 (card payments only) to show a live
+  listing first for 7 days, marked *Featured*; "Featured first" is the default
+  order of the Vault. Specialists can feature a pair for free from its page
+  (a launch, a promotion). Settings: `VAULT.feature`.
+- **Cleaning offers:** the sell page suggests a cleaning before the photos,
+  and every delivered order in My Vault suggests a Refresh. Both link to the
+  booking page.
+
+The terms (§ 17) and the privacy policy (section 7) cover all of this; the
+customer ticks the box that the service may start before the withdrawal period
+ends.
+
 ## Emails in everyone's own language
 
 Every email goes out in the recipient's language: the one they picked on the
@@ -213,6 +262,9 @@ language of the account with the `NOTIFY_EMAIL` address.
 | `Refund failed for order #N` | Refund the buyer by hand in Stripe |
 | `Support request #N` | Lab console → Support |
 | `Lab Check flagged a listing: …` | Lab console → Review queue: read the red flags, then reject, or **Ask the seller for these** |
+| `Legit Check LC-N: …` | A Legit Check was paid: answer it in Lab console → **Legit Checks** |
+| `Payment details needed for Legit Check LC-N` | Card payments are off: email the customer payment details, then **Mark as paid** |
+| `Refund Legit Check LC-N` | You answered "Can't verify" and it was not paid by card: refund it by hand |
 
 ## Turn it on
 
@@ -346,6 +398,9 @@ Vault takes real money:
 | `functions/_shared/support.js` | Wesley in the Vault and support requests |
 | `functions/_shared/labcheck.js` | The Lab Check: the prompt, the report format, asking the seller, automatic approval |
 | `js/vault-viewer.js` | The console's photo viewer (zoom, compare, the Lab Check's notes per photo) |
+| `functions/_shared/legit.js` | The Legit Check: payment, the specialist's answer, refunds, certificates |
+| `legit.html`, `js/vault-legit.js` | The Legit Check page (links from other apps, photos, payment) |
+| `verified.html`, `js/vault-verified.js`, `js/vault-cert.js` | Certificates: the public page, the picture, sharing |
 | `functions/_shared/mail.js`, `mail-i18n/*.js` | Every email, in eight languages, and `/api/mail` for the language links |
 | `functions/_shared/core.js` | Languages and the account tables |
 | `functions/api/account/verify.js`, `resend-verification.js` | Email confirmation |

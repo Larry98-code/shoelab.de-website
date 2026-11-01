@@ -1,6 +1,7 @@
 import { json, verifyStripeSignature } from '../../_shared/util.js';
 import { sendMail, sendStudio } from '../../_shared/mail.js';
-import { ensureSchema, markPaid } from '../../_shared/vault.js';
+import { ensureSchema, markPaid, featureListing, VAULT } from '../../_shared/vault.js';
+import { markLegitPaid } from '../../_shared/legit.js';
 
 // Stripe sends events here. Configure the endpoint URL + signing secret in the
 // Stripe dashboard (Developers -> Webhooks), and set STRIPE_WEBHOOK_SECRET.
@@ -33,6 +34,37 @@ export async function onRequestPost(context) {
     // Vault orders are matched by their own id and handled entirely here.
     // Returning early matters: the booking fallback below would otherwise mark
     // this customer's latest unpaid booking as paid too.
+    // ShoeLab's own Vault services: a Legit Check, or a listing featured for a week.
+    // Each is trusted only from a signed event, for exactly the price asked.
+    const meta = obj.metadata || {};
+    const legitRef = meta.vault_legit || (/^legit_(\d+)$/.exec(String(obj.client_reference_id || '')) || [])[1];
+    const featureRef = meta.vault_feature || (/^feature_(\d+)$/.exec(String(obj.client_reference_id || '')) || [])[1];
+    if (legitRef || featureRef) {
+      if (env.DB && env.STRIPE_WEBHOOK_SECRET && PAID_EVENTS.indexOf(event.type) !== -1) {
+        await ensureSchema(env);
+        const amount = obj.amount_total != null ? obj.amount_total : obj.amount_received != null ? obj.amount_received : obj.amount_paid;
+        const settled = event.type !== 'checkout.session.completed' || !obj.payment_status || obj.payment_status === 'paid';
+        const eur = String(obj.currency || '').toLowerCase() === 'eur';
+        const pi = event.type === 'payment_intent.succeeded' ? obj.id : (typeof obj.payment_intent === 'string' ? obj.payment_intent : null);
+        if (legitRef && settled && eur) {
+          const id = parseInt(legitRef, 10);
+          const g = await env.DB.prepare('SELECT fee FROM mk_legit WHERE id = ?').bind(id).first();
+          if (g && amount === g.fee) {
+            const fresh = await markLegitPaid(env, id, 'stripe', pi);
+            if (!fresh && pi) await env.DB.prepare('UPDATE mk_legit SET stripe_pi = ? WHERE id = ? AND stripe_pi IS NULL').bind(pi, id).run();
+          }
+        }
+        // a feature is bought once per Checkout; payment_intent.succeeded for the same payment is ignored
+        if (featureRef && settled && eur && event.type === 'checkout.session.completed' && amount === VAULT.feature.price) {
+          // Stripe may send the same event again: one week per payment
+          const lid = parseInt(featureRef, 10);
+          const seen = await env.DB.prepare("SELECT 1 FROM mk_events WHERE listing_id = ? AND kind = 'featured' AND note LIKE ?").bind(lid, 'paid ' + obj.id + ' %').first();
+          if (!seen) await featureListing(env, lid, 'paid ' + (obj.id || ''));
+        }
+      }
+      return json({ received: true }, 200);
+    }
+
     const vaultRef = (obj.metadata && obj.metadata.vault_order) ||
       (/^vault_(\d+)$/.exec(String(obj.client_reference_id || '')) || [])[1];
     if (vaultRef) {

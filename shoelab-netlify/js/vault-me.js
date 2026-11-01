@@ -71,6 +71,10 @@
     b.orders.forEach(function (o) {
       if (o.status === 'delivered' && !o.feedback) out.push({ icon: 'star', text: t('todoRate', { title: o.title }), go: t('rate'), order: o.id });
     });
+    (data.legit || []).forEach(function (g) {
+      if (g.request) out.push({ icon: 'camera', text: t('todoLegitMore', { title: g.title }), go: t('nmGo'), legit: g.id });
+      else if (g.status === 'awaiting_payment' && g.payMode !== 'manual') out.push({ icon: 'euro', text: t('todoLegitPay', { title: g.title }), go: t('payNow'), legit: g.id });
+    });
     return out;
   }
 
@@ -183,7 +187,8 @@
     var buyer = o.role === 'buyer';
     var lines = buyer
       ? S.lineHtml(t('lineItem'), money(o.itemPrice, true)) + S.lineHtml(t('lineAuth'), money(o.authFee, true)) +
-        S.lineHtml(t('lineShip'), money(o.shipFee, true)) + S.lineHtml(t('lineTotal'), money(o.total, true), 'total')
+        S.lineHtml(t('lineShip'), money(o.shipFee, true)) + (o.addon ? S.lineHtml(t('addon_' + o.addon), money(o.addonFee, true)) : '') +
+        S.lineHtml(t('lineTotal'), money(o.total, true), 'total')
       : S.lineHtml(t('salePrice'), money(o.itemPrice, true)) + S.lineHtml(t('commission'), '−' + money(o.commission, true), 'neg') +
         (o.tier === 'photo' ? S.lineHtml(t('postageBack'), '+' + money(o.shipFee, true), 'pos') : '') +
         S.lineHtml(t('youReceive'), money(o.payout, true), 'total');
@@ -195,11 +200,13 @@
       '<div class="v-order-top">' + thumb(o.photo, '/vault-item.html?id=' + o.listingId) +
         '<div style="min-width:0;"><b>' + esc(o.title) + '</b>' +
           '<small>EU ' + esc(o.size || '') + ' · ' + esc(t('orderNo', { n: o.id })) + ' · ' + esc(S.fmtDate(o.createdAt)) + '</small>' +
-          '<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.45rem;">' + chip(ORDER_TONE[o.status], t('os_' + o.status)) + S.tierBadge(o.tier) + '</div></div>' +
+          '<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.45rem;">' + chip(ORDER_TONE[o.status], t('os_' + o.status)) + S.tierBadge(o.tier) +
+            (o.addon ? chip('gold', t('addonChip', { name: t('addon_' + o.addon) })) : '') + '</div></div>' +
         '<div class="side"><span class="v-note">' + esc(t(buyer ? 'lineTotal' : 'youReceive')) + '</span><span class="amt">' + money(buyer ? o.total : o.payout, true) + '</span></div>' +
       '</div>' +
       (o.status === 'cancelled' ? '' : timeline(o)) +
       orderActions(o) +
+      (buyer && o.status === 'delivered' ? careHtml() : '') +
       '<details class="v-order-more"><summary>' + esc(t('orderDetails')) + '</summary><div class="in">' +
         '<div><div class="v-lines">' + lines + '</div>' +
           trackingLine(t('trackingIn'), o.trackingIn) + trackingLine(t('trackingOut'), o.trackingOut) + '</div>' +
@@ -307,8 +314,172 @@
     });
   }
 
+  // after delivery: keeping the new pair fresh is what the studio does
+  function careHtml() {
+    return '<div class="v-care">' + S.ico('sparkle') + '<div><b>' + esc(t('careT')) + '</b><small>' + esc(t('careP')) + '</small></div>' +
+      '<a class="v-btn ghost xs" href="/booking.html?service=refresh">' + esc(t('careBook')) + '</a></div>';
+  }
+  function feature(btn, id) {
+    var c = S.config() || {}, f = c.feature || { price: 299, days: 7 };
+    var m = S.modal({
+      title: t('featureT'),
+      html: '<p>' + esc(t('featureP', { days: f.days, price: money(f.price, true) })) + '</p>' +
+        '<label class="v-check" style="margin:1rem 0 0.4rem;"><input type="checkbox" id="vfConsent"/><span>' + esc(t('featureConsent')) + '</span></label>' +
+        '<div class="v-msg" role="alert"></div>',
+      foot: '<button type="button" class="v-btn ghost" data-no>' + esc(t('cancel')) + '</button><button type="button" class="v-btn gold" data-go>' + esc(t('featurePay', { price: money(f.price, true) })) + '</button>'
+    });
+    m.$('[data-no]').addEventListener('click', function () { m.close(); });
+    var go = m.$('[data-go]');
+    go.addEventListener('click', function () {
+      var msg = m.$('.v-msg');
+      if (!m.$('#vfConsent').checked) { msg.textContent = t('lgConsentNeeded'); msg.className = 'v-msg bad'; return; }
+      S.busy(go, true);
+      S.market('listing/feature', { body: { id: id, consent: true } }).then(function (res) {
+        if (res.ok && res.data.url) { w.location.href = res.data.url; return; }
+        S.busy(go, false);
+        msg.textContent = res.ok ? '' : S.errText(res); msg.className = 'v-msg bad';
+      });
+    });
+  }
+
+  /* ── Legit Checks ─────────────────────────────────────────────────── */
+  var lneed = {};                           // legit check id → item index → { data, thumb }
+  var LG_TONE = { awaiting_payment: 'warn', checking: 'gold', needs_info: 'warn', review: 'gold', done: '', cancelled: '' };
+  var VD_TONE = { authentic: 'ok', not_authentic: 'bad', inconclusive: 'warn' };
+  function findLegit(id) { return (data.legit || []).filter(function (g) { return g.id === id; })[0]; }
+  function legitPanel() {
+    var list = data.legit || [];
+    var head = '<div class="v-lg-cta">' + S.ico('shield') + '<div><b>' + esc(t('lgMeT')) + '</b><small>' + esc(t('lgMeP', { price: money((S.config() || {}).legit || 990, true) })) + '</small></div>' +
+      '<a class="v-btn gold sm" href="/legit.html">' + esc(t('lgStart')) + '</a></div>';
+    if (!list.length) return head + emptyBig('shield', 'lgEmptyT', 'lgEmpty', '/legit.html', 'lgStart');
+    return head + '<div class="v-rows">' + list.map(legitHtml).join('') + '</div>';
+  }
+  function legitHtml(g) {
+    var first = g.photos[0];
+    var chips = (g.status === 'done'
+      ? chip(VD_TONE[g.verdict], t('lv_' + g.verdict))
+      : chip(LG_TONE[g.status], t('ls_' + g.status))) +
+      chip('', t(g.mode === 'sell' ? 'lgModeSell' : 'lgModeBuy')) +
+      (g.platform ? (g.link ? '<a class="v-chip" href="' + esc(g.link) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(g.platform) + ' ↗</a>' : chip('', g.platform)) : '');
+    var body = '';
+    if (g.status === 'awaiting_payment') {
+      body = g.payMode === 'manual'
+        ? '<p class="v-note">' + S.ico('info') + esc(t('lgWaitManual', { amount: money(g.fee, true) })) + '</p>'
+        : '<label class="v-check" style="margin-bottom:0.7rem;"><input type="checkbox" id="lgc' + g.id + '"/><span>' + esc(t('lgConsent')) + '</span></label>' +
+          '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn gold sm" data-lg-pay="' + g.id + '">' + esc(t('lgPayBtn', { amount: money(g.fee, true) })) + '</button></div>';
+    } else if (g.status === 'needs_info' || g.request) {
+      body = legitNeedsHtml(g);
+    } else if (g.status === 'checking' || g.status === 'review') {
+      body = '<p class="v-note v-lg-prog"><span class="v-lc-spin"></span>' + esc(t(g.status === 'checking' ? 'lgProgChecking' : 'lgProgReview')) + '</p>';
+    } else if (g.status === 'done') {
+      body = '<div class="v-lg-result ' + (VD_TONE[g.verdict] || '') + '"><b>' + esc(t('lr_' + g.verdict)) + '</b>' +
+        (g.resultNote ? '<p>' + esc(g.resultNote) + '</p>' : '') +
+        (g.refunded ? '<small>' + esc(t('lgRefunded')) + '</small>' : '') + '</div>' +
+        (g.cert ? certHtml(g) : '');
+    }
+    return '<article class="v-order v-lgc" id="legit-' + g.id + '">' +
+      '<div class="v-order-top">' +
+        (first ? '<span class="thumb"><img src="' + esc(first.url) + '&amp;s=t" alt="" loading="lazy"/></span>' : '<span class="thumb"></span>') +
+        '<div style="min-width:0;"><b>' + esc(g.title) + '</b>' +
+          '<small>EU ' + esc(g.size) + ' · ' + esc(g.ref) + ' · ' + esc(S.fmtDate(g.createdAt)) + '</small>' +
+          '<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.45rem;">' + chips + '</div></div>' +
+      '</div>' + body + '</article>';
+  }
+  function certHtml(g) {
+    if (g.certRevoked) return '<div class="v-state bad" style="margin-top:0.8rem;">' + S.ico('alert') + '<div>' + esc(t('lgCertRevoked', { code: g.cert })) + '</div></div>';
+    return '<div class="v-lg-cert">' +
+      '<div class="v-lg-cert-top"><span class="seal">' + S.ico('check') + '</span><div><small>' + esc(t('lgCertT')) + '</small><b>' + esc(g.cert) + '</b></div></div>' +
+      '<p class="v-note">' + esc(t('lgCertHow')) + '</p>' +
+      '<div class="v-btn-row" style="justify-content:flex-start;">' +
+        '<button type="button" class="v-btn gold xs" data-lg-cert="share" data-id="' + g.id + '">' + S.ico('upload') + esc(t('certShareImg')) + '</button>' +
+        '<button type="button" class="v-btn ghost xs" data-lg-cert="text" data-id="' + g.id + '">' + esc(t('lgCopyText')) + '</button>' +
+        '<a class="v-btn ghost xs" href="/verified.html?c=' + encodeURIComponent(g.cert) + '" target="_blank" rel="noopener">' + esc(t('lgOpenCert')) + ' ↗</a>' +
+      '</div>' +
+      '<label class="v-switch" style="margin-top:0.9rem;"><span><b style="font-weight:500;display:block;">' + esc(t('lgCertPublic')) + '</b><small class="v-note">' + esc(t(g.certPublic ? 'lgCertPublicOn' : 'lgCertPublicOff')) + '</small></span>' +
+        '<input type="checkbox" data-lg-public="' + g.id + '"' + (g.certPublic ? ' checked' : '') + '/><span class="knob"></span></label>' +
+    '</div>';
+  }
+  function legitNeedsHtml(g) {
+    var q = g.request;
+    if (!q) return '<p class="v-note v-lg-prog"><span class="v-lc-spin"></span>' + esc(t('lgProgChecking')) + '</p>';
+    return '<div class="v-needs v-lg-needs" id="lneed-' + g.id + '">' +
+      '<div class="v-needs-head">' + S.ico('camera') + '<b>' + esc(t('lgNeedT')) + '</b></div>' +
+      '<p class="v-note">' + esc(t(g.mode === 'buy' ? 'lgNeedBuy' : 'nmP')) + '</p>' +
+      (g.sellerMessage ? '<div class="v-lg-msg"><small>' + esc(t('lgMsgT')) + '</small><p>' + esc(g.sellerMessage) + '</p>' +
+        '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn ghost xs" data-lg-copymsg="' + g.id + '">' + esc(t('lgCopyMsg')) + '</button>' +
+        (g.link ? '<a class="v-btn ghost xs" href="' + esc(g.link) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(t('lgOpenListing', { app: g.platform || '' })) + ' ↗</a>' : '') + '</div></div>' : '') +
+      '<ol>' + q.items.map(function (x, i) {
+        var got = lneed[g.id] && lneed[g.id][i];
+        return '<li><b>' + esc(x.title) + '</b>' + (x.instructions ? '<small>' + esc(x.instructions) + '</small>' : '') +
+          '<div class="v-needs-in">' +
+            (x.type === 'text'
+              ? '<textarea class="v-textarea" rows="2" maxlength="600" id="lt' + g.id + '-' + i + '" placeholder="' + esc(t('nmTextPh')) + '"></textarea>'
+              : '<label class="v-btn ghost xs v-needs-pick">' + S.ico('upload') + '<span>' + esc(t(got ? 'nmChange' : 'nmAdd')) + '</span>' +
+                  '<input type="file" accept="image/*" hidden data-lneed-photo="' + g.id + ':' + i + '"/></label>' +
+                (got ? '<img class="v-needs-thumb" src="' + got.thumb + '" alt=""/>' : '')) +
+            '<label class="v-needs-none"><input type="checkbox" id="ln' + g.id + '-' + i + '"/> ' + esc(t('nmNone')) + '</label>' +
+          '</div></li>';
+      }).join('') + '</ol>' +
+      '<div class="v-msg" role="alert" id="lmMsg' + g.id + '"></div>' +
+      '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn gold sm" data-lg-send="' + g.id + '">' + esc(t('nmSend')) + '</button></div>' +
+    '</div>';
+  }
+  function sendLegitNeeds(btn, id) {
+    var g = findLegit(id);
+    if (!g || !g.request) return;
+    var answers = [], missing = false;
+    g.request.items.forEach(function (x, i) {
+      if (($('ln' + id + '-' + i) || {}).checked) { answers.push({ i: i, none: true }); return; }
+      if (x.type === 'text') {
+        var v = (($('lt' + id + '-' + i) || {}).value || '').trim();
+        if (v) answers.push({ i: i, text: v }); else missing = true;
+        return;
+      }
+      var p = lneed[id] && lneed[id][i];
+      if (p) answers.push({ i: i, photo: { data: p.data, thumb: p.thumb } }); else missing = true;
+    });
+    var msg = $('lmMsg' + id);
+    if (missing) { msg.textContent = t('nmMissing'); msg.className = 'v-msg bad'; return; }
+    msg.textContent = t('uploading'); msg.className = 'v-msg';
+    S.busy(btn, true);
+    S.market('legit/answer', { body: { id: id, request: g.request.id, answers: answers } }).then(function (res) {
+      if (!res.ok) { S.busy(btn, false); msg.textContent = S.errText(res); msg.className = 'v-msg bad'; return; }
+      delete lneed[id];
+      msg.innerHTML = '<span class="v-lc-spin"></span> ' + esc(t('nmChecking'));
+      return S.market('legit/run', { body: { id: id } }).then(function (r2) {
+        S.busy(btn, false);
+        S.toast(t(r2.ok && r2.data.outcome === 'asked' ? 'nmMore' : 'lgThanks'), 'ok');
+        load();
+      });
+    });
+  }
+  // back from paying (or a free check): start the check; Stripe may need a moment
+  function startLegit(id, tries) {
+    S.market('legit/run', { body: { id: id } }).then(function (res) {
+      if (res.ok && res.data.outcome === 'unpaid' && tries > 0) { setTimeout(function () { startLegit(id, tries - 1); }, 3000); return; }
+      load();
+    });
+  }
+  function legitCert(btn, id, what) {
+    var g = findLegit(id);
+    if (!g || !g.cert) return;
+    var C = w.SLVCert;
+    if (what === 'text') {
+      C.copy(t('lgListingText', { code: g.cert, url: C.url(g.cert) })).then(function (ok) { S.toast(t(ok ? 'lgTextCopied' : 'certCopyFail'), ok ? 'ok' : 'bad'); });
+      return;
+    }
+    S.busy(btn, true);
+    var photo = g.photos.filter(function (p) { return p.kind !== 'extra'; })[0];
+    C.image({ code: g.cert, title: g.title, size: g.size, checkedAt: g.decidedAt, photo: photo && photo.url })
+      .then(function (blob) { return C.give(blob, 'ShoeLab-' + g.cert + '.png', true); })
+      .then(function (how) { S.busy(btn, false); if (how === 'saved') S.toast(t('certSaved'), 'ok'); },
+        function () { S.busy(btn, false); S.toast(t('certImgFail'), 'bad'); });
+  }
+
   function listingRowHtml(l) {
     var acts = '<a class="v-btn ghost xs" href="' + S.itemHref(l) + '">' + esc(t('view')) + '</a>';
+    // a live pair can be shown first for a week (card payments only)
+    if (l.status === 'live' && !l.featured && data.onlinePayment) acts += '<button type="button" class="v-btn gold xs" data-feature="' + l.id + '">' + S.ico('star') + esc(t('featureBtn')) + '</button>';
     if ((l.status === 'review' || l.status === 'live') && !l.bids) acts += '<button type="button" class="v-btn danger xs" data-withdraw="' + l.id + '">' + esc(t('withdraw')) + '</button>';
     if ((l.status === 'ended' || l.status === 'cancelled') && l.liveAt) acts += '<button type="button" class="v-btn gold xs" data-relist="' + l.id + '">' + esc(t('relistBtn')) + '</button>';
     var stats = [];
@@ -318,6 +489,7 @@
     return '<div class="v-rowcard">' + thumb(l.photo, S.itemHref(l)) +
       '<div class="main"><b><a href="' + S.itemHref(l) + '">' + esc(l.title) + '</a></b><small>EU ' + esc(l.size) + ' · ' + esc(stats.join(' · ')) + '</small>' +
         '<div class="chips">' + chip(LIST_TONE[l.status], t('st_' + l.status)) + S.tierBadge(l.tier) +
+          (l.featured ? chip('gold', t('featuredUntil', { date: S.fmtDate(l.featuredUntil) })) : '') +
           (l.status === 'live' && l.format === 'auction' && l.endsAt ? S.countdownHtml(l.endsAt) : '') + '</div>' +
         (l.status === 'rejected' && l.reviewNote ? '<small style="color:#ff9a9a;margin-top:0.45rem;">' + esc(l.reviewNote) + '</small>' : '') + '</div>' +
       '<div class="side"><span class="amt"><small>' + esc(t(l.format === 'auction' ? (l.bids ? 'currentBid' : 'startingBid') : 'price')) + '</small>' + money(l.price) + '</span>' +
@@ -384,7 +556,8 @@
         b.offers.filter(function (f) { return f.status === 'pending' || f.status === 'countered'; }).length,
       selling: s.orders.filter(act).length + s.offers.filter(function (f) { return f.status === 'pending'; }).length +
         s.listings.filter(function (l) { return l.status === 'live' || l.status === 'review'; }).length,
-      watching: data.watching.length
+      watching: data.watching.length,
+      legit: (data.legit || []).filter(function (g) { return g.status !== 'done' && g.status !== 'cancelled'; }).length
     };
   }
   function render() {
@@ -395,7 +568,7 @@
     var h = '';
     if (td.length) {
       h += '<div class="v-todo" role="list" aria-label="' + esc(t('todoTitle')) + '">' + td.map(function (x) {
-        return '<button type="button" class="v-todo-item" role="listitem" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '" data-todo-payouts="' + (x.payouts || '') + '" data-todo-need="' + (x.need || '') + '">' +
+        return '<button type="button" class="v-todo-item" role="listitem" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '" data-todo-payouts="' + (x.payouts || '') + '" data-todo-need="' + (x.need || '') + '" data-todo-legit="' + (x.legit || '') + '">' +
           S.ico(x.icon) + '<span>' + esc(x.text) + '</span><span class="go">' + esc(x.go) + ' →</span></button>';
       }).join('') + '</div>';
     }
@@ -403,7 +576,8 @@
       return '<button type="button" role="tab" data-tab="' + k + '" class="' + (tab === k ? 'on' : '') + '" aria-selected="' + (tab === k ? 'true' : 'false') + '">' + esc(label) +
         (n ? '<span class="n' + (k === 'watching' ? ' soft' : '') + '">' + n + '</span>' : '') + '</button>';
     };
-    h += '<div class="v-tabs" role="tablist">' + tb('buying', t('tabBuying'), c.buying) + tb('selling', t('tabSelling'), c.selling) + tb('watching', t('watchlist'), c.watching) + '</div>';
+    h += '<div class="v-tabs" role="tablist">' + tb('buying', t('tabBuying'), c.buying) + tb('selling', t('tabSelling'), c.selling) + tb('watching', t('watchlist'), c.watching) +
+      tb('legit', t('tabLegit'), c.legit) + '</div>';
     h += '<div id="mePanel">' + panel() + '</div>';
     $('meBody').innerHTML = h;
     S.tick();
@@ -424,6 +598,7 @@
         (s.orders.length ? group('sellOrders', t('sales'), '', s.orders.map(orderHtml).join('')) : '') +
         group('listings', t('yourListings'), '', listings.map(listingRowHtml).join(''));
     }
+    if (tab === 'legit') return legitPanel();
     if (!data.watching.length) return emptyBig('heart', 'emptyWatchT', 'emptyWatch', '/vault.html', 'heroBrowse');
     return '<div class="v-grid">' + data.watching.map(function (l) { l.watching = true; return S.card(l); }).join('') + '</div>';
   }
@@ -433,7 +608,7 @@
   }
   function pickTab() {
     var h = (w.location.hash || '').slice(1);
-    if (h === 'selling' || h === 'buying' || h === 'watching') return h;
+    if (h === 'selling' || h === 'buying' || h === 'watching' || h === 'legit' || /^legit-\d+$/.test(h)) return h.split('-')[0];
     if (h === 'payouts' || /^need-\d+$/.test(h)) return 'selling';
     var m = /^order-(\d+)$/.exec(h);
     if (m) {
@@ -453,11 +628,11 @@
   // scroll to the card a link (or an email) pointed at
   function jump() {
     var h = (w.location.hash || '').slice(1);
-    var el = /^(order|need)-\d+$/.test(h) ? $(h) : (h === 'offers' || h === 'payouts') ? $(h) : null;
+    var el = /^(order|need|legit)-\d+$/.test(h) ? $(h) : (h === 'offers' || h === 'payouts') ? $(h) : null;
     if (!el) return;
     setTimeout(function () {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      var card = el.classList.contains('v-order') || el.classList.contains('v-needs') ? el : null;
+      var card = el.classList.contains('v-order') || el.classList.contains('v-needs') || el.classList.contains('v-lgc') ? el : null;
       if (card) { card.classList.add('flash'); setTimeout(function () { card.classList.remove('flash'); }, 2400); }
     }, 120);
   }
@@ -495,6 +670,7 @@
       if (g('data-todo-offers')) { setTab(g('data-todo-offers'), true); w.location.hash = 'offers'; jump(); return; }
       if (g('data-todo-payouts')) { setTab('selling', true); w.location.hash = 'payouts'; jump(); return; }
       if (g('data-todo-need')) { setTab('selling', true); w.location.hash = 'need-' + g('data-todo-need'); jump(); return; }
+      if (g('data-todo-legit')) { setTab('legit', true); w.location.hash = 'legit-' + g('data-todo-legit'); jump(); return; }
       if (g('data-todo-order')) {
         var o = findOrder(+g('data-todo-order'));
         if (o) { tab = o.role === 'seller' ? 'selling' : 'buying'; render(); w.location.hash = 'order-' + o.id; jump(); }
@@ -502,6 +678,26 @@
       return;
     }
     if (g('data-pay')) { pay(+g('data-pay')); return; }
+    if (g('data-lg-send')) { sendLegitNeeds(el, +g('data-lg-send')); return; }
+    if (g('data-lg-cert')) { legitCert(el, +g('data-id'), g('data-lg-cert')); return; }
+    if (g('data-lg-copymsg')) {
+      var lg = findLegit(+g('data-lg-copymsg'));
+      if (lg && lg.sellerMessage) w.SLVCert.copy(lg.sellerMessage).then(function (ok) { S.toast(t(ok ? 'lgMsgCopied' : 'certCopyFail'), ok ? 'ok' : 'bad'); });
+      return;
+    }
+    if (g('data-lg-pay')) {
+      var lid = +g('data-lg-pay');
+      if (!($('lgc' + lid) || {}).checked) { $('lgc' + lid).closest('.v-check').classList.add('err'); S.toast(t('lgConsentNeeded'), 'bad'); return; }
+      S.busy(el, true);
+      S.market('legit/pay', { body: { id: lid, consent: true } }).then(function (res) {
+        if (res.ok && res.data.url) { w.location.href = res.data.url; return; }
+        S.busy(el, false);
+        if (!res.ok) { S.toast(S.errText(res), 'bad'); return; }
+        if (res.data.free) startLegit(lid, 0); else load();
+      });
+      return;
+    }
+    if (g('data-feature')) { feature(el, +g('data-feature')); return; }
     if (g('data-payouts')) {
       var how = g('data-payouts');
       if (how === 'setup') S.payoutsSetup(el, true);
@@ -612,6 +808,29 @@
   d.addEventListener('input', needTouched);
   d.addEventListener('change', function (e) {
     needTouched(e);
+    var pub = e.target && e.target.getAttribute && e.target.getAttribute('data-lg-public');
+    if (pub) {
+      var sw = e.target;
+      S.market('legit/cert', { body: { id: +pub, public: sw.checked } }).then(function (res) {
+        if (!res.ok) { sw.checked = !sw.checked; S.toast(S.errText(res), 'bad'); return; }
+        S.toast(t(sw.checked ? 'lgCertShown' : 'lgCertHidden'), 'ok');
+        load();
+      });
+      return;
+    }
+    var lkey = e.target && e.target.getAttribute && e.target.getAttribute('data-lneed-photo');
+    if (lkey && e.target.files && e.target.files[0]) {
+      var linp = e.target, lid = +lkey.split(':')[0], li = +lkey.split(':')[1];
+      S.compressPhoto(linp.files[0]).then(function (out) {
+        (lneed[lid] = lneed[lid] || {})[li] = out;
+        var box = linp.closest('.v-needs-in'), img = box.querySelector('.v-needs-thumb');
+        if (!img) { img = d.createElement('img'); img.className = 'v-needs-thumb'; img.alt = ''; linp.closest('label').insertAdjacentElement('afterend', img); }
+        img.src = out.thumb;
+        linp.closest('label').querySelector('span').textContent = t('nmChange');
+        linp.value = '';
+      }, function (err) { S.toast(t(err && err.message === 'large' ? 'e_photo_big' : 'e_photo_bad'), 'bad'); });
+      return;
+    }
     var inp = e.target, key = inp && inp.getAttribute && inp.getAttribute('data-need-photo');
     if (!key || !inp.files || !inp.files[0]) return;
     var id = +key.split(':')[0], i = +key.split(':')[1];
@@ -651,6 +870,13 @@
         try { w.history.replaceState(null, '', w.location.pathname + w.location.hash); } catch (e) {}
         // the payment webhook can trail the redirect by a few seconds
         if (paid) { setTimeout(load, 4000); setTimeout(load, 12000); }
+      }
+      // back from paying for a Legit Check (or a feature)
+      var lgBack = S.qs('legit'), ftBack = S.qs('featured');
+      if (lgBack || ftBack) {
+        try { w.history.replaceState(null, '', w.location.pathname + w.location.hash); } catch (e) {}
+        if (lgBack) { tab = 'legit'; S.toast(t('lgPaidToast'), 'ok'); if (me) startLegit(+lgBack, 6); }
+        if (ftBack) { tab = 'selling'; S.toast(t('featurePaidToast'), 'ok'); setTimeout(load, 4000); }
       }
       // back from Stripe's onboarding: ?payouts=done, or ?payouts=retry when
       // the link had expired, in which case a fresh one is made straight away

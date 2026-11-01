@@ -26,6 +26,10 @@ export const VAULT = {
   maxPhotos: 8,
   maxPhotoBytes: 750 * 1024,
   maxThumbBytes: 120 * 1024,
+  // ShoeLab's own services sold around the marketplace (cents)
+  legit: 990,                                   // a Legit Check of a pair from another app
+  addons: { refresh: 1800, revival: 3500 },     // cleaned in the studio before a Lab Verified pair ships
+  feature: { price: 299, days: 7 },             // a listing shown first, marked "Featured"
 };
 
 export const CONDITIONS = ['new', 'like_new', 'good', 'fair'];
@@ -209,6 +213,23 @@ const SCHEMA = [
     created_at TEXT NOT NULL, answered_at TEXT
   )`,
   'CREATE INDEX IF NOT EXISTS mk_r_listing ON mk_requests(listing_id, id)',
+  // a Legit Check: ShoeLab checks a pair from another app (Vinted, eBay …) for
+  // someone about to buy it, or for its owner, who gets a certificate to show.
+  // Its photos, Lab Check runs and requests live in mk_photos, mk_checks and
+  // mk_requests with legit_id set (and listing_id 0).
+  `CREATE TABLE IF NOT EXISTS mk_legit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, mode TEXT NOT NULL,
+    brand TEXT NOT NULL, model TEXT NOT NULL, size TEXT NOT NULL,
+    link TEXT, platform TEXT, asked_price INTEGER, note TEXT,
+    status TEXT NOT NULL DEFAULT 'awaiting_payment',
+    verdict TEXT, result_note TEXT, decided_at TEXT,
+    fee INTEGER NOT NULL, pay_mode TEXT, stripe_session TEXT, stripe_pi TEXT, paid_at TEXT, refund_ref TEXT,
+    cert TEXT, cert_public INTEGER NOT NULL DEFAULT 1, cert_revoked INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL, updated_at TEXT
+  )`,
+  'CREATE INDEX IF NOT EXISTS mk_lg_user ON mk_legit(user_id, id)',
+  'CREATE INDEX IF NOT EXISTS mk_lg_status ON mk_legit(status, id)',
+  'CREATE UNIQUE INDEX IF NOT EXISTS mk_lg_cert ON mk_legit(cert)',
   // daily message counts that keep the support assistant from being abused
   `CREATE TABLE IF NOT EXISTS support_usage (
     k TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (k, day)
@@ -219,6 +240,16 @@ const LATER = [
   ['mk_photos', 'thumb', 'TEXT'], ['mk_photos', 'note', 'TEXT'],
   ['mk_orders', 'stripe_pi', 'TEXT'], ['mk_orders', 'payout_status', 'TEXT'],
   ['mk_orders', 'payout_ref', 'TEXT'], ['mk_orders', 'payout_at', 'TEXT'], ['mk_orders', 'refund_ref', 'TEXT'],
+  // the Legit Check shares the photo, check and request tables with listings
+  ['mk_photos', 'legit_id', 'INTEGER'], ['mk_checks', 'legit_id', 'INTEGER'], ['mk_requests', 'legit_id', 'INTEGER'],
+  // the cleaning a buyer added to a Lab Verified order, and featured listings
+  ['mk_orders', 'addon', 'TEXT'], ['mk_orders', 'addon_fee', 'INTEGER'], ['mk_listings', 'featured_until', 'TEXT'],
+];
+// indexes on the columns above, made once they exist
+const LATER_INDEXES = [
+  'CREATE INDEX IF NOT EXISTS mk_p_legit ON mk_photos(legit_id, idx)',
+  'CREATE INDEX IF NOT EXISTS mk_c_legit ON mk_checks(legit_id, id)',
+  'CREATE INDEX IF NOT EXISTS mk_r_legit ON mk_requests(legit_id, id)',
 ];
 
 let schemaReady = false;
@@ -227,6 +258,7 @@ export async function ensureSchema(env) {
   await ensureCore(env);
   await env.DB.batch(SCHEMA.map((sql) => env.DB.prepare(sql)));
   await addMissingColumns(env, LATER);
+  await env.DB.batch(LATER_INDEXES.map((sql) => env.DB.prepare(sql)));
   schemaReady = true;
 }
 
@@ -278,6 +310,18 @@ export async function approveListing(env, l, note, kind) {
     title: listingTitle(l), url: '/vault-item.html?id=' + l.id, note: { k: l.tier === 'photo' ? 'livePhoto' : 'liveLab' },
   });
   return true;
+}
+
+// A listing paid to be featured (or featured free by a specialist): shown
+// first for VAULT.feature.days more days, from now or from its current end.
+export async function featureListing(env, listingId, how) {
+  const l = await env.DB.prepare('SELECT id, status, featured_until FROM mk_listings WHERE id = ?').bind(listingId).first();
+  if (!l) return null;
+  const now = nowIso(), from = l.featured_until && l.featured_until > now ? Date.parse(l.featured_until) : Date.now();
+  const until = new Date(from + VAULT.feature.days * 86400000).toISOString();
+  await env.DB.prepare('UPDATE mk_listings SET featured_until = ? WHERE id = ?').bind(until, l.id).run();
+  await logEvent(env, { listingId: l.id, kind: 'featured', note: how + ' until ' + until });
+  return until;
 }
 
 // ── orders ──────────────────────────────────────────────────────────────────

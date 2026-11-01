@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '6';   // bump together with the ?v= of the translation files
+  var V = '7';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },
@@ -539,6 +539,7 @@
         '<div class="v-card-top">' + tierBadge(it.tier) + (o.noHeart || sold ? '' : heartHtml(it)) + '</div>' +
         '<div class="v-card-bottom">' +
           (it.preview ? '<span class="v-badge example">' + esc(t('example')) + '</span>' : '') +
+          (it.featured && live ? '<span class="v-badge featured">' + ico('star') + esc(t('featured')) + '</span>' : '') +
           (auction && live && it.endsAt ? countdownHtml(it.endsAt) : '') +
           (!live && !sold && it.status ? '<span class="v-badge ghost">' + esc(t('st_' + it.status)) + '</span>' : '') +
         '</div>' +
@@ -638,6 +639,7 @@
         '<nav class="v-links" aria-label="Vault">' +
           link('browse', '/vault.html', t('navBrowse')) +
           link('sell', '/vault-sell.html', t('navSell')) +
+          link('legit', '/legit.html', t('navLegit')) +
           link('me', '/vault-me.html', t('navMine')) +
           (me && me.specialist ? link('lab', '/vault-lab.html', t('navLab'), ' lab') : '') +
         '</nav>' +
@@ -652,6 +654,7 @@
                   '<a class="v-menu-item" href="/vault-me.html">' + ico('vault') + esc(t('navMine')) + '</a>' +
                   '<a class="v-menu-item" href="/vault-me.html#watching">' + ico('heart') + esc(t('watchlist')) + '</a>' +
                   '<a class="v-menu-item" href="/vault-sell.html">' + ico('plus') + esc(t('sellPair')) + '</a>' +
+                  '<a class="v-menu-item" href="/vault-me.html#legit">' + ico('shield') + esc(t('tabLegit')) + '</a>' +
                   (me.specialist ? '<a class="v-menu-item" href="/vault-lab.html">' + ico('shield') + esc(t('navLab')) + '</a>' : '') +
                   '<a class="v-menu-item" href="/account.html">' + ico('settings') + esc(t('accountSettings')) + '</a>' +
                   '<button type="button" class="v-menu-item" id="vSignOut">' + ico('logout') + esc(t('signOut')) + '</button>' +
@@ -709,6 +712,8 @@
             '<a href="/vault.html#how">' + esc(t('footHow')) + '</a>' +
             '<a href="/vault.html#fees">' + esc(t('footFees')) + '</a>' +
             '<a href="/vault-sell.html">' + esc(t('sellPair')) + '</a>' +
+            '<a href="/legit.html">' + esc(t('navLegit')) + '</a>' +
+            '<a href="/verified.html">' + esc(t('footVerify')) + '</a>' +
             '<a href="/">ShoeLab.de</a>' +
             '<a href="/vault-terms.html">' + esc(t('footTerms')) + '</a>' +
             '<a href="/datenschutz.html">' + esc(t('footPrivacy')) + '</a>' +
@@ -873,8 +878,23 @@
       lineHtml(t('lineItem'), money(o.itemPrice, true)) +
       lineHtml(t('lineAuth') + ' · ' + t(o.tier === 'lab' ? 'tierLab' : 'tierPhoto'), money(o.authFee, true)) +
       lineHtml(t('lineShip'), money(o.shipFee, true)) +
+      (o.addon ? lineHtml(t('addon_' + o.addon), money(o.addonFee, true)) : '') +
       lineHtml(t('lineTotal'), money(o.total, true), 'total') +
     '</div>';
+  }
+  // "Fresh for delivery": a Lab Verified pair passes through the studio, so it
+  // can be cleaned there before it ships to the buyer
+  function addonHtml(o) {
+    var ad = (config && config.addons) || {};
+    var opts = [''].concat(Object.keys(ad));
+    return '<div class="v-addon"><h3 class="v-h3">' + ico('sparkle') + esc(t('addonT')) + '</h3><p class="v-note">' + esc(t('addonP')) + '</p>' +
+      '<div class="v-addon-opts" role="radiogroup" aria-label="' + esc(t('addonT')) + '">' + opts.map(function (k) {
+        var on = (o.addon || '') === k;
+        return '<label class="v-addon-opt' + (on ? ' sel' : '') + '"><input type="radio" name="vpAddon" value="' + k + '"' + (on ? ' checked' : '') + '/>' +
+          '<span><b>' + esc(k ? t('addon_' + k) : t('addonNone')) + '</b><small>' + esc(t(k ? 'addonDesc_' + k : 'addonNoneP')) + '</small></span>' +
+          '<em>' + (k ? '+' + money(ad[k], true) : '') + '</em></label>';
+      }).join('') + '</div>' +
+      '<label class="v-check" id="vpAddonOk"' + (o.addon ? '' : ' hidden') + ' style="margin-top:0.7rem;"><input type="checkbox" id="vpAddonConsent"/><span>' + esc(t('addonConsent')) + '</span></label></div>';
   }
   function addressHtml(p) {
     var f = function (id, key, val, ac, extra) {
@@ -908,11 +928,15 @@
         if (!p.name) p.name = u.name;
         return new Promise(function (resolve) {
           var finished = false, online = !!(config && config.onlinePayment);
+          var withAddon = o.tier === 'lab' && config && config.addons;
+          var base = o.itemPrice + o.authFee + o.shipFee;
+          if (!o.addon) { o.addon = null; o.addonFee = 0; o.total = base; }
           var m = modal({
             title: t(o.create ? 'buyTitle' : 'payTitle'),
             html:
               '<p style="margin-bottom:0.6rem;"><b style="color:#fff;font-weight:500;">' + esc(o.title) + '</b></p>' +
-              totalsHtml(o) +
+              '<div id="vpTotals">' + totalsHtml(o) + '</div>' +
+              (withAddon ? addonHtml(o) : '') +
               '<h3 class="v-h3" style="margin:1.3rem 0 0.8rem;">' + esc(t('deliveryTo')) + '</h3>' + addressHtml(p) +
               '<div class="v-state ' + (online ? 'info' : 'gold') + '">' + ico(online ? 'lock' : 'info') + '<span>' + esc(t(online ? (config.connect ? 'payNoteHeld' : 'payNoteOnline') : 'payNoteManual')) + '</span></div>' +
               '<p class="v-note" style="margin-top:0.8rem;">' + (o.create ? esc(t('bindingNote')) + ' ' : '') + esc(t('payTerms')) +
@@ -928,16 +952,31 @@
           });
           var go = m.$('[data-go]'), msg = m.$('.v-msg');
           var fail = function (text) { busy(go, false); msg.textContent = text; msg.className = 'v-msg bad'; };
+          var payLabel = function () { go.textContent = t(online ? 'payBtn' : 'reserveBtn', { amount: money(o.total, true) }); };
+          if (withAddon) {
+            m.$('.v-addon-opts').addEventListener('change', function (e) {
+              var k = e.target.value || null;
+              o.addon = k; o.addonFee = k ? config.addons[k] : 0; o.total = base + o.addonFee;
+              Array.prototype.forEach.call(m.$('.v-addon-opts').querySelectorAll('.v-addon-opt'), function (x) { x.classList.toggle('sel', x.querySelector('input').checked); });
+              m.$('#vpAddonOk').hidden = !k;
+              m.$('#vpTotals').innerHTML = totalsHtml(o);
+              payLabel();
+            });
+            m.$('#vpAddonConsent').addEventListener('change', function () { m.$('#vpAddonOk').classList.remove('err'); });
+          }
           go.addEventListener('click', function () {
             var a = readAddress(m);
             if (a.error) { msg.textContent = t(a.error); msg.className = 'v-msg bad'; return; }
+            if (o.addon && !m.$('#vpAddonConsent').checked) {
+              m.$('#vpAddonOk').classList.add('err'); msg.textContent = t('addonConsentNeeded'); msg.className = 'v-msg bad'; return;
+            }
             busy(go, true);
             msg.textContent = '';
             var first = o.orderId ? Promise.resolve({ ok: true, data: { orderId: o.orderId } }) : o.create();
             first.then(function (res) {
               if (!res.ok) { fail(errText(res)); return; }
               o.orderId = res.data.orderId;          // a retry pays, it never buys twice
-              market('order/pay', { body: { orderId: o.orderId, address: a } }).then(function (pay) {
+              market('order/pay', { body: { orderId: o.orderId, address: a, addon: o.addon || '', addonConsent: !!o.addon } }).then(function (pay) {
                 if (pay.ok && pay.data.url) { finished = true; resolve({ redirect: true, orderId: o.orderId }); w.location.href = pay.data.url; return; }
                 if (pay.ok) { finished = true; m.close(true); resolve({ manual: true, orderId: o.orderId }); return; }
                 fail(errText(pay));

@@ -11,7 +11,7 @@
   var preview = S.qs('preview') === '1';
 
   var SORTS = {
-    live: [['new', 'sortNew'], ['ending', 'sortEnding'], ['price_asc', 'sortPriceAsc'], ['price_desc', 'sortPriceDesc'], ['popular', 'sortPopular']],
+    live: [['featured', 'sortFeatured'], ['new', 'sortNew'], ['ending', 'sortEnding'], ['price_asc', 'sortPriceAsc'], ['price_desc', 'sortPriceDesc'], ['popular', 'sortPopular']],
     sold: [['sold', 'sortSold'], ['price_desc', 'sortPriceDesc'], ['price_asc', 'sortPriceAsc']]
   };
 
@@ -175,7 +175,7 @@
       if (state.max && x.price > S.centsOf(state.max)) return false;
       return state.view === 'live';
     });
-    var sort = state.sort || 'new';
+    var sort = state.sort || 'featured';
     list.sort(function (a, b) {
       if (sort === 'ending') return (a.endsAt ? Date.parse(a.endsAt) : Infinity) - (b.endsAt ? Date.parse(b.endsAt) : Infinity);
       if (sort === 'price_asc') return a.price - b.price;

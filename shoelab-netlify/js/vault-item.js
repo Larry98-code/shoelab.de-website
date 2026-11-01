@@ -189,6 +189,10 @@
       return out.join('');
     }
     if (v.specialist && L.status === 'review') out.push(stateBox('gold', 'shield', esc(t('labReviewHint')) + ' <a href="/vault-lab.html">' + esc(t('navLab')) + '</a>'));
+    // a specialist can feature a live pair for free (a promotion, a launch)
+    if (v.specialist && L.status === 'live') out.push(stateBox('gold', 'star', L.featured
+      ? esc(t('featuredUntil', { date: S.fmtDate(L.featuredUntil) }))
+      : esc(t('featureFreeHint')) + ' <button type="button" class="v-link-btn" data-act="featureFree">' + esc(t('featureFree')) + '</button>'));
     if (L.status === 'live' && L.format === 'auction' && v.highBidder) out.push(stateBox('ok', 'check', '<b>' + esc(t('youLead')) + '</b> ' + esc(t('yourMaxIs', { amount: money(v.myMax, true) }))));
     else if (L.status === 'live' && L.format === 'auction' && v.myMax) out.push(stateBox('bad', 'alert', '<b>' + esc(t('youOutbid')) + '</b> ' + esc(t('yourMaxWas', { amount: money(v.myMax, true) }))));
     if (L.status === 'sold' && v.order && v.role === 'buyer') {
@@ -278,12 +282,17 @@
     if (L.status !== 'live' || isOwner()) return '';
     var base = L.format === 'fixed' ? L.buyNow : L.price;
     var o = { itemPrice: base, authFee: L.fees.auth, shipFee: L.fees.shipping, total: base + L.fees.auth + L.fees.shipping, tier: L.tier };
+    var ad = (S.config() || {}).addons;
     return '<div class="v-card-box"><h3 class="v-h3" style="margin-bottom:0.6rem;">' + esc(t(L.format === 'auction' ? 'payIfWinNow' : 'youPay')) + '</h3>' +
-      S.totalsHtml(o) + '<p class="v-note" style="margin-top:0.7rem;">' + esc(t('payWithin')) + '</p></div>';
+      S.totalsHtml(o) + '<p class="v-note" style="margin-top:0.7rem;">' + esc(t('payWithin')) + '</p>' +
+      // a Lab Verified pair passes through the studio: it can arrive freshly cleaned
+      (L.tier === 'lab' && ad ? '<p class="v-addon-tease">' + S.ico('sparkle') + '<span>' + esc(t('addonTease', { price: S.money(Math.min.apply(null, Object.keys(ad).map(function (k) { return ad[k]; })), true) })) + '</span></p>' : '') +
+      '</div>';
   }
 
   function headHtml() {
     var meta = '<span class="v-chip">EU ' + esc(L.size) + '</span><span class="v-chip">' + esc(S.condLabel(L.cond)) + '</span>' + S.tierBadge(L.tier) +
+      (L.featured && L.status === 'live' ? '<span class="v-chip gold">' + S.ico('star') + ' ' + esc(t('featured')) + '</span>' : '') +
       (L.watchers ? '<span class="v-chip" id="vWatchers">' + S.ico('heart') + ' ' + esc(S.tn('watchers', L.watchers)) + '</span>' : '<span class="v-chip" id="vWatchers" hidden></span>') +
       (L.status !== 'live' ? '<span class="v-chip ' + (L.status === 'sold' ? 'ok' : L.status === 'review' ? 'warn' : L.status === 'rejected' ? 'bad' : '') + '">' + esc(t('st_' + L.status)) + '</span>' : '<span class="v-chip live">' + esc(t('st_live')) + '</span>');
     return '<div class="v-buy-head"><span class="v-card-brand">' + esc(L.brand) + '</span><h1>' + esc(L.model) + '</h1>' +
@@ -342,9 +351,19 @@
       if (!a) return;
       var act = a.getAttribute('data-act');
       if (pv && act !== 'pay') { S.toast(t('previewOnly'), 'info'); return; }
-      ({ buy: onBuy, offer: onOffer, withdraw: onWithdraw, relist: onRelist, pay: onPayExisting,
+      ({ buy: onBuy, offer: onOffer, withdraw: onWithdraw, relist: onRelist, pay: onPayExisting, featureFree: onFeatureFree,
          withdrawOffer: function () { respond('withdraw'); }, acceptCounter: function () { respond('accept'); },
          declineCounter: function () { respond('decline'); } })[act]();
+    });
+  }
+  function onFeatureFree(btn) {
+    S.confirm(t('featureFreeT'), t('featureFreeQ', { days: ((S.config() || {}).feature || {}).days || 7 }), t('featureFree')).then(function (y) {
+      if (!y) return;
+      S.market('listing/feature', { body: { id: L.id, free: true } }).then(function (res) {
+        if (!res.ok) { S.toast(S.errText(res), 'bad'); return; }
+        S.toast(t('featuredToast'), 'ok');
+        load();
+      });
     });
   }
   function bidErr(text) {

@@ -46,7 +46,19 @@
     }).join('');
   }
 
+  // Clean pairs photograph better and sell faster: the studio is next door
+  function cleanOffer() {
+    var box = $('sClean');
+    if (!box) {
+      box = d.createElement('div');
+      box.id = 'sClean'; box.className = 'v-care v-clean-offer';
+      $('sPhotos').parentNode.appendChild(box);
+    }
+    box.innerHTML = S.ico('sparkle') + '<div><b>' + esc(t('cleanFirstT')) + '</b><small>' + esc(t('cleanFirstP')) + '</small></div>' +
+      '<a class="v-btn ghost xs" href="/booking.html?service=revival" target="_blank" rel="noopener">' + esc(t('cleanFirstBtn')) + '</a>';
+  }
   function renderPhotos() {
+    cleanOffer();
     var req = REQ[st.tier];
     $('sPhotosP').textContent = t('photosNeed', { n: req.length, tier: t(st.tier === 'lab' ? 'tierLab' : 'tierPhoto') });
     // required shots first, then the optional ones

@@ -10,7 +10,7 @@
   'use strict';
   var S = w.SLV, t = S.t, esc = S.esc, money = S.money;
   var $ = function (id) { return d.getElementById(id); };
-  var data = null, tab = /#support$/.test(w.location.hash) ? 'support' : /#orders$/.test(w.location.hash) ? 'orders' : 'review', timer = null;
+  var data = null, tab = /#support$/.test(w.location.hash) ? 'support' : /#orders$/.test(w.location.hash) ? 'orders' : /#legit$/.test(w.location.hash) ? 'legit' : 'review', timer = null;
   var drafts = {};   // answers being written survive the minute-by-minute refresh
 
   function load() {
@@ -44,21 +44,21 @@
   // The seller's photos, numbered as the Lab Check numbers them, with a dot
   // where it noted something; each opens the photo viewer.
   function photosHtml(l) {
-    var list = l.photos || [], VW = w.SLVViewer, mk = VW ? VW.marks(l.check, list.length) : [];
+    var list = l.photos || [], VW = w.SLVViewer, mk = VW ? VW.marks(l.check, list.length) : [], key = (l.isLegit ? 'g' : '') + l.id;
     return '<div class="v-rp-head"><b>' + esc(t('vwPhotos')) + '<small>' + S.num(list.length) + '</small></b>' +
-        (list.length ? '<button type="button" class="v-btn ghost xs" data-view="' + l.id + ':1">' + S.ico('search') + esc(t('vwViewAll')) + '</button>' : '') + '</div>' +
+        (list.length ? '<button type="button" class="v-btn ghost xs" data-view="' + key + ':1">' + S.ico('search') + esc(t('vwViewAll')) + '</button>' : '') + '</div>' +
       '<div class="v-review-photos">' + list.map(function (p, i) {
         var label = p.kind === 'extra' ? (p.note || t('kind_extra')) : t('kind_' + p.kind);
-        return '<button type="button" class="v-rp-tile' + (p.kind === 'extra' ? ' extra' : '') + '" data-view="' + l.id + ':' + (i + 1) + '" aria-label="' + esc(t('vwCount', { n: i + 1, total: list.length }) + ': ' + label) + '">' +
+        return '<button type="button" class="v-rp-tile' + (p.kind === 'extra' ? ' extra' : '') + '" data-view="' + key + ':' + (i + 1) + '" aria-label="' + esc(t('vwCount', { n: i + 1, total: list.length }) + ': ' + label) + '">' +
           '<img src="' + esc(p.url) + '&amp;s=t" alt="" loading="lazy"/><b>' + (i + 1) + '</b><span>' + esc(label) + '</span>' +
           (mk[i] ? '<em class="v-dot ' + mk[i] + '"></em>' : '') + '<i>' + S.ico('search') + '</i></button>';
       }).join('') + '</div>';
   }
   // "Photo 4" in the Lab Check's text opens that photo
-  function refs(html, l) { return w.SLVViewer ? w.SLVViewer.linkRefs(html, l.id, (l.photos || []).length) : html; }
+  function refs(html, l) { return w.SLVViewer ? w.SLVViewer.linkRefs(html, (l.isLegit ? 'g' : '') + l.id, (l.photos || []).length) : html; }
   function openViewer(key) {
-    var id = +key.split(':')[0], n = +key.split(':')[1];
-    var l = data && data.review.filter(function (x) { return x.id === id; })[0];
+    var legit = key.charAt(0) === 'g', id = +key.split(':')[0].replace(/^g/, ''), n = +key.split(':')[1];
+    var l = data && (legit ? data.legit || [] : data.review).filter(function (x) { return x.id === id; })[0];
     if (!l || !w.SLVViewer) return;
     w.SLVViewer.open({ photos: l.photos, index: n - 1, title: l.title, id: l.id, check: l.check });
   }
@@ -104,10 +104,11 @@
     var st = (data.stats && data.stats.labCheck) || {}, c = l.check, q = l.request;
     var head = '<div class="v-lc-head">' + S.ico('sparkle') + '<b>' + esc(t('lcTitle')) + '</b><small>' + esc(t('lcAi')) + '</small></div>';
     if (!st.on) return '<section class="v-lc">' + head + '<p class="v-note">' + esc(t('lcOff')) + '</p></section>';
-    if (checking[l.id] || (c && c.status === 'running')) {
+    if (checking[(l.isLegit ? 'g' : '') + l.id] || (c && c.status === 'running')) {
       return '<section class="v-lc">' + head + '<div class="v-lc-run"><span class="v-lc-spin"></span>' + esc(t('lcRunning')) + '</div></section>';
     }
-    var again = '<button type="button" class="v-btn ghost xs" data-lc="again" data-id="' + l.id + '">' + S.ico('refresh') + esc(t('lcAgain')) + '</button>';
+    var lg = l.isLegit ? ' data-legit="1"' : '';
+    var again = '<button type="button" class="v-btn ghost xs" data-lc="again"' + lg + ' data-id="' + l.id + '">' + S.ico('refresh') + esc(t('lcAgain')) + '</button>';
     if (!c) return '<section class="v-lc">' + head + '<p class="v-note">' + esc(t('lcNone')) + '</p><div class="v-btn-row">' + again + '</div></section>';
     if (c.status === 'error' || !c.result) {
       return '<section class="v-lc">' + head + '<div class="v-state bad">' + S.ico('alert') + '<div>' + esc(t('lcError', { reason: c.error || '' })) + '</div></div><div class="v-btn-row">' + again + '</div></section>';
@@ -142,7 +143,7 @@
       }).join('') + '</ol>' +
         (q && q.status === 'open' ? '<p class="v-note">' + esc(t('lcAsked', { when: S.ago(q.at) })) + '</p>'
           : q && q.status === 'answered' ? '<p class="v-note">' + esc(t('lcAnswered', { when: S.ago(q.answeredAt) })) + '</p>'
-          : '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn gold xs" data-lc="ask" data-id="' + l.id + '">' + esc(t('lcAsk')) + '</button></div>' +
+          : '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn gold xs" data-lc="ask"' + lg + ' data-id="' + l.id + '">' + esc(t('lcAsk')) + '</button></div>' +
             (old && old.status === 'open' ? '<p class="v-note">' + esc(t('lcAskedOld', { when: S.ago(old.at) })) + '</p>' : '') +
             (suspicious ? '<p class="v-note">' + esc(t('lcAskHint')) + '</p>' : '')) +
         '</div>';
@@ -162,7 +163,70 @@
       var ids = l.photos.map(function (p) { return p.id; }).join(','), seen = (c.photoIds || []).join(',');
       return ids !== seen || !!(q && q.status === 'answered' && q.answeredAt > c.at);
     })[0];
-    if (next) runCheck(next.id, false);
+    if (next) { runCheck(next.id, false); return; }
+    var lg = (data.legit || []).filter(function (g) {
+      return !tried['g' + g.id] && g.status === 'checking' && !(g.check && g.check.status === 'running');
+    })[0];
+    if (lg) runLegit(lg.id, false);
+  }
+  function runLegit(id, force) {
+    checking['g' + id] = true; tried['g' + id] = true;
+    if (tab === 'legit') { keepDrafts(); render(); }
+    S.market('legit/run', { body: { id: id, force: !!force } }).then(function (res) {
+      delete checking['g' + id];
+      if (!res.ok) S.toast(S.errText(res), 'bad');
+      if (res.ok && res.data.outcome === 'running') setTimeout(function () { load(); }, 8000);
+      else load();
+    });
+  }
+
+  /* ── Legit Checks ─────────────────────────────────────────────────── */
+  var LG_TONE = { awaiting_payment: 'warn', checking: 'gold', needs_info: 'warn', review: 'gold', done: '' };
+  var LV_TONE = { authentic: 'ok', not_authentic: 'bad', inconclusive: 'warn' };
+  function legitHtml(g) {
+    g.isLegit = true;
+    var c = g.customer || {}, open = ['checking', 'needs_info', 'review'].indexOf(g.status) !== -1;
+    var chips = (g.status === 'done' ? '<span class="v-chip ' + (LV_TONE[g.verdict] || '') + '">' + esc(t('lv_' + g.verdict)) + '</span>'
+      : '<span class="v-chip ' + (LG_TONE[g.status] || '') + '">' + esc(t('ls_' + g.status)) + '</span>') +
+      '<span class="v-chip ' + (g.mode === 'sell' ? 'gold' : '') + '">' + esc(t(g.mode === 'sell' ? 'lgModeSell' : 'lgModeBuy')) + '</span>' +
+      '<span class="v-note">' + esc(g.ref + ' · ' + S.ago(g.createdAt)) + '</span>';
+    var link = g.link ? '<a href="' + esc(g.link) + '" target="_blank" rel="noopener noreferrer nofollow">' + esc(g.platform || g.link) + ' ↗</a>' : esc(g.platform || '');
+    var act = '';
+    if (g.status === 'awaiting_payment') {
+      act = '<div class="v-state gold" style="margin-top:0.9rem;">' + S.ico('euro') + '<div>' + esc(t('lgLabManual', { amount: money(g.fee, true), email: c.email || '' })) + '</div></div>' +
+        '<div class="v-btn-row"><button type="button" class="v-btn ok sm" data-lgpaid="' + g.id + '">' + esc(t('markPaid')) + '</button></div>';
+    } else if (open) {
+      act = '<div class="v-field" style="margin-top:0.9rem;"><label class="v-label" for="lgnote' + g.id + '"><span>' + esc(t('lgNoteCustomer')) + '</span><small>' + esc(t('lgNoteHint')) + '</small></label>' +
+          '<textarea class="v-textarea" id="lgnote' + g.id + '" rows="2" maxlength="800"></textarea></div>' +
+        '<div class="v-btn-row">' +
+          '<button type="button" class="v-btn ok sm" data-lgd="authentic" data-id="' + g.id + '">' + esc(t('lgDecAuth')) + '</button>' +
+          '<button type="button" class="v-btn danger sm" data-lgd="not_authentic" data-id="' + g.id + '">' + esc(t('lgDecNot')) + '</button>' +
+          '<button type="button" class="v-btn ghost sm" data-lgd="inconclusive" data-id="' + g.id + '">' + esc(t('lgDecUnsure')) + '</button>' +
+        '</div>';
+    } else if (g.status === 'done') {
+      act = '<div class="v-lg-result ' + (LV_TONE[g.verdict] || '') + '" style="margin-top:0.9rem;"><b>' + esc(t('lv_' + g.verdict)) + '</b>' +
+        (g.resultNote ? '<p>' + esc(g.resultNote) + '</p>' : '') + (g.refunded ? '<small>' + esc(t('lgRefunded')) + '</small>' : '') + '</div>' +
+        (g.cert ? '<p class="v-note" style="margin-top:0.6rem;">' + esc(t('lgCertT')) + ': <a href="/verified.html?c=' + encodeURIComponent(g.cert) + '" target="_blank" rel="noopener">' + esc(g.cert) + '</a>' +
+          (g.certRevoked ? ' · ' + esc(t('lgRevokedShort')) : !g.certPublic ? ' · ' + esc(t('lgHiddenShort')) : '') + '</p>' +
+          '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn ' + (g.certRevoked ? 'ghost' : 'danger') + ' xs" data-lgrevoke="' + (g.certRevoked ? 0 : 1) + '" data-id="' + g.id + '">' +
+            esc(t(g.certRevoked ? 'lgRestore' : 'lgRevoke')) + '</button></div>' : '');
+    }
+    return '<article class="v-review" id="lg-' + g.id + '">' +
+      '<div>' + photosHtml(g) + '</div>' +
+      '<div>' +
+        '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">' + chips + '</div>' +
+        '<h2 class="v-h3" style="margin-top:0.7rem;font-size:1.45rem;">' + esc(g.title) + '</h2>' +
+        '<dl class="v-kv">' +
+          kv(t('fSize'), 'EU ' + esc(g.size)) +
+          kv(t('lgListing'), link) +
+          kv(t('lgAskedShort'), g.askedPrice ? money(g.askedPrice, true) : '') +
+          kv(t('lgCustomer'), esc(c.name || '') + (c.email ? ' · <a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>' : '')) +
+          kv(t('lgPaid'), g.paidAt ? esc(S.fmtShort(g.paidAt)) + (g.payMode ? ' · ' + esc(g.payMode) : '') : '') +
+        '</dl>' +
+        (g.note ? '<p class="v-desc" style="font-size:0.82rem;">“' + esc(g.note) + '”</p>' : '') +
+        (g.status !== 'awaiting_payment' ? labCheckHtml(g) : '') +
+        act +
+      '</div></article>';
   }
   function runCheck(id, force) {
     checking[id] = true; tried[id] = true;
@@ -263,7 +327,7 @@
     '</article>';
   }
   function keepDrafts() {
-    d.querySelectorAll('[id^="tans"], [id^="lnote"], [id^="note"]').forEach(function (el) { if (el.value) drafts[el.id] = el.value; else delete drafts[el.id]; });
+    d.querySelectorAll('[id^="tans"], [id^="lnote"], [id^="note"], [id^="lgnote"]').forEach(function (el) { if (el.value) drafts[el.id] = el.value; else delete drafts[el.id]; });
   }
   function restoreDrafts() {
     Object.keys(drafts).forEach(function (id) { var el = $(id); if (el) el.value = drafts[id]; });
@@ -302,6 +366,7 @@
     var tickets = data.tickets || [];
     var needs = data.orders.filter(function (o) { return ['awaiting_payment', 'to_lab', 'in_lab', 'verified', 'disputed', 'delivered'].indexOf(o.status) !== -1; }).length;
     var openTickets = tickets.filter(function (k) { return k.status === 'open'; }).length;
+    var legits = data.legit || [], legitOpen = legits.filter(function (g) { return g.status !== 'done'; }).length;
     var tb = function (k, label, n) {
       return '<button type="button" role="tab" data-tab="' + k + '" class="' + (tab === k ? 'on' : '') + '" aria-selected="' + (tab === k ? 'true' : 'false') + '">' + esc(label) + (n ? '<span class="n">' + n + '</span>' : '') + '</button>';
     };
@@ -317,10 +382,12 @@
         stat(t('statRevenue'), money(s.revenue || 0)) + stat(t('statTickets'), S.num(openTickets)) +
       '</div>' +
       storageHtml(s) +
-      '<div class="v-tabs" role="tablist">' + tb('review', t('tabReview'), data.review.length) + tb('orders', t('tabOrders'), needs) + tb('support', t('tabSupport'), openTickets) + '</div>' +
+      '<div class="v-tabs" role="tablist">' + tb('review', t('tabReview'), data.review.length) + tb('legit', t('tabLegit'), legitOpen) + tb('orders', t('tabOrders'), needs) + tb('support', t('tabSupport'), openTickets) + '</div>' +
       (tab === 'review' ? labStateHtml(s) : '') +
       '<div class="v-rows">' + (tab === 'review'
         ? (data.review.length ? data.review.map(reviewHtml).join('') : '<div class="v-empty">' + S.ico('check') + '<h3>' + esc(t('queueEmptyT')) + '</h3><p>' + esc(t('queueEmpty')) + '</p></div>')
+        : tab === 'legit'
+        ? (legits.length ? legits.map(legitHtml).join('') : '<div class="v-empty">' + S.ico('shield') + '<h3>' + esc(t('lgLabEmptyT')) + '</h3><p>' + esc(t('lgLabEmpty')) + '</p></div>')
         : tab === 'orders'
         ? (data.orders.length ? data.orders.map(orderHtml).join('') : '<div class="v-empty">' + S.ico('box') + '<h3>' + esc(t('ordersEmptyT')) + '</h3><p>' + esc(t('ordersEmpty')) + '</p></div>')
         : (tickets.length ? tickets.map(ticketHtml).join('') : '<div class="v-empty">' + S.ico('chat') + '<h3>' + esc(t('ticketsEmptyT')) + '</h3><p>' + esc(t('ticketsEmpty')) + '</p></div>')) +
@@ -391,9 +458,40 @@
     var tk = el.getAttribute('data-ticket');
     if (tk) { answer(el, tk, id); return; }
     var lc = el.getAttribute('data-lc');
+    if (lc && el.getAttribute('data-legit')) {
+      if (lc === 'again') { runLegit(id, true); return; }
+      S.confirm(t('lcAskT'), t('lgAskQ'), t('lcAsk'), false).then(function (y) { if (y) post(el, 'legit/ask', { id: id }, 'lcAskedToast'); });
+      return;
+    }
     if (lc === 'again') { runCheck(id, true); return; }
     if (lc === 'ask') {
       S.confirm(t('lcAskT'), t('lcAskQ'), t('lcAsk'), false).then(function (y) { if (y) post(el, 'check/ask', { id: id }, 'lcAskedToast'); });
+      return;
+    }
+    if (el.getAttribute('data-lgpaid')) { post(el, 'legit/paid', { id: +el.getAttribute('data-lgpaid') }, 'lgPaidMarked'); return; }
+    if (el.getAttribute('data-lgrevoke')) {
+      var rk = el.getAttribute('data-lgrevoke') === '1';
+      var doRev = function () { post(el, 'legit/cert', { id: id, revoke: rk }, rk ? 'lgRevokedToast' : 'lgRestoredToast'); };
+      if (rk) S.confirm(t('lgRevokeT'), t('lgRevokeQ'), t('lgRevoke'), true).then(function (y) { if (y) doRev(); }); else doRev();
+      return;
+    }
+    var lgd = el.getAttribute('data-lgd');
+    if (lgd) {
+      var ln = $('lgnote' + id), lnote = (ln.value || '').trim();
+      if (lgd !== 'authentic' && !lnote) { ln.classList.add('err'); ln.focus(); S.toast(t('e_note_needed'), 'bad'); return; }
+      var lgx = (data.legit || []).filter(function (x) { return x.id === id; })[0] || {};
+      var q = lgd === 'authentic' ? (lgx.mode === 'sell' ? 'lgDecAuthQSell' : 'lgDecAuthQ') : lgd === 'not_authentic' ? 'lgDecNotQ' : 'lgDecUnsureQ';
+      S.confirm(t('lv_' + lgd), t(q), t('confirm'), lgd !== 'authentic').then(function (y) {
+        if (!y) return;
+        S.busy(el, true);
+        S.market('legit/decide', { body: { id: id, verdict: lgd, note: lnote } }).then(function (res) {
+          S.busy(el, false);
+          if (!res.ok) { S.toast(S.errText(res), 'bad'); return; }
+          delete drafts['lgnote' + id];
+          S.toast(t(res.data.refund === 'manual' ? 'lgRefundManualToast' : 'lgDecidedToast'), 'ok');
+          load();
+        });
+      });
       return;
     }
     var rv = el.getAttribute('data-review');
@@ -423,7 +521,7 @@
   $('labRefresh').addEventListener('click', function () { load(); });
   w.addEventListener('hashchange', function () {
     var h = (w.location.hash || '').slice(1);
-    if ((h === 'support' || h === 'orders' || h === 'review') && h !== tab && data) { keepDrafts(); tab = h; render(); }
+    if ((h === 'support' || h === 'orders' || h === 'review' || h === 'legit') && h !== tab && data) { keepDrafts(); tab = h; render(); }
   });
   d.addEventListener('visibilitychange', function () { if (!d.hidden && data) load(); });
 

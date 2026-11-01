@@ -1,0 +1,25 @@
+{
+  "name": "ShoeLab — sneaker care, Vault & Legit Check",
+  "short_name": "ShoeLab",
+  "description": "Sneaker care in Bremen, the ShoeLab Vault marketplace, and the Legit Check for pairs from any app.",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "share_target": {
+    "action": "/legit.html",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  },
+  "shortcuts": [
+    { "name": "Legit Check", "short_name": "Legit Check", "url": "/legit.html", "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "ShoeLab Vault", "short_name": "Vault", "url": "/vault.html", "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Book a cleaning", "short_name": "Book", "url": "/booking.html", "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

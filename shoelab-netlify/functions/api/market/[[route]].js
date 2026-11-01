@@ -6,13 +6,22 @@
 //        order/feedback | payouts/setup | payouts/dashboard | support/chat
 //        support/ticket | support/answer | review | lab | lab/photos-to-r2
 //        check | check/ask | listing/answer   (the Lab Check, see _shared/labcheck.js)
+//        listing/feature                      (featured listings)
+//   GET  legit/cert?c=
+//   POST legit | legit/pay | legit/run | legit/answer | legit/cert
+//        legit/decide | legit/paid | legit/ask (the Legit Check, see _shared/legit.js)
 import { json, preflight, clean, currentUser, stripeApi, sessionSecret, mailTrouble } from '../../_shared/util.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
   siteUrl, isSpecialist, onSpecialistList, shortName, maskName, fees, ensureSchema, logEvent, userById,
   listingTitle, tell, tellStudio, createOrder, markPaid, shipTo, housekeeping, settleAuction,
   orderDelivered, releasePayout, releaseWaiting, refundOrder, connectOn, sellerRow, refreshSeller, LAB, approveListing,
+  featureListing,
 } from '../../_shared/vault.js';
+import {
+  OPEN_LIMIT, LEGIT_VERDICTS, cleanLink, platformOf, normCert, loadLegit, legitView, legitTitle,
+  startLegitPayment, legitPaidAtStripe, markLegitPaid, decideLegit, certView, certLive,
+} from '../../_shared/legit.js';
 import { supportChat, supportTicket, supportAnswer, ticketsForQueue } from '../../_shared/support.js';
 import { runCheck, mayRun, checkView, requestView, latestCheck, latestRequest, askSeller, checkSettings } from '../../_shared/labcheck.js';
 
@@ -78,6 +87,8 @@ function card(l) {
     // cards load the small version; the item page asks for the full photo
     photo: l.photo_id ? '/api/market/photo?id=' + l.photo_id + '&s=t' : null,
     watchers: l.watchers || 0, createdAt: l.created_at, liveAt: l.live_at, updatedAt: l.updated_at,
+    featured: !!(l.featured_until && l.status === 'live' && l.featured_until > nowIso()),
+    featuredUntil: l.featured_until && l.featured_until > nowIso() ? l.featured_until : null,
   };
 }
 async function loadListing(env, id) {
@@ -103,6 +114,7 @@ async function getConfig({ request, env }) {
     minPrice: VAULT.minPrice, maxPrice: VAULT.maxPrice, durations: VAULT.durations,
     conditions: CONDITIONS, tiers: TIERS, photoKinds: PHOTO_KINDS, required: REQUIRED_KINDS,
     maxPhotos: VAULT.maxPhotos, maxPhotoBytes: VAULT.maxPhotoBytes, onlinePayment: !!env.STRIPE_SECRET_KEY,
+    legit: VAULT.legit, addons: VAULT.addons, feature: VAULT.feature,
     connect: connectOn(env), support: !!env.ANTHROPIC_API_KEY,
     me: me ? {
       id: me.id, name: me.name, email: me.email, specialist: isSpecialist(env, me), verified: !!me.verified,
@@ -135,14 +147,17 @@ async function getListings({ request, env }) {
   const min = cents(q.get('min')); if (q.get('min') && min > 0) { where.push('l.price >= ?'); args.push(min); }
   const max = cents(q.get('max')); if (q.get('max') && max > 0) { where.push('l.price <= ?'); args.push(max); }
 
+  // "Featured first" is the default: paid features lead, marked as such, then the newest.
+  // nowIso() is our own timestamp, safe to write into the SQL.
   const SORTS = {
+    featured: "CASE WHEN l.featured_until > '" + nowIso() + "' THEN 0 ELSE 1 END, COALESCE(l.live_at, l.created_at) DESC",
     ending: "CASE WHEN l.ends_at IS NULL THEN 1 ELSE 0 END, l.ends_at ASC, l.id DESC",
     new: 'COALESCE(l.live_at, l.created_at) DESC',
     price_asc: 'l.price ASC', price_desc: 'l.price DESC',
     popular: 'watchers DESC, l.bids DESC, l.id DESC',
     sold: 'l.updated_at DESC',
   };
-  const sort = SORTS[q.get('sort')] ? q.get('sort') : (view === 'sold' ? 'sold' : 'new');
+  const sort = SORTS[q.get('sort')] ? q.get('sort') : (view === 'sold' ? 'sold' : 'featured');
   const per = Math.min(48, Math.max(6, intParam(q.get('per')) || 24));
   const page = Math.max(1, intParam(q.get('page')) || 1);
 
@@ -280,13 +295,21 @@ async function storePhoto(env, listingId, idx, p) {
 async function getPhoto({ request, env }) {
   const q = new URL(request.url).searchParams;
   const id = intParam(q.get('id'));
-  const p = id && await env.DB.prepare('SELECT p.mime, p.data, p.thumb, p.kind, l.seller_id FROM mk_photos p LEFT JOIN mk_listings l ON l.id = p.listing_id WHERE p.id = ?').bind(id).first();
+  const p = id && await env.DB.prepare(
+    'SELECT p.mime, p.data, p.thumb, p.kind, p.legit_id, l.seller_id FROM mk_photos p LEFT JOIN mk_listings l ON l.id = p.listing_id WHERE p.id = ?'
+  ).bind(id).first();
   if (!p) return new Response('Not found', { status: 404 });
-  // a photo sent on request (it may be a receipt) is shown only to the seller and to specialists
-  const privy = p.kind === 'extra';
+  // a photo sent on request (it may be a receipt) is shown only to its owner and to
+  // specialists; so is every photo of a Legit Check, unless it is on a live certificate
+  let privy = p.kind === 'extra', owner = p.seller_id;
+  if (p.legit_id) {
+    const g = await loadLegit(env, p.legit_id);
+    owner = g && g.user_id;
+    if (!g || !certLive(g)) privy = true;
+  }
   if (privy) {
     const u = await currentUser(request, env);
-    if (!u || (u.id !== p.seller_id && !isSpecialist(env, u))) return new Response('Not found', { status: 404 });
+    if (!u || (u.id !== owner && !isSpecialist(env, u))) return new Response('Not found', { status: 404 });
   }
   const small = q.get('s') === 't' && p.thumb;
   const src = small ? p.thumb : p.data;
@@ -306,11 +329,12 @@ async function getPhoto({ request, env }) {
 async function photosToR2({ request, env }) {
   await needSpecialist(request, env);
   if (!env.VAULT_PHOTOS) fail(409, 'Bind an R2 bucket as VAULT_PHOTOS first', 'no_r2');
-  const rows = await env.DB.prepare("SELECT id, listing_id, idx, mime, data, thumb FROM mk_photos WHERE data NOT LIKE 'r2:%' LIMIT 15").all();
+  const rows = await env.DB.prepare("SELECT id, listing_id, legit_id, idx, mime, data, thumb FROM mk_photos WHERE data NOT LIKE 'r2:%' LIMIT 15").all();
   let moved = 0;
   for (const p of rows.results || []) {
-    const data = await putR2(env, p.listing_id, String(p.idx), p.mime, p.data);
-    const thumb = p.thumb && String(p.thumb).slice(0, 3) !== 'r2:' ? await putR2(env, p.listing_id, p.idx + 't', 'image/jpeg', p.thumb) : p.thumb;
+    const folder = p.legit_id ? 'legit-' + p.legit_id : p.listing_id;
+    const data = await putR2(env, folder, String(p.idx), p.mime, p.data);
+    const thumb = p.thumb && String(p.thumb).slice(0, 3) !== 'r2:' ? await putR2(env, folder, p.idx + 't', 'image/jpeg', p.thumb) : p.thumb;
     const r = await env.DB.prepare("UPDATE mk_photos SET data = ?, thumb = ? WHERE id = ? AND data NOT LIKE 'r2:%'").bind(data, thumb, p.id).run();
     if (r.meta.changes) moved++;
   }
@@ -647,6 +671,7 @@ async function orderView(env, o, me, spec) {
     size: l && l.size, photo: l && l.photo_id ? '/api/market/photo?id=' + l.photo_id + '&s=t' : null,
     tier: o.tier, source: o.source, status: o.status, payMode: o.pay_mode,
     itemPrice: o.item_price, authFee: o.auth_fee, shipFee: o.ship_fee, total: o.total,
+    addon: o.addon || null, addonFee: o.addon_fee || 0,
     trackingIn: o.tracking_in, trackingOut: o.tracking_out,
     createdAt: o.created_at, updatedAt: o.updated_at,
     // payouts are between the seller and ShoeLab; Stripe references and
@@ -691,9 +716,16 @@ async function payOrder({ request, env }) {
     city: clean(a.city, 60), postal: clean(a.postal, 12), country: clean(a.country || 'DE', 2).toUpperCase(),
   };
   if (!addr.name || !addr.line1 || !addr.city || !addr.postal) fail(400, 'Add your full delivery address', 'address');
+  // "Fresh for delivery": a Lab Verified pair passes through the studio, so the
+  // buyer can have it cleaned there before it ships (ShoeLab's own service)
+  const addon = o.tier === 'lab' && VAULT.addons[b.addon] ? b.addon : null;
+  if (addon && !b.addonConsent) fail(400, 'Please confirm that the cleaning may start before the withdrawal period ends', 'addon_consent');
+  const addonFee = addon ? VAULT.addons[addon] : 0;
+  o.total = o.item_price + o.auth_fee + o.ship_fee + addonFee;
+  o.addon = addon; o.addon_fee = addonFee;
   await env.DB.prepare(
-    'UPDATE mk_orders SET ship_name = ?, ship_line1 = ?, ship_line2 = ?, ship_city = ?, ship_postal = ?, ship_country = ?, updated_at = ? WHERE id = ?'
-  ).bind(addr.name, addr.line1, addr.line2, addr.city, addr.postal, addr.country, nowIso(), o.id).run();
+    'UPDATE mk_orders SET ship_name = ?, ship_line1 = ?, ship_line2 = ?, ship_city = ?, ship_postal = ?, ship_country = ?, addon = ?, addon_fee = ?, total = ?, updated_at = ? WHERE id = ?'
+  ).bind(addr.name, addr.line1, addr.line2, addr.city, addr.postal, addr.country, addon, addonFee, o.total, nowIso(), o.id).run();
 
   const l = await loadListing(env, o.listing_id);
   if (env.STRIPE_SECRET_KEY) {
@@ -702,10 +734,16 @@ async function payOrder({ request, env }) {
       mode: 'payment',
       'line_items[0][quantity]': 1,
       'line_items[0][price_data][currency]': 'eur',
-      'line_items[0][price_data][unit_amount]': o.total,
+      'line_items[0][price_data][unit_amount]': o.total - addonFee,
       'line_items[0][price_data][product_data][name]': 'ShoeLab Vault: ' + listingTitle(l) + ' (EU ' + l.size + ')',
       'line_items[0][price_data][product_data][description]':
         'Item ' + euro(o.item_price) + ' + authentication ' + euro(o.auth_fee) + ' + shipping ' + euro(o.ship_fee),
+      ...(addon ? {
+        'line_items[1][quantity]': 1,
+        'line_items[1][price_data][currency]': 'eur',
+        'line_items[1][price_data][unit_amount]': addonFee,
+        'line_items[1][price_data][product_data][name]': 'ShoeLab ' + (addon === 'revival' ? 'Revival' : 'Refresh') + ': cleaned in our Bremen studio before it ships',
+      } : {}),
       success_url: site + '/vault-me.html?paid=' + o.id + '#order-' + o.id,
       cancel_url: site + '/vault-me.html#order-' + o.id,
       customer_email: me.email,
@@ -746,7 +784,8 @@ async function shipOrder({ request, env }) {
   if (lab) {
     await tellStudio(env, 'sIncoming', {
       order: o.id, url: LAB,
-      rows: [['item', listingTitle(l) + ' · EU ' + l.size], ['tracking', tracking], ['seller', me.name + ' <' + me.email + '>']],
+      rows: [['item', listingTitle(l) + ' · EU ' + l.size], ['tracking', tracking], ['seller', me.name + ' <' + me.email + '>'],
+        o.addon ? ['cleaning', { k: 'addon_' + o.addon }] : null].filter(Boolean),
     }, me.email);
   } else {
     await tell(env, await userById(env, o.buyer_id), 'shippedToBuyer', {
@@ -873,6 +912,8 @@ async function getMe({ request, env }) {
       orders: ov.filter((o) => o.role === 'buyer'),
     },
     watching: (watching.results || []).map(card),
+    legit: await Promise.all(((await env.DB.prepare('SELECT * FROM mk_legit WHERE user_id = ? ORDER BY id DESC LIMIT 30').bind(me.id).all()).results || [])
+      .map((g) => legitView(env, g, false))),
     onlinePayment: !!env.STRIPE_SECRET_KEY,
   }, 200, { 'Cache-Control': 'no-store' });
 }
@@ -939,7 +980,15 @@ async function getQueue({ request, env }) {
   const trouble = await mailTrouble(env);
   stats.mail_failures = trouble.failing;
   stats.mail_failure_last = trouble.last;
-  return json({ review: items, orders, stats, tickets: await ticketsForQueue(env) }, 200, { 'Cache-Control': 'no-store' });
+  const week = new Date(Date.now() - 7 * 86400000).toISOString();
+  const lg = await env.DB.prepare(
+    `SELECT * FROM mk_legit WHERE status IN ('checking','needs_info','review') OR (status = 'awaiting_payment' AND pay_mode = 'manual')
+       OR (status = 'done' AND decided_at > ?) ORDER BY CASE status WHEN 'review' THEN 0 WHEN 'checking' THEN 1 WHEN 'needs_info' THEN 2
+       WHEN 'awaiting_payment' THEN 3 ELSE 4 END, id ASC LIMIT 60`
+  ).bind(week).all();
+  const legit = [];
+  for (const g of lg.results || []) legit.push(await legitView(env, g, true));
+  return json({ review: items, orders, stats, tickets: await ticketsForQueue(env), legit }, 200, { 'Cache-Control': 'no-store' });
 }
 
 async function review({ request, env }) {
@@ -1155,6 +1204,14 @@ async function answerRequest({ request, env }) {
   if (!l || l.seller_id !== me.id) fail(404, 'Listing not found', 'not_found');
   const q = await env.DB.prepare("SELECT * FROM mk_requests WHERE listing_id = ? AND status = 'open' ORDER BY id DESC LIMIT 1").bind(l.id).first();
   if (!q || l.status !== 'review') fail(409, 'There is nothing to answer for this listing', 'no_request');
+  const n = await saveAnswers(env, l, q, b);
+  await logEvent(env, { listingId: l.id, kind: 'info_sent', note: n + ' answer(s)' });
+  return json({ ok: true });
+}
+// One answer per item: a photo (stored as a private 'extra' photo), a short
+// text, or "I can't provide this". subj is a listing, or a Legit Check (legit).
+async function saveAnswers(env, subj, q, b) {
+  const legit = !!subj.legit;
   // the specialist sent a newer list while this page was open
   if (b.request && +b.request !== q.id) fail(409, 'The request has changed: reload the page', 'request_changed');
   const items = JSON.parse(q.items || '[]');
@@ -1177,17 +1234,210 @@ async function answerRequest({ request, env }) {
     answers.push({ i, photo: true });
   });
   const at = nowIso();
-  const top = await env.DB.prepare('SELECT COALESCE(MAX(idx), -1) AS n FROM mk_photos WHERE listing_id = ?').bind(l.id).first();
+  const top = await env.DB.prepare('SELECT COALESCE(MAX(idx), -1) AS n FROM mk_photos WHERE ' + (legit ? 'legit_id' : 'listing_id') + ' = ?').bind(subj.id).first();
   for (let k = 0; k < photos.length; k++) {
     const p = photos[k], idx = top.n + 1 + k;
-    const stored = await storePhoto(env, l.id, idx, p);
-    await env.DB.prepare('INSERT INTO mk_photos (listing_id, idx, kind, note, mime, data, thumb, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-      .bind(l.id, idx, 'extra', clean(p.note, 120), p.mime, stored.data, stored.thumb, at).run();
+    const stored = await storePhoto(env, legit ? 'legit-' + subj.id : subj.id, idx, p);
+    await env.DB.prepare('INSERT INTO mk_photos (listing_id, legit_id, idx, kind, note, mime, data, thumb, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(legit ? 0 : subj.id, legit ? subj.id : null, idx, 'extra', clean(p.note, 120), p.mime, stored.data, stored.thumb, at).run();
   }
   await env.DB.prepare("UPDATE mk_requests SET answers = ?, status = 'answered', answered_at = ? WHERE id = ? AND status = 'open'")
     .bind(JSON.stringify(answers), at, q.id).run();
-  await logEvent(env, { listingId: l.id, kind: 'info_sent', note: answers.length + ' answer(s)' });
+  return answers.length;
+}
+
+// ── the Legit Check (see _shared/legit.js) ────────────────────────────────
+// Photos arrive like a listing's: data URLs compressed on the phone, each
+// labelled with what it shows. An owner needs the full photo set; a buyer
+// may only have the other seller's pictures, so three will do.
+async function createLegit({ request, env }) {
+  const me = await needVerified(request, env);
+  const b = await body(request);
+  const mode = b.mode === 'sell' ? 'sell' : b.mode === 'buy' ? 'buy' : null;
+  if (!mode) fail(400, 'Choose whether you are buying or selling', 'legit_mode');
+  const brand = clean(b.brand || '', 40), model = clean(b.model || '', 80), size = clean(String(b.size || ''), 8);
+  if (!brand || !model || !size) fail(400, 'Add the brand, model and size', 'legit_fields');
+  const link = b.link ? cleanLink(b.link) : null;
+  if (b.link && !link) fail(400, 'That link does not look right', 'legit_link');
+  let asked = null;
+  if (b.askedPrice != null && b.askedPrice !== '') {
+    asked = cents(b.askedPrice);
+    if (!(asked > 0 && asked <= VAULT.maxPrice)) fail(400, 'That price does not look right', 'legit_price');
+  }
+  if (VAULT.legit && !b.consent) fail(400, 'Please confirm that the check may start right away', 'legit_consent');
+  const open = await env.DB.prepare("SELECT COUNT(*) AS n FROM mk_legit WHERE user_id = ? AND status = 'awaiting_payment'").bind(me.id).first();
+  if ((open.n || 0) >= OPEN_LIMIT) fail(429, 'Pay or cancel your open Legit Checks first', 'legit_open');
+  const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, VAULT.maxPhotos + 1);
+  if (photos.length > VAULT.maxPhotos) fail(400, 'Too many photos', 'too_many_photos', { max: VAULT.maxPhotos });
+  const parsed = photos.map((p) => {
+    const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(p && p.data || ''));
+    if (!m) fail(400, 'One of the photos could not be read', 'photo_bad');
+    if (m[2].length * 0.75 > VAULT.maxPhotoBytes) fail(400, 'A photo is too large — keep each under 750 KB', 'photo_big');
+    const t = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String(p.thumb || ''));
+    return { kind: PHOTO_KINDS.indexOf(p.kind) !== -1 ? p.kind : 'other', mime: m[1], data: m[2], thumb: t && t[1].length * 0.75 <= VAULT.maxThumbBytes ? t[1] : null };
+  });
+  if (mode === 'sell') {
+    const have = parsed.map((p) => p.kind);
+    const missing = REQUIRED_KINDS.photo.filter((k) => have.indexOf(k) === -1);
+    if (missing.length) fail(400, 'Some required photos are missing', 'photos_missing', { missing });
+  } else if (parsed.length < 3) fail(400, 'Add at least three photos', 'legit_photos');
+  const at = nowIso();
+  const res = await env.DB.prepare(
+    `INSERT INTO mk_legit (user_id, mode, brand, model, size, link, platform, asked_price, note, status, fee, cert_public, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'awaiting_payment', ?, ?, ?, ?)`
+  ).bind(me.id, mode, brand, model, size, link, link ? platformOf(link) : (clean(b.platform || '', 40) || null), asked,
+    clean(b.note || '', 600) || null, VAULT.legit, b.publish === false ? 0 : 1, at, at).run();
+  const id = res.meta.last_row_id;
+  for (let i = 0; i < parsed.length; i++) {
+    const stored = await storePhoto(env, 'legit-' + id, i, parsed[i]);
+    await env.DB.prepare('INSERT INTO mk_photos (listing_id, legit_id, idx, kind, mime, data, thumb, created_at) VALUES (0, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(id, i, parsed[i].kind, parsed[i].mime, stored.data, stored.thumb, at).run();
+  }
+  const g = await loadLegit(env, id);
+  const pay = await startLegitPayment(env, g, me);
+  return json(Object.assign({ ok: true, id }, pay.error ? { payError: pay.error } : pay));
+}
+async function ownLegit(request, env, b) {
+  const me = await needUser(request, env);
+  const g = await loadLegit(env, intParam(b.id));
+  const spec = isSpecialist(env, me);
+  if (!g || (g.user_id !== me.id && !spec)) fail(404, 'Legit Check not found', 'not_found');
+  return { me, g, spec };
+}
+async function payLegit({ request, env }) {
+  const b = await body(request);
+  const { me, g } = await ownLegit(request, env, b);
+  if (g.user_id !== me.id) fail(404, 'Legit Check not found', 'not_found');
+  if (g.status !== 'awaiting_payment') fail(409, 'This Legit Check has already been paid', 'already_paid');
+  if (VAULT.legit && !b.consent && g.pay_mode !== 'manual') fail(400, 'Please confirm that the check may start right away', 'legit_consent');
+  const pay = await startLegitPayment(env, g, me);
+  if (pay.error) fail(502, pay.error, 'pay_failed');
+  return json(Object.assign({ ok: true }, pay));
+}
+// Runs the Lab Check on a paid Legit Check. The owner's page calls this on
+// coming back from paying (Stripe may not have told us yet: we ask it), and
+// the console calls it for any paid check without a current result.
+async function runLegit({ request, env }) {
+  const b = await body(request);
+  const { g: g0, spec } = await ownLegit(request, env, b);
+  let g = g0;
+  if (g.status === 'awaiting_payment' && await legitPaidAtStripe(env, g)) g = await loadLegit(env, g.id);
+  if (g.status === 'awaiting_payment') return json({ ok: true, outcome: 'unpaid' });
+  if (g.status === 'done') return json({ ok: true, outcome: 'done' });
+  const why = await mayRun(env, g, spec && !!b.force);
+  const reply = async (outcome, extra) => {
+    const fresh = await loadLegit(env, g.id);
+    return json(Object.assign({ ok: true, outcome, status: fresh.status }, spec ? { legit: await legitView(env, fresh, true) } : {}, extra || {}));
+  };
+  if (why === 'check_off') {                              // a specialist checks it by hand
+    await env.DB.prepare("UPDATE mk_legit SET status = 'review', updated_at = ? WHERE id = ? AND status = 'checking'").bind(nowIso(), g.id).run();
+    return reply('review');
+  }
+  if (why === 'running') return reply('running');
+  if (why === 'up_to_date') return reply(g.status === 'needs_info' ? 'asked' : 'review');
+  if (why === 'check_limit') fail(429, 'This pair has been checked often enough today', 'check_limit');
+  if (why) fail(409, 'This Legit Check is not waiting for a check', 'wrong_step');
+  const ran = await runCheck(env, g, spec ? 'specialist' : 'customer');
+  if (!ran) return reply('running');
+  if (ran.outcome === 'error') {
+    // the specialist can still decide from the photos
+    await env.DB.prepare("UPDATE mk_legit SET status = 'review', updated_at = ? WHERE id = ? AND status = 'checking'").bind(nowIso(), g.id).run();
+  }
+  return reply(ran.outcome === 'asked' ? 'asked' : 'review');
+}
+async function answerLegit({ request, env }) {
+  const b = await body(request);
+  const { me, g } = await ownLegit(request, env, b);
+  if (g.user_id !== me.id) fail(404, 'Legit Check not found', 'not_found');
+  const q = await env.DB.prepare("SELECT * FROM mk_requests WHERE legit_id = ? AND status = 'open' ORDER BY id DESC LIMIT 1").bind(g.id).first();
+  if (!q || ['checking', 'needs_info', 'review'].indexOf(g.status) === -1) fail(409, 'There is nothing to answer for this check', 'no_request');
+  await saveAnswers(env, g, q, b);
+  await env.DB.prepare("UPDATE mk_legit SET status = 'checking', updated_at = ? WHERE id = ? AND status IN ('needs_info','review')").bind(nowIso(), g.id).run();
   return json({ ok: true });
+}
+async function askLegit({ request, env }) {
+  await needSpecialist(request, env);
+  const b = await body(request);
+  const g = await loadLegit(env, intParam(b.id));
+  if (!g || ['checking', 'needs_info', 'review'].indexOf(g.status) === -1) fail(409, 'This Legit Check is not open', 'wrong_step');
+  const c = checkView(await latestCheck(env, g.id, true));
+  const items = c && c.result && c.result.requests;
+  if (!items || !items.length) fail(409, 'The check has nothing to ask for', 'nothing_to_ask');
+  if (!await askSeller(env, g, await userById(env, g.user_id), c.id, items, true)) fail(409, 'The customer has an open request already', 'request_open');
+  await env.DB.prepare("UPDATE mk_legit SET status = 'needs_info', updated_at = ? WHERE id = ?").bind(nowIso(), g.id).run();
+  return json({ ok: true, legit: await legitView(env, await loadLegit(env, g.id), true) });
+}
+async function decideLegitRoute({ request, env }) {
+  await needSpecialist(request, env);
+  const b = await body(request);
+  const g = await loadLegit(env, intParam(b.id));
+  if (!g || ['checking', 'needs_info', 'review'].indexOf(g.status) === -1) fail(409, 'This Legit Check is not waiting for a decision', 'wrong_step');
+  if (LEGIT_VERDICTS.indexOf(b.verdict) === -1) fail(400, 'Choose a verdict', 'legit_verdict');
+  const note = clean(b.note || '', 800);
+  if (b.verdict !== 'authentic' && !note) fail(400, 'Add a note for the customer', 'note_needed');
+  const out = await decideLegit(env, g, b.verdict, note);
+  if (!out) fail(409, 'This Legit Check is not waiting for a decision', 'wrong_step');
+  return json({ ok: true, refund: out.refund, legit: await legitView(env, await loadLegit(env, g.id), true) });
+}
+async function paidLegit({ request, env }) {
+  await needSpecialist(request, env);
+  const b = await body(request);
+  const g = await loadLegit(env, intParam(b.id));
+  if (!g || g.status !== 'awaiting_payment') fail(409, 'This Legit Check is not waiting for payment', 'wrong_step');
+  await markLegitPaid(env, g.id, 'manual');
+  return json({ ok: true, legit: await legitView(env, await loadLegit(env, g.id), true) });
+}
+// the owner shows or hides their certificate; a specialist can withdraw it
+async function certLegit({ request, env }) {
+  const b = await body(request);
+  const { me, g, spec } = await ownLegit(request, env, b);
+  if (!g.cert) fail(409, 'This check has no certificate', 'no_cert');
+  if (b.revoke != null) {
+    if (!spec) fail(403, 'Specialists only', 'specialists');
+    await env.DB.prepare('UPDATE mk_legit SET cert_revoked = ?, updated_at = ? WHERE id = ?').bind(b.revoke ? 1 : 0, nowIso(), g.id).run();
+  } else {
+    if (g.user_id !== me.id) fail(404, 'Legit Check not found', 'not_found');
+    await env.DB.prepare('UPDATE mk_legit SET cert_public = ?, updated_at = ? WHERE id = ?').bind(b.public ? 1 : 0, nowIso(), g.id).run();
+  }
+  return json({ ok: true, legit: await legitView(env, await loadLegit(env, g.id), spec && g.user_id !== me.id) });
+}
+async function getCert({ request, env }) {
+  const code = normCert(new URL(request.url).searchParams.get('c'));
+  if (!code) fail(404, 'No certificate with that number', 'cert_unknown');
+  const v = await certView(env, code);
+  if (!v) fail(404, 'No certificate with that number', 'cert_unknown');
+  return json(v, 200, { 'Cache-Control': 'no-store' });
+}
+
+// ── POST listing/feature — show a live listing first for a week ───────────
+// Sellers pay by card (VAULT.feature); a specialist can feature one for free.
+async function featureRoute({ request, env }) {
+  const me = await needUser(request, env);
+  const b = await body(request);
+  const l = await loadListing(env, intParam(b.id));
+  const spec = isSpecialist(env, me);
+  if (!l || (l.seller_id !== me.id && !spec)) fail(404, 'Listing not found', 'not_found');
+  if (l.status !== 'live') fail(409, 'Only a live listing can be featured', 'wrong_step');
+  if (spec && b.free) return json({ ok: true, until: await featureListing(env, l.id, 'free') });
+  if (l.seller_id !== me.id) fail(404, 'Listing not found', 'not_found');
+  if (!env.STRIPE_SECRET_KEY) fail(409, 'Featuring needs card payments, which are not switched on yet', 'feature_off');
+  if (!b.consent) fail(400, 'Please confirm that the feature may start right away', 'feature_consent');
+  const site = siteUrl(env);
+  const s = await stripeApi(env, 'checkout/sessions', {
+    mode: 'payment',
+    'line_items[0][quantity]': 1,
+    'line_items[0][price_data][currency]': 'eur',
+    'line_items[0][price_data][unit_amount]': VAULT.feature.price,
+    'line_items[0][price_data][product_data][name]': 'ShoeLab Vault: featured for ' + VAULT.feature.days + ' days — ' + listingTitle(l),
+    success_url: site + '/vault-me.html?featured=' + l.id + '#selling',
+    cancel_url: site + '/vault-me.html#selling',
+    customer_email: me.email,
+    client_reference_id: 'feature_' + l.id,
+    'metadata[vault_feature]': String(l.id),
+    'payment_intent_data[metadata][vault_feature]': String(l.id),
+  });
+  if (!s || !s.url) fail(502, (s && s.error && s.error.message) || 'Payment could not be started', 'pay_failed');
+  return json({ ok: true, url: s.url });
 }
 
 const ROUTES = {
@@ -1214,6 +1464,16 @@ const ROUTES = {
   'POST check': checkRoute,
   'POST check/ask': checkAsk,
   'POST listing/answer': answerRequest,
+  'POST listing/feature': featureRoute,
+  'GET legit/cert': getCert,
+  'POST legit': createLegit,
+  'POST legit/pay': payLegit,
+  'POST legit/run': runLegit,
+  'POST legit/answer': answerLegit,
+  'POST legit/ask': askLegit,
+  'POST legit/decide': decideLegitRoute,
+  'POST legit/paid': paidLegit,
+  'POST legit/cert': certLegit,
   'POST lab': lab,
   'POST lab/photos-to-r2': photosToR2,
   'POST payouts/setup': payoutsSetup,

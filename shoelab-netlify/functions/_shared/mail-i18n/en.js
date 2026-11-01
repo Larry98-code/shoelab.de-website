@@ -9,6 +9,19 @@
 // Subject tags in [BRACKETS] stay English in every language (inbox filters).
 export default {
   _: {
+    // the Legit Check, and the cleaning a buyer adds to a Lab Verified order
+    mode: 'Check for', modeBuy: 'Buying', modeSell: 'Selling (certificate)', platform: 'Platform', asked: 'Price asked', customer: 'Customer',
+    cleaning: 'Cleaning before shipping', addon_refresh: 'The ShoeLab Refresh', addon_revival: 'The ShoeLab Revival',
+    legitTipBuy: 'Tip: in My Vault you will find a ready-made message for the seller, asking for all of this at once.',
+    lr_authentic: 'Verdict: authentic. Our specialist found nothing that contradicts a genuine pair.',
+    lr_not_authentic: 'Verdict: not authentic. Our specialist found details that do not match a genuine pair.',
+    lr_inconclusive: 'We could not reach a sure verdict from the photos we have.',
+    lrCert: 'Your certificate is ready in My Vault: add its image or link to your listing so buyers can check it.',
+    lrBuyOk: 'From the photos, nothing speaks against buying it. When it arrives, compare it with these photos.',
+    lrBuyNo: 'We advise against buying this pair. If you have already paid, use the buyer protection of the app you bought it on.',
+    lrSellNo: 'We cannot issue a certificate for this pair.',
+    lrRefund: 'We have refunded your payment.',
+    lrRefundManual: 'We will refund your payment within a few working days.',
     // the Lab Check (authenticity check) in studio emails
     verdict: 'Verdict', confidence: 'Confidence', vd_authentic: 'Authentic', vd_likely_authentic: 'Likely authentic', vd_inconclusive: 'Inconclusive', vd_likely_counterfeit: 'Likely counterfeit', vd_counterfeit: 'Counterfeit',
     hi: 'Hi {name},', hiAll: 'Hello,',
@@ -340,6 +353,40 @@ export default {
     s: '[VAULT] Support request #{ticket}: {topic}',
     b: ['{customer} needs a specialist.', '%rows', 'Summary:', '%message', '%transcript', 'Reply to this email, or answer from the lab console.'],
     c: 'Open the lab console',
+  },
+  // ── the Legit Check ──
+  legitPayManual: {
+    s: 'Payment for your Legit Check: {title}',
+    b: ['Hi {name},', 'Thanks for your Legit Check. We will email you payment details for {amount} within one working day; the check starts as soon as the payment is in.'],
+  },
+  legitPaid: {
+    s: 'We are checking your {title}',
+    b: ['Hi {name},', 'Thanks — your Legit Check {ref} has started. Our authenticity check is looking at your photos now, and a ShoeLab specialist gives you the answer, usually within 24 hours.', 'If we need another photo, we will email you.'],
+    c: 'Open My Vault',
+  },
+  legitNeedsMore: {
+    s: 'A few more photos for your Legit Check: {title}',
+    b: ['Hi {name},', 'To give you a sure answer, our authenticity check needs a little more:', '%message', '{tip}', 'Add it in My Vault. As soon as it is in, we check again.'],
+    c: 'Add it in My Vault',
+  },
+  legitResult: {
+    s: 'Your Legit Check result: {title}',
+    b: ['Hi {name},', 'Your Legit Check {ref} is done.', '{verdictLine}', '%message', '{next}'],
+    c: 'See the result',
+  },
+  sLegitNew: {
+    s: '[VAULT] Legit Check {ref}: {title}',
+    b: ['A Legit Check has been paid. The Lab Check looks at it first; then it waits for your answer in the lab console.', '%rows'],
+    c: 'Open the lab console',
+  },
+  sLegitPayment: {
+    s: '[VAULT] Payment details needed for Legit Check {ref}',
+    b: ['Card payments are not switched on, so please email {email} payment details for {amount} ({title}). Mark it as paid in the lab console (Legit Checks) once the money has arrived; the check then starts.'],
+    c: 'Open the lab console',
+  },
+  sLegitRefund: {
+    s: '[VAULT] Refund Legit Check {ref}',
+    b: ['The check could not reach a verdict, so please refund {amount} to {email} by hand ({title}).'],
   },
   sTest: {
     s: '[TEST] ShoeLab email check',
