@@ -12,7 +12,10 @@
  *   - ← → photos, + − 0 zoom, R rotate, E enhance, C compare, I notes,
  *     Esc closes; on phones, swipe between photos and Back closes.
  *
- * SLVViewer.open({ photos, index, title, id, check }) opens it. The console
+ * SLVViewer.open({ photos, index, title, id, check, pub }) opens it; pub: true
+ * is the buyers' version (listings, reviews, certificates): no notes panel,
+ * the photo takes the whole width; onClose(i) hears which photo it ended on.
+ * The console
  * also uses marks() for the dots on its thumbnails and linkRefs() to turn
  * "Photo 4" in the Lab Check's text into a button that opens that photo. */
 (function (w, d) {
@@ -255,7 +258,7 @@
   }
   function build() {
     root = d.createElement('div');
-    root.className = 'v-vw';
+    root.className = 'v-vw' + (ctx.pub ? ' pub' : '');
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-label', ctx.title || t('vwPhotos'));
@@ -266,7 +269,7 @@
           tool('out', 'zout', 'vwZoomOut', 'z') + '<span class="v-vw-pct z"></span>' + tool('in', 'zin', 'vwZoomIn', 'z') + tool('fit', 'fit', 'vwFit', 'z') +
           '<i class="v-vw-sep z"></i>' +
           tool('rot', 'rot', 'vwRotate') + tool('enh', 'enh', 'vwEnhance', '', true) + tool('cmp', 'cmp', 'vwCompare', '', true) +
-          tool('info', 'info', 'vwNotes', 'm', true) +
+          (ctx.pub ? '' : tool('info', 'info', 'vwNotes', 'm', true)) +
           '<a class="v-vw-btn" data-vw="orig" target="_blank" rel="noopener" title="' + esc(t('vwOriginal')) + '" aria-label="' + esc(t('vwOriginal')) + '">' + ico('ext') + '</a>' +
           '<i class="v-vw-sep"></i>' + tool('close', 'x', 'close') +
         '</div>' +
@@ -277,7 +280,7 @@
           '<button type="button" class="v-vw-nav next" data-vw="next" aria-label="' + esc(t('vwNext')) + '">' + ico('right') + '</button>' +
           '<p class="v-vw-hint" aria-hidden="true"></p>' +
         '</div>' +
-        '<aside class="v-vw-side" aria-live="polite"></aside>' +
+        (ctx.pub ? '' : '<aside class="v-vw-side" aria-live="polite"></aside>') +
       '</div>' +
       '<nav class="v-vw-strip" aria-label="' + esc(t('vwStrip')) + '">' + strip() + '</nav>' +
       (fine ? '<p class="v-vw-keys">' + esc(t('vwKeys')) + '</p>' : '');
@@ -321,7 +324,7 @@
     root.querySelector('.v-vw-pct').textContent = P ? P.pct() : '';
   }
   function side() {
-    if (!root) return;
+    if (!root || ctx.pub) return;
     var P = panes[act], i = P.i, p = photos[i], sz = sizes[i];
     var c = ctx.check, r = c && c.status === 'done' && c.result, list = notes(c, i + 1);
     var html = '<section class="v-vw-sec"><small class="v-vw-k">' + esc(t('vwCount', { n: i + 1, total: photos.length })) + '</small>' +
@@ -447,7 +450,7 @@
     else if (c === 'KeyR') P.rotate();
     else if (c === 'KeyE') root.classList.toggle('enh', toggle('enh'));
     else if (c === 'KeyC') setCompare(!cmp);
-    else if (c === 'KeyI') root.classList.toggle('notes', toggle('info'));
+    else if (c === 'KeyI' && !ctx.pub) root.classList.toggle('notes', toggle('info'));
     else if (cmp && (k === '1' || k === '2')) activate(panes[+k - 1]);
     else done = false;
     if (done) { e.preventDefault(); e.stopPropagation(); }
@@ -493,6 +496,7 @@
   }
   function close() {
     if (!root) return;
+    var at = panes[act] ? panes[act].i : 0, done = ctx && ctx.onClose;
     d.removeEventListener('keydown', onKey, true);
     w.removeEventListener('resize', onResize);
     w.removeEventListener('popstate', onPop);
@@ -502,6 +506,7 @@
     d.documentElement.classList.remove('v-vw-lock');
     if (pushed) { pushed = false; try { w.history.back(); } catch (e) {} }
     if (lastFocus && lastFocus.focus && d.contains(lastFocus)) { try { lastFocus.focus({ preventScroll: true }); } catch (e) {} }
+    if (typeof done === 'function') { try { done(at); } catch (e) {} }
   }
 
   w.SLVViewer = { open: open, close: close, isOpen: function () { return !!root; }, marks: marks, linkRefs: linkRefs, refs: refs };

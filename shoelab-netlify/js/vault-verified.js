@@ -68,7 +68,7 @@
   function onClick(e) {
     var tile = e.target.closest('[data-cv]');
     if (tile && cert && w.SLVViewer) {
-      w.SLVViewer.open({ photos: cert.photos, index: +tile.getAttribute('data-cv'), title: cert.title + ' · ' + cert.code, check: null });
+      w.SLVViewer.open({ photos: cert.photos, index: +tile.getAttribute('data-cv'), title: cert.title + ' · ' + cert.code, check: null, pub: true });
       return;
     }
     var b = e.target.closest('[data-cert]');

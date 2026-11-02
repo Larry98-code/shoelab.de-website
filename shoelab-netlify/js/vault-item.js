@@ -111,63 +111,115 @@
   }
 
   function kindLabel(k) { return t('kind_' + k); }
+  // The gallery: the photos sit side by side and follow the finger (swipe, or
+  // a trackpad); arrows, thumbnails and ← → step through them. On a computer
+  // the photo zooms where the mouse points; a click or tap opens the full
+  // screen viewer (pinch and double-tap zoom, swipe, compare, rotate).
+  function thumbUrl(u) { return u + (u.indexOf('?') === -1 ? '?' : '&') + 's=t'; }
   function galleryHtml() {
     var ph = L.photos || [];
     if (!ph.length) return '<div class="v-stage">' + S.photoHtml(null) + '</div>';
     photo = Math.min(photo, ph.length - 1);
-    var cur = ph[photo];
-    return '<div class="v-stage" id="vStage" role="button" tabindex="0" aria-label="' + esc(t('zoom')) + '">' +
-        '<img id="vMainImg" src="' + esc(cur.url) + '" alt="' + esc(L.title + ' — ' + kindLabel(cur.kind)) + '"' + (L.cut ? ' class="cut"' : '') + '/>' +
-        '<span class="v-kind v-badge ghost" id="vKind">' + esc(kindLabel(cur.kind)) + '</span>' +
-        (ph.length > 1 ? '<button type="button" class="nav prev" data-nav="-1" aria-label="' + esc(t('prevPhoto')) + '">' + S.ico('left') + '</button>' +
-          '<button type="button" class="nav next" data-nav="1" aria-label="' + esc(t('nextPhoto')) + '">' + S.ico('right') + '</button>' : '') +
+    var many = ph.length > 1;
+    return '<div class="v-stage' + (many ? ' many' : '') + '" id="vStage">' +
+        '<div class="v-track" id="vTrack" tabindex="0" role="region" aria-roledescription="carousel" aria-label="' + esc(t('vwStrip')) + '">' +
+        ph.map(function (p, i) {
+          return '<figure class="v-slide" data-i="' + i + '" role="group" aria-roledescription="slide" aria-label="' + esc(t('vwCount', { n: i + 1, total: ph.length }) + ': ' + kindLabel(p.kind)) + '">' +
+            '<img src="' + esc(p.url) + '" alt="' + esc(L.title + ' — ' + kindLabel(p.kind)) + '"' + (L.cut ? ' class="cut"' : '') +
+            (Math.abs(i - photo) > 1 ? ' loading="lazy"' : '') + ' draggable="false"/></figure>';
+        }).join('') +
+        '</div>' +
+        '<span class="v-kind v-badge ghost" id="vKind">' + esc(kindLabel(ph[photo].kind)) + '</span>' +
+        (many ? '<span class="v-count" id="vCount" aria-hidden="true">' + (photo + 1) + ' / ' + ph.length + '</span>' : '') +
+        '<button type="button" class="v-full" data-full aria-label="' + esc(t('zoom')) + '" title="' + esc(t('zoom')) + '">' + S.ico('expand') + '</button>' +
+        (many ? '<button type="button" class="nav prev" data-nav="-1" aria-label="' + esc(t('prevPhoto')) + '">' + S.ico('left') + '</button>' +
+          '<button type="button" class="nav next" data-nav="1" aria-label="' + esc(t('nextPhoto')) + '">' + S.ico('right') + '</button>' +
+          (ph.length <= 12 ? '<div class="v-dots" aria-hidden="true">' + ph.map(function (p, i) { return '<i' + (i === photo ? ' class="on"' : '') + '></i>'; }).join('') + '</div>' : '') : '') +
       '</div>' +
-      (ph.length > 1 ? '<div class="v-thumbs" id="vThumbs">' + ph.map(function (p, i) {
-        return '<button type="button" class="v-thumb' + (i === photo ? ' on' : '') + '" data-i="' + i + '" aria-label="' + esc(kindLabel(p.kind)) + '">' +
-          '<img src="' + esc(p.url) + '" alt="" loading="lazy"/></button>';
+      (many ? '<div class="v-thumbs" id="vThumbs">' + ph.map(function (p, i) {
+        return '<button type="button" class="v-thumb' + (i === photo ? ' on' : '') + '" data-i="' + i + '" aria-label="' + esc(t('vwCount', { n: i + 1, total: ph.length }) + ': ' + kindLabel(p.kind)) + '"' + (i === photo ? ' aria-current="true"' : '') + '>' +
+          '<img src="' + esc(thumbUrl(p.url)) + '" alt="" loading="lazy"/></button>';
       }).join('') + '</div>' : '');
   }
-  function show(i) {
+  // what follows the photo in view: label, counter, dots, thumbnails
+  function mark(i) {
     var ph = L.photos || [];
-    if (!ph.length) return;
-    photo = (i + ph.length) % ph.length;
-    var img = $('vMainImg');
-    img.src = ph[photo].url;
-    img.alt = L.title + ' — ' + kindLabel(ph[photo].kind);
-    $('vKind').textContent = kindLabel(ph[photo].kind);
-    Array.prototype.forEach.call(d.querySelectorAll('.v-thumb'), function (b, j) { b.classList.toggle('on', j === photo); });
+    if (!ph.length || !$('vStage')) return;
+    photo = i;
+    $('vKind').textContent = kindLabel(ph[i].kind);
+    if ($('vCount')) $('vCount').textContent = (i + 1) + ' / ' + ph.length;
+    Array.prototype.forEach.call(d.querySelectorAll('.v-dots i'), function (x, j) { x.classList.toggle('on', j === i); });
+    Array.prototype.forEach.call(d.querySelectorAll('.v-thumb'), function (b, j) {
+      b.classList.toggle('on', j === i);
+      if (j === i) {
+        b.setAttribute('aria-current', 'true');
+        var th = $('vThumbs');   // keep the thumbnail in view without moving the page
+        if (th && (b.offsetLeft < th.scrollLeft || b.offsetLeft + b.offsetWidth > th.scrollLeft + th.clientWidth)) th.scrollTo({ left: b.offsetLeft - 8, behavior: 'smooth' });
+      } else b.removeAttribute('aria-current');
+    });
+  }
+  var reduced = w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function show(i, instant) {
+    var ph = L.photos || [], tr = $('vTrack');
+    if (!ph.length || !tr) return;
+    i = (i + ph.length) % ph.length;
+    tr.scrollTo({ left: i * tr.clientWidth, behavior: instant || reduced ? 'auto' : 'smooth' });
+    mark(i);
   }
   function wireGallery() {
-    var st = $('vStage');
-    if (!st) return;
+    var st = $('vStage'), tr = $('vTrack');
+    if (!st || !tr) return;
+    // back to the photo that was in view (a new language redraws the page)
+    if (photo) { tr.style.scrollBehavior = 'auto'; tr.scrollLeft = photo * tr.clientWidth; tr.style.scrollBehavior = ''; }
+    var raf = 0;
+    tr.addEventListener('scroll', function () {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(function () {
+        var i = Math.max(0, Math.min((L.photos || []).length - 1, Math.round(tr.scrollLeft / Math.max(1, tr.clientWidth))));
+        if (i !== photo) mark(i);
+      });
+    }, { passive: true });
     st.addEventListener('click', function (e) {
       var nav = e.target.closest('[data-nav]');
-      if (nav) { e.stopPropagation(); show(photo + parseInt(nav.getAttribute('data-nav'), 10)); return; }
-      openLightbox();
+      if (nav) { show(photo + parseInt(nav.getAttribute('data-nav'), 10)); return; }
+      if (e.target.closest('[data-full]') || e.target.closest('.v-slide')) openViewer();
     });
-    st.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(); } });
+    tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(); } });
     var th = $('vThumbs');
     if (th) th.addEventListener('click', function (e) {
       var b = e.target.closest('[data-i]');
       if (b) show(parseInt(b.getAttribute('data-i'), 10));
     });
-    // swipe on touch screens
-    var x0 = null;
-    st.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
-    st.addEventListener('touchend', function (e) {
-      if (x0 == null) return;
-      var dx = e.changedTouches[0].clientX - x0;
-      if (Math.abs(dx) > 45) show(photo + (dx < 0 ? 1 : -1));
-      x0 = null;
-    });
+    // a computer: the photo zooms in where the mouse points
+    if (!L.cut && w.matchMedia && w.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      tr.addEventListener('mousemove', function (e) {
+        var f = e.target.closest('.v-slide');
+        if (!f) return;
+        var r = f.getBoundingClientRect(), im = f.querySelector('img');
+        im.style.transformOrigin = ((e.clientX - r.left) / r.width * 100).toFixed(1) + '% ' + ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%';
+        if (!f.classList.contains('hz')) f.classList.add('hz');
+      });
+      tr.addEventListener('mouseout', function (e) {
+        var f = e.target.closest('.v-slide');
+        if (f && !f.contains(e.relatedTarget)) f.classList.remove('hz');
+      });
+    }
+    // the photo's width changes with the window: stay on the same photo
+    if (w.ResizeObserver) {
+      var last = tr.clientWidth;
+      new w.ResizeObserver(function () {
+        if (tr.clientWidth === last) return;
+        last = tr.clientWidth;
+        tr.style.scrollBehavior = 'auto'; tr.scrollLeft = photo * tr.clientWidth; tr.style.scrollBehavior = '';
+      }).observe(tr);
+    }
   }
-  function openLightbox() {
-    var lb = $('vLightbox'), ph = L.photos || [];
+  function openViewer() {
+    var ph = L.photos || [];
     if (!ph.length) return;
-    lb.querySelector('img').src = ph[photo].url;
-    lb.querySelector('img').alt = L.title;
-    lb.classList.add('open');
-    lb.querySelector('button').focus();
+    if (!w.SLVViewer) { w.open(ph[photo].url, '_blank', 'noopener'); return; }
+    w.SLVViewer.open({ photos: ph, index: photo, title: L.title + ' · EU ' + L.size, id: L.id, check: null, pub: true,
+      onClose: function (i) { if (i !== photo) show(i, true); } });
   }
 
   /* ── the buy column ───────────────────────────────────────────────── */
@@ -610,16 +662,11 @@
   d.addEventListener('slv:ended', function () { if (!pv) setTimeout(function () { load(false); }, 1500); });
   d.addEventListener('visibilitychange', function () { if (!d.hidden && L && !pv && L.status === 'live') load(false); });
   d.addEventListener('keydown', function (e) {
-    var lb = $('vLightbox');
-    if (lb.classList.contains('open')) {
-      if (e.key === 'Escape') lb.classList.remove('open');
-      return;
-    }
-    if (!L || /input|textarea|select/i.test((d.activeElement || {}).tagName || '')) return;
-    if (e.key === 'ArrowRight') show(photo + 1);
-    if (e.key === 'ArrowLeft') show(photo - 1);
+    if (!L || (w.SLVViewer && w.SLVViewer.isOpen()) || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (/input|textarea|select/i.test((d.activeElement || {}).tagName || '') || (d.activeElement && d.activeElement.isContentEditable)) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); show(photo + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); show(photo - 1); }
   });
-  $('vLightbox').addEventListener('click', function () { this.classList.remove('open'); });
 
   S.boot({
     key: 'browse',

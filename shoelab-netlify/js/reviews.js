@@ -412,7 +412,7 @@
       if (ph && w.SLVViewer) {
         var id = +ph.getAttribute('data-rv-photo').split(':')[0], i = +ph.getAttribute('data-rv-photo').split(':')[1];
         var r = st.items.filter(function (x) { return x.id === id; })[0];
-        if (r) w.SLVViewer.open({ photos: r.photos, index: i, title: r.name + ' · ' + t('rvT_' + r.topic), check: null });
+        if (r) w.SLVViewer.open({ photos: r.photos, index: i, title: r.name + ' · ' + t('rvT_' + r.topic), check: null, pub: true });
       }
     });
     $('rvMore').addEventListener('click', function () { st.page++; load(false); });

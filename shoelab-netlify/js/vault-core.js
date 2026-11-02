@@ -196,7 +196,8 @@
     bolt: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
     logout: '<path d="M14.5 4.5h-9v15h9M10.5 12h10M17 8.5l3.5 3.5-3.5 3.5"/>',
     settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>',
-    home: '<path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5.5h4V20"/>'
+    home: '<path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5.5h4V20"/>',
+    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'
   };
   function ico(name, cls) {
     return '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
