@@ -2,6 +2,20 @@
 // Same keys, {placeholders} and %blocks as en.js; [TAGS] in subjects stay English.
 export default {
   _: {
+    // a listing just went live
+    itemNo: 'Номер товару',
+    startPrice: 'Стартова ціна',
+    endsAt: 'Аукціон завершується',
+    payoutEst: 'Ви отримаєте в разі продажу за цією ціною',
+    liveNoMorePhotos: 'Додаткові фото, про які ми просили раніше, більше не потрібні — вашу пару схвалено.',
+    liveNextFixed: 'Що далі: покупці можуть купити пару одразу. Щойно її продадуть, ми одразу вам напишемо; ви відправляєте її протягом трьох робочих днів і отримуєте оплату, коли покупець її отримає.',
+    liveNextOffers: 'Що далі: покупці можуть купити пару одразу або запропонувати свою ціну — ви приймаєте, відхиляєте чи робите зустрічну пропозицію в My Vault. Щойно її продадуть, ми одразу вам напишемо; ви відправляєте її протягом трьох робочих днів і отримуєте оплату, коли покупець її отримає.',
+    liveNextAuction: 'Що далі: аукціон триває до {ends}. Ми напишемо вам, щойно він завершиться з переможцем; ви відправляєте пару протягом трьох робочих днів і отримуєте оплату, коли покупець її отримає.',
+    liveShare: 'Порада: поділіться посиланням на оголошення в Instagram або WhatsApp — пари, якими діляться, продаються швидше.',
+    // reviews and the satisfaction survey
+    t_studio: 'Чистка в студії', t_vault_buy: 'Купівля у Vault', t_vault_sell: 'Продаж у Vault', t_legit: 'Legit Check', t_shop: 'Магазин', t_other: 'Інше',
+    it_studio: 'Студія', it_vault: 'Vault', it_legit: 'Legit Check', it_shop: 'Магазин', it_website: 'Сайт', it_other: 'Інше',
+    topic: 'Тема', rated: 'Оцінка', nps: 'Готовність рекомендувати', verifiedRow: 'Підтверджено', publicRow: 'Для публікації', photosRow: 'Фото', privateNote: 'Приватна нотатка', yes: 'так', no: 'ні',
     // the Legit Check, and the cleaning a buyer adds to a Lab Verified order
     mode: 'Мета перевірки', modeBuy: 'Купівля', modeSell: 'Продаж (сертифікат)', platform: 'Майданчик', asked: 'Ціна продавця', customer: 'Клієнт',
     cleaning: 'Чистка перед відправленням', addon_refresh: 'The ShoeLab Refresh', addon_revival: 'The ShoeLab Revival',
@@ -93,8 +107,8 @@ export default {
     c: 'Переглянути оголошення',
   },
   listingLive: {
-    s: 'Ваша пара {title} уже в продажу',
-    b: ['Вітаємо, {name}!', 'Чудова новина: ваша пара {title} уже в продажу в ShoeLab Vault.', '{note}'],
+    s: 'Вітаємо — ваша пара {title} уже в продажу',
+    b: ['Добрий день, {name}!', 'Вітаємо! Ваша пара {title} пройшла нашу перевірку й тепер у продажу в ShoeLab Vault.', '{note}', '%rows', '{asked}', '{next}', '{share}'],
     c: 'Подивитися оголошення',
   },
   listingNeedsMore: {
@@ -380,6 +394,32 @@ export default {
   sLegitRefund: {
     s: '[VAULT] Повернення коштів за Legit Check {ref}',
     b: ['Перевірка не дійшла вердикту, тож поверніть, будь ласка, вручну {amount} клієнту {email} ({title}).'],
+  },
+  // ── reviews and the satisfaction survey ──
+  reviewInvite: {
+    s: 'Як вам {service}?',
+    b: ['Вітаємо, {name}!', 'Дякуємо, що завітали до ShoeLab. Ви просили запитати вас після візиту, як усе пройшло. Тож: як вам {service}?', 'Це забере хвилину — і допоможе нам та іншим поціновувачам кросівок у Бремені.'],
+    c: 'Оцінити візит',
+  },
+  reviewLive: {
+    s: 'Ваш відгук опубліковано',
+    b: ['Вітаємо, {name}!', 'Дякуємо — ваш відгук тепер на shoelabonline.de, і його можуть прочитати всі.', '%message'],
+    c: 'Переглянути відгук',
+  },
+  reviewReply: {
+    s: 'ShoeLab відповів на ваш відгук',
+    b: ['Вітаємо, {name}!', 'Команда ShoeLab відповіла на ваш відгук:', '%message'],
+    c: 'Переглянути відповідь',
+  },
+  sReviewNew: {
+    s: '[REVIEW] {stars} {topic}',
+    b: ['Новий відгук чекає на вас у консолі лабораторії. Опублікуйте його (позитивний він чи негативний) або відхиліть — але лише із зазначенням причини.', '%rows', '%message'],
+    c: 'Відкрити консоль лабораторії',
+  },
+  sIdea: {
+    s: '[IDEA] {topic}',
+    b: ['Хтось має ідею для ShoeLab:', '%rows', '%message'],
+    c: 'Відкрити консоль лабораторії',
   },
   sTest: {
     s: '[TEST] Перевірка пошти ShoeLab',

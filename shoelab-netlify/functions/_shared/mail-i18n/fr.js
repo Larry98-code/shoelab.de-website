@@ -3,6 +3,20 @@
 // (invisible) characters: U+00A0 before : and after n°, U+202F before ; ? !
 export default {
   _: {
+    // a listing just went live
+    itemNo: 'Numéro d’article',
+    startPrice: 'Prix de départ',
+    endsAt: 'Fin de l’enchère',
+    payoutEst: 'Tu reçois si elle se vend à ce prix',
+    liveNoMorePhotos: 'Inutile d’envoyer les photos supplémentaires demandées plus tôt : ta paire est approuvée.',
+    liveNextFixed: 'Et maintenant : les acheteurs peuvent l’acheter tout de suite. Dès qu’elle est vendue, nous t’écrivons ; tu l’expédies sous trois jours ouvrés et tu es payé dès que l’acheteur l’a reçue.',
+    liveNextOffers: 'Et maintenant : les acheteurs peuvent l’acheter tout de suite ou te faire une offre, que tu acceptes, refuses ou contres dans My Vault. Dès qu’elle est vendue, nous t’écrivons ; tu l’expédies sous trois jours ouvrés et tu es payé dès que l’acheteur l’a reçue.',
+    liveNextAuction: 'Et maintenant : l’enchère dure jusqu’au {ends}. Nous t’écrivons dès qu’elle se termine avec un gagnant ; tu l’expédies sous trois jours ouvrés et tu es payé dès que l’acheteur l’a reçue.',
+    liveShare: 'Astuce : partage le lien de ton annonce sur Instagram ou WhatsApp — les paires partagées se vendent plus vite.',
+    // reviews and the satisfaction survey
+    t_studio: 'Nettoyage au studio', t_vault_buy: 'Achat dans le Vault', t_vault_sell: 'Vente dans le Vault', t_legit: 'Legit Check', t_shop: 'Boutique', t_other: 'Autre chose',
+    it_studio: 'Le studio', it_vault: 'Le Vault', it_legit: 'Le Legit Check', it_shop: 'La boutique', it_website: 'Le site', it_other: 'Autre chose',
+    topic: 'Sujet', rated: 'Note', nps: 'Recommanderait', verifiedRow: 'Vérifié', publicRow: 'À publier', photosRow: 'Photos', privateNote: 'Remarque privée', yes: 'oui', no: 'non',
     // the Legit Check, and the cleaning a buyer adds to a Lab Verified order
     mode: 'Contrôle pour', modeBuy: 'Achat', modeSell: 'Vente (certificat)', platform: 'Plateforme', asked: 'Prix demandé', customer: 'Client',
     cleaning: 'Nettoyage avant l’envoi', addon_refresh: 'The ShoeLab Refresh', addon_revival: 'The ShoeLab Revival',
@@ -94,8 +108,8 @@ export default {
     c: 'Voir ton annonce',
   },
   listingLive: {
-    s: 'Ta paire {title} est en ligne',
-    b: ['Bonjour {name},', 'Bonne nouvelle : ta paire {title} est maintenant en ligne dans le ShoeLab Vault.', '{note}'],
+    s: 'Félicitations — ta paire {title} est en ligne',
+    b: ['Bonjour {name},', 'Félicitations ! Ta paire {title} a passé notre contrôle et est maintenant en ligne dans le ShoeLab Vault.', '{note}', '%rows', '{asked}', '{next}', '{share}'],
     c: 'Voir ton annonce',
   },
   listingNeedsMore: {
@@ -381,6 +395,32 @@ export default {
   sLegitRefund: {
     s: '[VAULT] Remboursement à effectuer : Legit Check {ref}',
     b: ['Le contrôle n’a pas pu aboutir à un verdict : merci de rembourser manuellement {amount} à {email} ({title}).'],
+  },
+  // ── reviews and the satisfaction survey ──
+  reviewInvite: {
+    s: '{service} : alors, c’était comment ?',
+    b: ['Bonjour {name},', 'Merci pour ta visite chez ShoeLab. Tu nous avais demandé de prendre de tes nouvelles après ton rendez-vous : qu’as-tu pensé de {service} ?', 'Ça prend une minute — et ça nous aide, nous et les autres passionnés de sneakers à Brême.'],
+    c: 'Donner mon avis',
+  },
+  reviewLive: {
+    s: 'Ton avis est en ligne',
+    b: ['Bonjour {name},', 'Merci — ton avis est maintenant sur shoelabonline.de, visible par tous.', '%message'],
+    c: 'Voir mon avis',
+  },
+  reviewReply: {
+    s: 'ShoeLab a répondu à ton avis',
+    b: ['Bonjour {name},', 'L’équipe ShoeLab a répondu à ton avis :', '%message'],
+    c: 'Voir la réponse',
+  },
+  sReviewNew: {
+    s: '[REVIEW] {stars} {topic}',
+    b: ['Un nouvel avis t’attend dans la console du lab. Publie-le (qu’il soit positif ou négatif), ou refuse-le uniquement pour un motif précis.', '%rows', '%message'],
+    c: 'Ouvrir la console du lab',
+  },
+  sIdea: {
+    s: '[IDEA] {topic}',
+    b: ['Quelqu’un a une idée pour ShoeLab :', '%rows', '%message'],
+    c: 'Ouvrir la console du lab',
   },
   sTest: {
     s: '[TEST] Vérification des e-mails ShoeLab',
