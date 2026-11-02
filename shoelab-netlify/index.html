@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<script src="/js/consent.js?v=1" defer></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="theme-color" content="#080808"/>
 <meta name="description" content="Professionelle Sneaker Reinigung, Schuhpflege und Restauration in Bremen. Termin online buchen ab 18 € — Abholung möglich. Premium shoe cleaning in Bremen, booked online."/>
@@ -3836,6 +3837,7 @@ section[id], [id]{ scroll-margin-top: 90px; }
       <a href="/datenschutz.html">Datenschutz</a>
       <a href="/agb.html">AGB</a>
       <a href="/widerruf.html">Widerruf</a>
+      <a href="#cookie-settings" data-consent-open>Cookie settings</a>
     </div>
   </div>
 </footer>
@@ -6455,19 +6457,8 @@ const _origHandleUserMessage = handleUserMessage;
 })();
 </script>
 
-<!-- ════ Cookie consent + backend booking sync (isolated) ════ -->
+<!-- ════ Booking sync and small extras (isolated; cookie consent: js/consent.js) ════ -->
 <style>
-  #cookieBar{position:fixed;left:0;right:0;bottom:0;z-index:99990;display:none;
-    background:rgba(12,12,12,0.97);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,0.1);
-    padding:1rem 1.2rem;}
-  #cookieBar.show{display:block;}
-  #cookieBar .cb-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;justify-content:center;}
-  #cookieBar p{font-size:0.8rem;color:#bbb;margin:0;flex:1 1 320px;line-height:1.5;}
-  #cookieBar a{color:#CC1111;text-decoration:underline;}
-  #cookieBar button{font-family:inherit;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;
-    padding:0.6rem 1.3rem;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.18);}
-  #cookieBar .cb-ok{background:#CC1111;border-color:#CC1111;color:#fff;font-weight:600;}
-  #cookieBar .cb-ok:hover{background:#FF2020;}
   /* while the notice is up, Wesley sits above it, not under it */
   body.cb-on .wesley-launcher,body.cb-on .wesley-window{translate:0 calc(-1 * var(--cb-h, 0px));}
   body.cb-on .wesley-window{max-height:calc(100vh - 8rem - var(--cb-h, 0px));}
@@ -6520,29 +6511,9 @@ const _origHandleUserMessage = handleUserMessage;
   .sl-toast-x{background:none;border:none;color:#888;font-size:0.85rem;cursor:pointer;padding:0.2rem 0.3rem;}
   .sl-toast-x:hover{color:#fff;}
 </style>
-<div id="cookieBar" role="dialog" aria-label="Cookie notice">
-  <div class="cb-inner">
-    <p data-i18n-html="cookie.text">We use only essential cookies to keep you logged in and remember your language. By using this site you agree to our <a href="/datenschutz.html">privacy policy</a>.</p>
-    <button class="cb-ok" id="cookieOk" data-i18n="cookie.ok">Got it</button>
-  </div>
-</div>
 <script>
 (function(){
-  /* Cookie notice — essential cookies only, info banner suffices */
-  try{
-    var bar=document.getElementById('cookieBar');
-    // Wesley moves up by the notice's height while it shows (it wraps on narrow screens)
-    var lift=function(on){
-      document.body.classList.toggle('cb-on', !!on);
-      if(on) document.documentElement.style.setProperty('--cb-h', bar.offsetHeight+'px');
-    };
-    if(bar && !localStorage.getItem('shoelab_cookie_ok')){
-      setTimeout(function(){ bar.classList.add('show'); lift(true); }, 800);
-      window.addEventListener('resize', function(){ if(bar.classList.contains('show')) lift(true); });
-    }
-    var ok=document.getElementById('cookieOk');
-    if(ok) ok.addEventListener('click', function(){ try{localStorage.setItem('shoelab_cookie_ok','1');}catch(_){} if(bar){ bar.classList.remove('show'); lift(false); } });
-  }catch(e){}
+  /* Cookie consent and the Google Ads tag live in js/consent.js (every page) */
 
   /* Record bookings to the backend without altering the Stripe flow */
   function val(id){ var el=document.getElementById(id); return el? (el.value||'').trim() : ''; }

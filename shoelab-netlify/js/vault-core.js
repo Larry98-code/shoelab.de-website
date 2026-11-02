@@ -718,6 +718,7 @@
             '<a href="/vault-terms.html">' + esc(t('footTerms')) + '</a>' +
             '<a href="/datenschutz.html">' + esc(t('footPrivacy')) + '</a>' +
             '<a href="/impressum.html">' + esc(t('footImprint')) + '</a>' +
+            (w.SLConsent ? '<a href="#cookie-settings" data-consent-open>' + esc(w.SLConsent.label()) + '</a>' : '') +
           '</nav>' +
         '</div>' +
         '<div class="v-foot-in" style="margin-top:1rem;"><small>© 2025–' + new Date().getFullYear() + ' ShoeLab · Bremen · ' + esc(t('footTag')) + '</small></div>';

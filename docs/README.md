@@ -68,6 +68,21 @@ catalog, and Wesley tells people the shop opens soon. The switch is one line in
 2. Set `OPEN` to `true`, and bump `?v=` where the file is loaded
    (`index.html`, `brushes.html`).
 
+## Google Ads and cookie consent
+
+The Google Ads tag (`AW-18475286923`) is in `shoelab-netlify/js/consent.js`,
+loaded on every page except `reset.html` (its address carries a private code)
+and `vault-lab.html` (staff only). It loads **only after the visitor presses
+"Accept"** in the cookie banner (8 languages, "Decline" equally visible), as
+German law requires; the choice is kept for a year. "Cookie settings" in every
+footer opens the banner again, and declining later stops the tag and deletes
+its cookies. The privacy policy (section 11) describes it.
+
+To count bookings or Vault purchases as conversions, create a conversion
+action in Google Ads based on a page view of `/thank-you.html` (bookings) or
+`/vault-me.html?paid=` (Vault payments). If Google gives you an event snippet
+with a label (`AW-18475286923/…`) instead, add it in `consent.js`.
+
 ## Notes
 
 - **BACKEND.md**: accounts, sessions, the D1 database, Stripe
