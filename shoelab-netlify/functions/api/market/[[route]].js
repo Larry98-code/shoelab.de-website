@@ -10,6 +10,8 @@
 //   GET  legit/cert?c=
 //   POST legit | legit/pay | legit/run | legit/answer | legit/cert
 //        legit/decide | legit/paid | legit/ask (the Legit Check, see _shared/legit.js)
+//   GET  reviews | reviews/mine | reviews/queue
+//   POST reviews | reviews/idea | reviews/moderate | reviews/idea-status  (see _shared/reviews.js)
 import { json, preflight, clean, currentUser, stripeApi, sessionSecret, mailTrouble } from '../../_shared/util.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
@@ -22,6 +24,10 @@ import {
   OPEN_LIMIT, LEGIT_VERDICTS, cleanLink, platformOf, normCert, loadLegit, legitView, legitTitle,
   startLegitPayment, legitPaidAtStripe, markLegitPaid, decideLegit, certView, certLive,
 } from '../../_shared/legit.js';
+import {
+  TOPICS as RV_TOPICS, parseRef, eligible as rvEligible, readInvite, submitReview, submitIdea, listReviews,
+  reviewQueue, moderate, ideaStatus, sendInvites, allowed as rvAllowed,
+} from '../../_shared/reviews.js';
 import { supportChat, supportTicket, supportAnswer, ticketsForQueue } from '../../_shared/support.js';
 import { runCheck, mayRun, checkView, requestView, latestCheck, latestRequest, askSeller, checkSettings } from '../../_shared/labcheck.js';
 
@@ -115,6 +121,8 @@ async function getConfig({ request, env }) {
     conditions: CONDITIONS, tiers: TIERS, photoKinds: PHOTO_KINDS, required: REQUIRED_KINDS,
     maxPhotos: VAULT.maxPhotos, maxPhotoBytes: VAULT.maxPhotoBytes, onlinePayment: !!env.STRIPE_SECRET_KEY,
     legit: VAULT.legit, addons: VAULT.addons, feature: VAULT.feature,
+    // where a happy customer can also leave a Google review (optional, shown to everyone)
+    googleReviewUrl: /^https:\/\//.test(String(env.GOOGLE_REVIEW_URL || '')) ? env.GOOGLE_REVIEW_URL : null,
     connect: connectOn(env), support: !!env.ANTHROPIC_API_KEY,
     me: me ? {
       id: me.id, name: me.name, email: me.email, specialist: isSpecialist(env, me), verified: !!me.verified,
@@ -296,7 +304,7 @@ async function getPhoto({ request, env }) {
   const q = new URL(request.url).searchParams;
   const id = intParam(q.get('id'));
   const p = id && await env.DB.prepare(
-    'SELECT p.mime, p.data, p.thumb, p.kind, p.legit_id, l.seller_id FROM mk_photos p LEFT JOIN mk_listings l ON l.id = p.listing_id WHERE p.id = ?'
+    'SELECT p.mime, p.data, p.thumb, p.kind, p.legit_id, p.review_id, l.seller_id FROM mk_photos p LEFT JOIN mk_listings l ON l.id = p.listing_id WHERE p.id = ?'
   ).bind(id).first();
   if (!p) return new Response('Not found', { status: 404 });
   // a photo sent on request (it may be a receipt) is shown only to its owner and to
@@ -306,6 +314,11 @@ async function getPhoto({ request, env }) {
     const g = await loadLegit(env, p.legit_id);
     owner = g && g.user_id;
     if (!g || !certLive(g)) privy = true;
+  }
+  if (p.review_id) {
+    const rv = await env.DB.prepare('SELECT user_id, status, publish FROM fb_reviews WHERE id = ?').bind(p.review_id).first();
+    owner = rv && rv.user_id;
+    if (!rv || rv.status !== 'published' || !rv.publish) privy = true;
   }
   if (privy) {
     const u = await currentUser(request, env);
@@ -914,6 +927,8 @@ async function getMe({ request, env }) {
     watching: (watching.results || []).map(card),
     legit: await Promise.all(((await env.DB.prepare('SELECT * FROM mk_legit WHERE user_id = ? ORDER BY id DESC LIMIT 30').bind(me.id).all()).results || [])
       .map((g) => legitView(env, g, false))),
+    reviewed: ((await env.DB.prepare("SELECT ref_kind, ref_id FROM fb_reviews WHERE kind = 'review' AND user_id = ? AND ref_kind IS NOT NULL").bind(me.id).all()).results || [])
+      .map((x) => x.ref_kind + '-' + x.ref_id),
     onlinePayment: !!env.STRIPE_SECRET_KEY,
   }, 200, { 'Cache-Control': 'no-store' });
 }
@@ -1409,6 +1424,82 @@ async function getCert({ request, env }) {
   return json(v, 200, { 'Cache-Control': 'no-store' });
 }
 
+// ── reviews and the satisfaction survey (see _shared/reviews.js) ─────────
+async function getReviews({ request, env }) {
+  return json(await listReviews(env, new URL(request.url).searchParams), 200, { 'Cache-Control': 'no-store' });
+}
+// what the visitor may review (verified), and a booking invitation's details
+async function getMyReviews({ request, env }) {
+  const me = await currentUser(request, env);
+  const q = new URL(request.url).searchParams;
+  const out = { signedIn: !!me, name: me ? shortName(me.name) : null, eligible: await rvEligible(env, me) };
+  const ref = parseRef(q.get('ref')), inv = await readInvite(env, q.get('k'));
+  if (ref && ref.kind === 'booking' && inv && inv.id === ref.id) {
+    const b = await env.DB.prepare('SELECT id, service, date, first_name, last_name FROM bookings WHERE id = ?').bind(ref.id).first();
+    const done = await env.DB.prepare("SELECT id FROM fb_reviews WHERE kind = 'review' AND ref_kind = 'booking' AND ref_id = ?").bind(ref.id).first();
+    if (b) out.invite = { ref: 'booking-' + b.id, topic: 'studio', label: b.service, date: b.date, name: shortName((b.first_name || '') + ' ' + (b.last_name || '')), done: !!done };
+  }
+  return json(out, 200, { 'Cache-Control': 'no-store' });
+}
+async function postReview({ request, env }) {
+  const me = await currentUser(request, env);
+  const b = await body(request);
+  if (b.website) return json({ ok: true, id: 0 });           // a bot filled the hidden field
+  // an invitation link is proof enough (and a booking is reviewed only once), so it skips the per-network limit
+  const inv = me ? null : await readInvite(env, b.k), ref = parseRef(b.ref);
+  const invited = !!(inv && ref && ref.kind === 'booking' && ref.id === inv.id);
+  if (!invited && !await rvAllowed(env, request, me, 'rv', me ? 6 : 3)) fail(429, 'That is enough reviews for today — thank you!', 'rv_limit');
+  const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, 3);
+  const parsed = photos.map((p) => {
+    const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(p && p.data || ''));
+    if (!m) fail(400, 'One of the photos could not be read', 'photo_bad');
+    if (m[2].length * 0.75 > VAULT.maxPhotoBytes) fail(400, 'A photo is too large — keep each under 750 KB', 'photo_big');
+    const t = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String(p.thumb || ''));
+    return { mime: m[1], data: m[2], thumb: t && t[1].length * 0.75 <= VAULT.maxThumbBytes ? t[1] : null };
+  });
+  const saver = async (id) => {
+    const at = nowIso();
+    for (let i = 0; i < parsed.length; i++) {
+      const stored = await storePhoto(env, 'review-' + id, i, parsed[i]);
+      await env.DB.prepare("INSERT INTO mk_photos (listing_id, review_id, idx, kind, mime, data, thumb, created_at) VALUES (0, ?, ?, 'other', ?, ?, ?, ?)")
+        .bind(id, i, parsed[i].mime, stored.data, stored.thumb, at).run();
+    }
+    return parsed.length;
+  };
+  const out = await submitReview(env, me, b, saver);
+  if (out.error) fail(out.status, out.error, out.code);
+  if (!invited) await rvAllowed(env, request, me, 'rv', 0, true);
+  return json(Object.assign({ ok: true }, out));
+}
+async function postIdea({ request, env }) {
+  const me = await currentUser(request, env);
+  const b = await body(request);
+  if (b.website) return json({ ok: true });
+  if (!await rvAllowed(env, request, me, 'idea', 5)) fail(429, 'That is enough ideas for today — thank you!', 'rv_limit');
+  const out = await submitIdea(env, me, b);
+  if (out.error) fail(out.status, out.error, out.code);
+  await rvAllowed(env, request, me, 'idea', 0, true);
+  return json({ ok: true });
+}
+async function getReviewQueue({ request, env }) {
+  await needSpecialist(request, env);
+  return json(await reviewQueue(env), 200, { 'Cache-Control': 'no-store' });
+}
+async function postModerate({ request, env }) {
+  await needSpecialist(request, env);
+  const b = await body(request);
+  const out = await moderate(env, intParam(b.id), b.action, b.reason, b.reply);
+  if (out.error) fail(out.status, out.error, out.code);
+  return json({ ok: true });
+}
+async function postIdeaStatus({ request, env }) {
+  await needSpecialist(request, env);
+  const b = await body(request);
+  const out = await ideaStatus(env, intParam(b.id), b.status);
+  if (out.error) fail(out.status, out.error, out.code);
+  return json({ ok: true });
+}
+
 // ── POST listing/feature — show a live listing first for a week ───────────
 // Sellers pay by card (VAULT.feature); a specialist can feature one for free.
 async function featureRoute({ request, env }) {
@@ -1466,6 +1557,13 @@ const ROUTES = {
   'POST listing/answer': answerRequest,
   'POST listing/feature': featureRoute,
   'GET legit/cert': getCert,
+  'GET reviews': getReviews,
+  'GET reviews/mine': getMyReviews,
+  'GET reviews/queue': getReviewQueue,
+  'POST reviews': postReview,
+  'POST reviews/idea': postIdea,
+  'POST reviews/moderate': postModerate,
+  'POST reviews/idea-status': postIdeaStatus,
   'POST legit': createLegit,
   'POST legit/pay': payLegit,
   'POST legit/run': runLegit,
@@ -1499,7 +1597,7 @@ export async function onRequest(context) {
   if (!handler) return json({ error: 'Not found' }, 404);
   try {
     await ensureSchema(env);
-    if (route !== 'photo') await housekeeping(env);
+    if (route !== 'photo') { await housekeeping(env); await sendInvites(env); }
     return await handler(context);
   } catch (e) {
     if (e instanceof HttpError) return json(Object.assign({ error: e.message }, e.code ? { code: e.code } : null, e.extra), e.status);

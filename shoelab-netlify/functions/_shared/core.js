@@ -40,6 +40,8 @@ const COLUMNS = [
   ['users', 'postal', 'TEXT'], ['users', 'country', 'TEXT'], ['users', 'stripe_customer_id', 'TEXT'],
   ['users', 'lang', 'TEXT'], ['users', 'email_verified_at', 'TEXT'],
   ['bookings', 'lang', 'TEXT'],
+  // the customer agreed to be asked for feedback after the appointment; when we did
+  ['bookings', 'feedback_ok', 'INTEGER'], ['bookings', 'review_invited', 'TEXT'],
 ];
 const TABLES = [
   // one-time links: email confirmation (and anything like it later)

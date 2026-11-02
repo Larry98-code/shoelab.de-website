@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '7';   // bump together with the ?v= of the translation files
+  var V = '8';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },
@@ -633,9 +633,14 @@
         return '<a class="v-link' + (k === key ? ' on' : '') + (extra || '') + '" href="' + href + '"' + (k === key ? ' aria-current="page"' : '') + '>' + esc(label) + '</a>';
       };
       nav.innerHTML =
-        '<a class="v-brand" href="/vault.html" aria-label="ShoeLab Vault">' +
-          '<img src="/img/shoelab-logo-96.png" alt="" width="34" height="34" decoding="async"/>' +
-          '<span class="v-brand-text">SHOE<b>LAB</b><i>VAULT</i></span></a>' +
+        // pages about all of ShoeLab (reviews) carry the plain ShoeLab name
+        (page.brand === 'lab'
+          ? '<a class="v-brand" href="/" aria-label="ShoeLab">' +
+              '<img src="/img/shoelab-logo-96.png" alt="" width="34" height="34" decoding="async"/>' +
+              '<span class="v-brand-text">SHOE<b>LAB</b></span></a>'
+          : '<a class="v-brand" href="/vault.html" aria-label="ShoeLab Vault">' +
+              '<img src="/img/shoelab-logo-96.png" alt="" width="34" height="34" decoding="async"/>' +
+              '<span class="v-brand-text">SHOE<b>LAB</b><i>VAULT</i></span></a>') +
         '<nav class="v-links" aria-label="Vault">' +
           link('browse', '/vault.html', t('navBrowse')) +
           link('sell', '/vault-sell.html', t('navSell')) +
@@ -714,6 +719,7 @@
             '<a href="/vault-sell.html">' + esc(t('sellPair')) + '</a>' +
             '<a href="/legit.html">' + esc(t('navLegit')) + '</a>' +
             '<a href="/verified.html">' + esc(t('footVerify')) + '</a>' +
+            '<a href="/reviews.html">' + esc(t('footReviews')) + '</a>' +
             '<a href="/">ShoeLab.de</a>' +
             '<a href="/vault-terms.html">' + esc(t('footTerms')) + '</a>' +
             '<a href="/datenschutz.html">' + esc(t('footPrivacy')) + '</a>' +
@@ -989,6 +995,18 @@
     });
   }
 
+  /* ── sharing a listing ──────────────────────────────────────────────── */
+  function shareListing(it) {
+    var url = w.location.origin + '/vault-item.html?id=' + it.id;
+    var text = t('congShareText', { title: it.title });
+    if (navigator.share) return navigator.share({ title: it.title, text: text, url: url }).catch(function () {});
+    var done = function (ok) { toast(t(ok ? 'congCopied' : 'certCopyFail'), ok ? 'ok' : 'bad'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(url).then(function () { done(true); }, function () { done(false); });
+    done(false);
+  }
+  // live for less than a week: the seller sees a congratulations
+  function freshlyLive(it) { return it && it.status === 'live' && it.liveAt && Date.now() - Date.parse(it.liveAt) < 7 * 86400000; }
+
   /* ── relisting an ended pair with new terms ──────────────────────────── */
   function relistFlow(l) {
     return new Promise(function (resolve) {
@@ -1087,7 +1105,7 @@
     sellerPrompt: sellerPrompt, payoutsSetup: payoutsSetup,
     busy: busy, toast: toast, modal: modal, confirm: confirmBox,
     tierBadge: tierBadge, condLabel: condLabel, countdownHtml: countdownHtml, photoHtml: photoHtml,
-    totalsHtml: totalsHtml, lineHtml: lineHtml, payFlow: payFlow, relistFlow: relistFlow,
+    totalsHtml: totalsHtml, lineHtml: lineHtml, payFlow: payFlow, relistFlow: relistFlow, shareListing: shareListing, freshlyLive: freshlyLive,
     card: card, skeletonCards: skeletonCards, itemHref: itemHref, heartHtml: heartHtml,
     applyI18n: applyI18n, renderChrome: renderChrome, reveal: reveal, tick: tick,
     previewItems: previewItems, boot: boot

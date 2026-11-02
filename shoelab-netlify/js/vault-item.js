@@ -179,8 +179,12 @@
     if (isOwner()) {
       if (L.status === 'review') out.push(stateBox('warn', 'clock', esc(t('ownReview')) + ' <button type="button" class="v-link-btn" data-act="withdraw">' + esc(t('withdraw')) + '</button>'));
       else if (L.status === 'rejected') out.push(stateBox('bad', 'alert', '<b>' + esc(t('ownRejected')) + '</b> ' + esc(L.reviewNote || '') + ' <a href="/vault-sell.html">' + esc(t('listAgain')) + '</a>'));
-      else if (L.status === 'live') out.push(stateBox('info', 'eye', esc(t('ownLive')) + (L.bids ? '' : ' <button type="button" class="v-link-btn" data-act="withdraw">' + esc(t('withdraw')) + '</button>') +
-        ' · <a href="/vault-me.html#selling">' + esc(t('manageInVault')) + '</a>'));
+      else if (L.status === 'live') {
+        if (S.freshlyLive(L)) out.push(stateBox('gold', 'check', '<b>' + esc(t('congT', { title: L.title })) + '</b> ' + esc(t(L.tier === 'lab' ? 'congP_lab' : 'congP_photo')) +
+          ' <button type="button" class="v-link-btn" data-act="share">' + esc(t('congShare')) + '</button>'));
+        out.push(stateBox('info', 'eye', esc(t('ownLive')) + (L.bids ? '' : ' <button type="button" class="v-link-btn" data-act="withdraw">' + esc(t('withdraw')) + '</button>') +
+          ' · <a href="/vault-me.html#selling">' + esc(t('manageInVault')) + '</a>'));
+      }
       else if (L.status === 'sold') out.push(stateBox('ok', 'check', '<b>' + esc(t('ownSold', { amount: money(L.price) })) + '</b>' +
         (v.order ? ' <a href="/vault-me.html#order-' + v.order.id + '">' + esc(t('viewOrder')) + '</a>' : '')));
       else if (L.status === 'ended' || L.status === 'cancelled') out.push(stateBox('info', 'info', esc(t(L.status === 'ended' ? 'ownEnded' : 'ownCancelled')) +
@@ -351,7 +355,7 @@
       if (!a) return;
       var act = a.getAttribute('data-act');
       if (pv && act !== 'pay') { S.toast(t('previewOnly'), 'info'); return; }
-      ({ buy: onBuy, offer: onOffer, withdraw: onWithdraw, relist: onRelist, pay: onPayExisting, featureFree: onFeatureFree,
+      ({ buy: onBuy, offer: onOffer, withdraw: onWithdraw, relist: onRelist, pay: onPayExisting, featureFree: onFeatureFree, share: function () { S.shareListing(L); },
          withdrawOffer: function () { respond('withdraw'); }, acceptCounter: function () { respond('accept'); },
          declineCounter: function () { respond('decline'); } })[act]();
     });

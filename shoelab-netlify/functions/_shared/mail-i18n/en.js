@@ -9,6 +9,10 @@
 // Subject tags in [BRACKETS] stay English in every language (inbox filters).
 export default {
   _: {
+    // reviews and the satisfaction survey
+    t_studio: 'Studio cleaning', t_vault_buy: 'Vault purchase', t_vault_sell: 'Vault sale', t_legit: 'Legit Check', t_shop: 'Shop', t_other: 'Something else',
+    it_studio: 'The studio', it_vault: 'The Vault', it_legit: 'The Legit Check', it_shop: 'The shop', it_website: 'The website', it_other: 'Something else',
+    topic: 'About', rated: 'Rating', nps: 'Would recommend', verifiedRow: 'Verified', publicRow: 'To be published', photosRow: 'Photos', privateNote: 'Private note', yes: 'yes', no: 'no',
     // the Legit Check, and the cleaning a buyer adds to a Lab Verified order
     mode: 'Check for', modeBuy: 'Buying', modeSell: 'Selling (certificate)', platform: 'Platform', asked: 'Price asked', customer: 'Customer',
     cleaning: 'Cleaning before shipping', addon_refresh: 'The ShoeLab Refresh', addon_revival: 'The ShoeLab Revival',
@@ -45,6 +49,12 @@ export default {
     nextPhotoCheck: 'A ShoeLab specialist now checks your photos for authenticity. If everything adds up, the listing goes live with the Photo Verified badge.',
     nextLabCheck: 'We give it a quick look and put it live. Once it sells, you post it to our lab and a specialist authenticates it by hand before it travels on to the buyer.',
     liveLab: 'It is live now, and every buyer sees that our lab will check it by hand before it ships.',
+    itemNo: 'Item number', startPrice: 'Start price', endsAt: 'Auction ends', payoutEst: 'You receive if it sells at this price',
+    liveNoMorePhotos: 'You do not need to send the extra photos we asked for earlier — your pair is approved.',
+    liveNextFixed: 'What happens next: buyers can buy it straight away. When it sells, we email you at once; you then ship within three working days and are paid once the buyer has it.',
+    liveNextOffers: 'What happens next: buyers can buy it straight away or make you an offer, which you accept, decline or counter in My Vault. When it sells, we email you at once; you then ship within three working days and are paid once the buyer has it.',
+    liveNextAuction: 'What happens next: the auction runs until {ends}. We email you as soon as it ends with a winner; you then ship within three working days and are paid once the buyer has it.',
+    liveShare: 'Tip: share your listing link on Instagram or WhatsApp — pairs that get shared sell faster.',
     livePhoto: 'Our specialists checked your photos, so it carries the Photo Verified badge.',
     paidNextLab: 'The seller now posts the pair to our lab. A specialist authenticates it before it travels on to you.',
     paidNextPhoto: 'The seller now posts the pair to you. You will get the tracking number by email.',
@@ -100,8 +110,8 @@ export default {
     c: 'View your listing',
   },
   listingLive: {
-    s: 'Your {title} is live',
-    b: ['Hi {name},', 'Good news: your {title} is now live in the ShoeLab Vault.', '{note}'],
+    s: 'Congratulations — your {title} is live',
+    b: ['Hi {name},', 'Congratulations! Your {title} passed our review and is now live in the ShoeLab Vault.', '{note}', '%rows', '{asked}', '{next}', '{share}'],
     c: 'See your listing',
   },
   listingNeedsMore: {
@@ -387,6 +397,32 @@ export default {
   sLegitRefund: {
     s: '[VAULT] Refund Legit Check {ref}',
     b: ['The check could not reach a verdict, so please refund {amount} to {email} by hand ({title}).'],
+  },
+  // ── reviews and the satisfaction survey ──
+  reviewInvite: {
+    s: 'How was your {service}?',
+    b: ['Hi {name},', 'Thanks for visiting ShoeLab. You asked us to check in after your appointment: how happy are you with your {service}?', 'It takes a minute — and it helps us and other sneaker lovers in Bremen.'],
+    c: 'Rate your experience',
+  },
+  reviewLive: {
+    s: 'Your review is live',
+    b: ['Hi {name},', 'Thank you — your review is now on shoelabonline.de for everyone to read.', '%message'],
+    c: 'See your review',
+  },
+  reviewReply: {
+    s: 'ShoeLab replied to your review',
+    b: ['Hi {name},', 'The ShoeLab team answered your review:', '%message'],
+    c: 'See the reply',
+  },
+  sReviewNew: {
+    s: '[REVIEW] {stars} {topic}',
+    b: ['A new review is waiting for you in the lab console. Publish it (positive or negative), or reject it only for a stated reason.', '%rows', '%message'],
+    c: 'Open the lab console',
+  },
+  sIdea: {
+    s: '[IDEA] {topic}',
+    b: ['Someone has an idea for ShoeLab:', '%rows', '%message'],
+    c: 'Open the lab console',
   },
   sTest: {
     s: '[TEST] ShoeLab email check',

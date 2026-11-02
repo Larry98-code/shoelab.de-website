@@ -207,6 +207,7 @@
       (o.status === 'cancelled' ? '' : timeline(o)) +
       orderActions(o) +
       (buyer && o.status === 'delivered' ? careHtml() : '') +
+      (o.status === 'delivered' ? rateHtml((buyer ? 'buy-' : 'sell-') + o.id) : '') +
       '<details class="v-order-more"><summary>' + esc(t('orderDetails')) + '</summary><div class="in">' +
         '<div><div class="v-lines">' + lines + '</div>' +
           trackingLine(t('trackingIn'), o.trackingIn) + trackingLine(t('trackingOut'), o.trackingOut) + '</div>' +
@@ -314,6 +315,11 @@
     });
   }
 
+  // finished with something? one tap to the satisfaction survey (once per order or check)
+  function rateHtml(ref) {
+    if ((data.reviewed || []).indexOf(ref) !== -1) return '<p class="v-note" style="margin-top:0.7rem;">' + S.ico('check') + ' ' + esc(t('rvThanksRated')) + '</p>';
+    return '<div class="v-btn-row" style="justify-content:flex-start;margin-top:0.8rem;"><a class="v-btn ghost xs v-rate-btn" href="/reviews.html?ref=' + ref + '#write">' + S.ico('star') + esc(t('rvWriteBtn')) + '</a></div>';
+  }
   // after delivery: keeping the new pair fresh is what the studio does
   function careHtml() {
     return '<div class="v-care">' + S.ico('sparkle') + '<div><b>' + esc(t('careT')) + '</b><small>' + esc(t('careP')) + '</small></div>' +
@@ -340,6 +346,21 @@
         msg.textContent = res.ok ? '' : S.errText(res); msg.className = 'v-msg bad';
       });
     });
+  }
+
+  /* ── a listing just went live ─────────────────────────────────────── */
+  function congratsSeen(id) { try { return !!w.localStorage.getItem('slv_cong_' + id); } catch (e) { return false; } }
+  function congratsHtml() {
+    return data.selling.listings.filter(function (l) { return S.freshlyLive(l) && !congratsSeen(l.id); }).map(function (l) {
+      return '<section class="v-congrats" id="cong-' + l.id + '">' +
+        '<div class="v-congrats-badge">' + S.ico('check') + '</div>' +
+        '<div class="v-congrats-txt"><small>' + esc(t('congEyebrow')) + '</small><b>' + esc(t('congT', { title: l.title })) + '</b>' +
+          '<p>' + esc(t(l.tier === 'lab' ? 'congP_lab' : 'congP_photo')) + '</p>' +
+          '<div class="v-btn-row" style="justify-content:flex-start;"><a class="v-btn gold sm" href="' + S.itemHref(l) + '">' + esc(t('congView')) + '</a>' +
+            '<button type="button" class="v-btn ghost sm" data-cong-share="' + l.id + '">' + S.ico('upload') + esc(t('congShare')) + '</button></div></div>' +
+        '<button type="button" class="v-congrats-x" data-cong-x="' + l.id + '" aria-label="' + esc(t('close')) + '">✕</button>' +
+      '</section>';
+    }).join('');
   }
 
   /* ── Legit Checks ─────────────────────────────────────────────────── */
@@ -375,7 +396,7 @@
       body = '<div class="v-lg-result ' + (VD_TONE[g.verdict] || '') + '"><b>' + esc(t('lr_' + g.verdict)) + '</b>' +
         (g.resultNote ? '<p>' + esc(g.resultNote) + '</p>' : '') +
         (g.refunded ? '<small>' + esc(t('lgRefunded')) + '</small>' : '') + '</div>' +
-        (g.cert ? certHtml(g) : '');
+        (g.cert ? certHtml(g) : '') + rateHtml('legit-' + g.id);
     }
     return '<article class="v-order v-lgc" id="legit-' + g.id + '">' +
       '<div class="v-order-top">' +
@@ -565,7 +586,7 @@
     $('meHello').textContent = t('hello', { name: S.firstName(u.name) || '' });
     if (!tab) tab = pickTab();
     var td = todos(), c = counts();
-    var h = '';
+    var h = congratsHtml();
     if (td.length) {
       h += '<div class="v-todo" role="list" aria-label="' + esc(t('todoTitle')) + '">' + td.map(function (x) {
         return '<button type="button" class="v-todo-item" role="listitem" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '" data-todo-payouts="' + (x.payouts || '') + '" data-todo-need="' + (x.need || '') + '" data-todo-legit="' + (x.legit || '') + '">' +
@@ -678,6 +699,12 @@
       return;
     }
     if (g('data-pay')) { pay(+g('data-pay')); return; }
+    if (g('data-cong-share')) { var cl = data.selling.listings.filter(function (x) { return x.id === +g('data-cong-share'); })[0]; if (cl) S.shareListing(cl); return; }
+    if (g('data-cong-x')) {
+      try { w.localStorage.setItem('slv_cong_' + g('data-cong-x'), '1'); } catch (e2) {}
+      var cg = $('cong-' + g('data-cong-x')); if (cg) cg.remove();
+      return;
+    }
     if (g('data-lg-send')) { sendLegitNeeds(el, +g('data-lg-send')); return; }
     if (g('data-lg-cert')) { legitCert(el, +g('data-id'), g('data-lg-cert')); return; }
     if (g('data-lg-copymsg')) {

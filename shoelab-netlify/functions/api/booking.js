@@ -33,6 +33,9 @@ export async function onRequestPost(context) {
   const lang = pickLang(body.lang) || requestLang(request);
 
   const payMode = clean(body.payMode, 10) === 'studio' ? 'studio' : 'online';
+  // they ticked "ask me for feedback after my appointment" (an invitation is
+  // advertising under German law, so only with this consent)
+  const feedbackOk = body.feedbackOk === true ? 1 : 0;
   const status = payMode === 'studio' ? 'unpaid' : 'pending';
 
   if (!first || !validEmail(email)) {
@@ -48,11 +51,11 @@ export async function onRequestPost(context) {
     const user = await currentUser(request, env);
     const res = await env.DB.prepare(
       `INSERT INTO bookings
-       (user_id, first_name, last_name, email, phone, type, service, plan, amount, date, time_slot, notes, status, lang)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       (user_id, first_name, last_name, email, phone, type, service, plan, amount, date, time_slot, notes, status, lang, feedback_ok)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       user ? user.id : null, first, last, email, phone, type, service, plan,
-      amount, date, time, notes, status, lang
+      amount, date, time, notes, status, lang, feedbackOk
     ).run();
     bookingId = res.meta.last_row_id;
   }

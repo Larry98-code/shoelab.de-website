@@ -16,6 +16,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="stylesheet" href="/css/flow.css?v=1"/>
+<style>.co-feedback{display:flex;gap:0.6rem;align-items:flex-start;margin:1rem 0 0.2rem;font-size:0.8rem;color:#bbb;line-height:1.5;cursor:pointer;}
+.co-feedback input{width:17px;height:17px;margin-top:0.1rem;accent-color:#CC1111;flex-shrink:0;}
+</style>
 </head>
 <body>
 
@@ -79,6 +82,7 @@
         <div class="sum-line"><span data-t="email">Email</span><span id="coEmail">—</span></div>
         <div class="sum-line"><span data-t="phone">Phone / WhatsApp</span><span id="coPhone">—</span></div>
         <div class="sum-line" id="coNotesRow" style="display:none;"><span data-t="notes">Notes</span><span id="coNotes">—</span></div>
+        <label class="co-feedback"><input type="checkbox" id="coFeedback"/><span data-t="feedbackOk">Ask me how it went after my appointment (one email, the day after).</span></label>
         <div class="btn-row">
           <a class="btn btn-ghost btn-sm" href="/booking.html" data-t="editBooking">← Edit booking</a>
         </div>
@@ -116,7 +120,7 @@
 <script src="https://js.stripe.com/v3/"></script>
 <script src="/js/sl-geo.js?v=2"></script>
 <script src="/js/sl-stripe.js?v=1"></script>
-<script src="/js/flow.js?v=2"></script>
+<script src="/js/flow.js?v=3"></script>
 <script>
 (function(){
   var F = window.SLFlow, S = window.SLStripe;
@@ -185,7 +189,9 @@
         plan: isSub() ? order.serviceName + ' (monthly)' : '',
         amount: order.amount,
         date: order.date, time: order.time, notes: order.notes,
-        lang: F.lang(), payMode: payMode
+        lang: F.lang(), payMode: payMode,
+        // optional: one feedback email after the appointment, only if ticked
+        feedbackOk: !!(el('coFeedback') && el('coFeedback').checked)
       })
     })
     .then(function(r){ return r.json().catch(function(){ return {}; }); })

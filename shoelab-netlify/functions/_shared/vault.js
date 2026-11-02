@@ -230,6 +230,20 @@ const SCHEMA = [
   'CREATE INDEX IF NOT EXISTS mk_lg_user ON mk_legit(user_id, id)',
   'CREATE INDEX IF NOT EXISTS mk_lg_status ON mk_legit(status, id)',
   'CREATE UNIQUE INDEX IF NOT EXISTS mk_lg_cert ON mk_legit(cert)',
+  // reviews and the satisfaction survey (kind 'review'), and ideas (kind 'idea'):
+  // see reviews.js. Photos of a review sit in mk_photos with review_id set.
+  `CREATE TABLE IF NOT EXISTS fb_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, topic TEXT NOT NULL,
+    ref_kind TEXT, ref_id INTEGER, ref_label TEXT, verified INTEGER NOT NULL DEFAULT 0,
+    user_id INTEGER, name TEXT, email TEXT, lang TEXT,
+    rating INTEGER, aspects TEXT, nps INTEGER, title TEXT, body TEXT, private_note TEXT,
+    publish INTEGER NOT NULL DEFAULT 1, status TEXT NOT NULL,
+    reject_reason TEXT, reply TEXT, reply_at TEXT,
+    created_at TEXT NOT NULL, published_at TEXT, updated_at TEXT
+  )`,
+  'CREATE INDEX IF NOT EXISTS fb_r_status ON fb_reviews(kind, status, id)',
+  // one review per booking, order side or Legit Check
+  "CREATE UNIQUE INDEX IF NOT EXISTS fb_r_ref ON fb_reviews(ref_kind, ref_id) WHERE ref_kind IS NOT NULL AND kind = 'review'",
   // daily message counts that keep the support assistant from being abused
   `CREATE TABLE IF NOT EXISTS support_usage (
     k TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (k, day)
@@ -244,12 +258,14 @@ const LATER = [
   ['mk_photos', 'legit_id', 'INTEGER'], ['mk_checks', 'legit_id', 'INTEGER'], ['mk_requests', 'legit_id', 'INTEGER'],
   // the cleaning a buyer added to a Lab Verified order, and featured listings
   ['mk_orders', 'addon', 'TEXT'], ['mk_orders', 'addon_fee', 'INTEGER'], ['mk_listings', 'featured_until', 'TEXT'],
+  ['mk_photos', 'review_id', 'INTEGER'],
 ];
 // indexes on the columns above, made once they exist
 const LATER_INDEXES = [
   'CREATE INDEX IF NOT EXISTS mk_p_legit ON mk_photos(legit_id, idx)',
   'CREATE INDEX IF NOT EXISTS mk_c_legit ON mk_checks(legit_id, id)',
   'CREATE INDEX IF NOT EXISTS mk_r_legit ON mk_requests(legit_id, id)',
+  'CREATE INDEX IF NOT EXISTS mk_p_review ON mk_photos(review_id, idx)',
 ];
 
 let schemaReady = false;
@@ -306,8 +322,21 @@ export async function approveListing(env, l, note, kind) {
     .bind(at, ends, note || null, at, l.id).run();
   if (!r.meta.changes) return false;
   await logEvent(env, { listingId: l.id, kind: kind || 'approved', note: note || null });
+  // a photo request still open is no longer needed: the pair is approved
+  const closed = await env.DB.prepare("UPDATE mk_requests SET status = 'closed' WHERE listing_id = ? AND status = 'open'").bind(l.id).run();
+  // the seller's congratulations: what is live, at what price, what they will
+  // receive if it sells there, and what happens next
+  const auction = l.format === 'auction';
+  const price = auction ? l.start_price : l.buy_now;
   await tell(env, await userById(env, l.seller_id), 'listingLive', {
     title: listingTitle(l), url: '/vault-item.html?id=' + l.id, note: { k: l.tier === 'photo' ? 'livePhoto' : 'liveLab' },
+    ends: ends ? { d: ends } : '',
+    rows: [['itemNo', '#' + l.id], ['size', 'EU ' + l.size], ['tier', { k: l.tier === 'lab' ? 'tierLab' : 'tierPhoto' }],
+      [auction ? 'startPrice' : 'price', price ? { m: price } : ''], auction && ends ? ['endsAt', { d: ends }] : null,
+      !auction && price ? ['payoutEst', { m: fees(l.tier, price).payout }] : null].filter(Boolean),
+    asked: closed.meta && closed.meta.changes ? { k: 'liveNoMorePhotos' } : '',
+    next: { k: auction ? 'liveNextAuction' : l.accept_offers ? 'liveNextOffers' : 'liveNextFixed' },
+    share: { k: 'liveShare' },
   });
   return true;
 }

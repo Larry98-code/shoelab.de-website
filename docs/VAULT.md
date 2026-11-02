@@ -35,6 +35,15 @@ it, and you post it on to the buyer. If it fails, the buyer is refunded in full.
 
 ## How a sale moves
 
+When a specialist approves a listing, the seller gets a **congratulations
+email** ("Congratulations — your … is live") with the item number, size,
+price, what they receive if it sells at that price, and what happens next for
+their format (fixed price, offers or auction). If the Lab Check had asked them
+for more photos, the request is closed and the email tells them they need not
+send them. For seven days My Vault opens with a congratulations card, and the
+listing page congratulates its owner, both with a **Share** button (the
+phone's share sheet, or the link copied).
+
 ```
 Photo Verified:  sold → paid → shipped → delivered → payout
 Lab Verified:    sold → paid → to the lab → in the lab → authenticated → shipped → delivered → payout
@@ -231,6 +240,41 @@ The terms (§ 17) and the privacy policy (section 7) cover all of this; the
 customer ticks the box that the service may start before the withdrawal period
 ends.
 
+## Reviews and the satisfaction survey
+
+`/reviews.html` is ShoeLab's review wall and satisfaction survey, for the
+studio, the Vault, the Legit Check and the shop.
+
+- **The survey** takes about a minute:
+  1. **What's being rated.** Signed-in customers see their own past bookings,
+     Vault orders and Legit Checks; picking one marks the review **Verified**.
+     Anyone else picks a topic, and the review shows "Not verified".
+  2. **How satisfied they are:** overall stars, four parts of that service
+     (for the studio: result, service, value, speed), and "how likely to
+     recommend us" from 0 to 10.
+  3. **The review itself:** text and photos, a **private note for the team**,
+     and whether to publish at all.
+- **Moderation:** everything waits in the Lab console, tab **Reviews**, where
+  you'll also find satisfaction over the last 90 days, the recommendation
+  score (NPS) and the ideas customers send.
+  - **Publish** a review (optionally with a public reply), or **turn it down**
+    only for a stated reason: spam, insults, other people's personal data,
+    not about ShoeLab, or a duplicate.
+  - Under German law (§ 5b UWG), turning down a fair negative review is
+    misleading. Reply to it instead.
+- **Getting reviews:**
+  - My Vault shows "Rate your experience" on finished orders and Legit Checks.
+  - The homepage reviews section links to the survey.
+  - Booking customers can tick "ask me how it went" at checkout and then get
+    one email the day after their appointment. Feedback emails without that
+    consent count as advertising in Germany, so no one else is emailed.
+  - In the studio, hand customers a card with a QR code to
+    `https://shoelabonline.de/reviews.html#write`.
+- **Google:** set `GOOGLE_REVIEW_URL` (your Google review link) as a
+  Cloudflare variable, and the thank-you screen also invites everyone to
+  review you on Google. It's shown to everyone, whatever their rating; asking
+  only happy customers isn't allowed.
+
 ## Emails in everyone's own language
 
 Every email goes out in the recipient's language: the one they picked on the
@@ -261,6 +305,8 @@ language of the account with the `NOTIFY_EMAIL` address.
 | `Refunded order #N` | For your records: Stripe refunded the buyer |
 | `Refund failed for order #N` | Refund the buyer by hand in Stripe |
 | `Support request #N` | Lab console → Support |
+| `[REVIEW] ★★★★☆ …` | Lab console → Reviews: publish (with a reply if you like) or turn down with a reason |
+| `[IDEA] …` | Lab console → Reviews → Ideas; reply by email if they left one |
 | `Lab Check flagged a listing: …` | Lab console → Review queue: read the red flags, then reject, or **Ask the seller for these** |
 | `Legit Check LC-N: …` | A Legit Check was paid: answer it in Lab console → **Legit Checks** |
 | `Payment details needed for Legit Check LC-N` | Card payments are off: email the customer payment details, then **Mark as paid** |

@@ -10,7 +10,8 @@
   'use strict';
   var S = w.SLV, t = S.t, esc = S.esc, money = S.money;
   var $ = function (id) { return d.getElementById(id); };
-  var data = null, tab = /#support$/.test(w.location.hash) ? 'support' : /#orders$/.test(w.location.hash) ? 'orders' : /#legit$/.test(w.location.hash) ? 'legit' : 'review', timer = null;
+  var data = null, tab = /#support$/.test(w.location.hash) ? 'support' : /#orders$/.test(w.location.hash) ? 'orders' : /#legit$/.test(w.location.hash) ? 'legit' : /#reviews$/.test(w.location.hash) ? 'reviews' : 'review', timer = null;
+  var rv = null;            // reviews, satisfaction and ideas (reviews/queue)
   var drafts = {};   // answers being written survive the minute-by-minute refresh
 
   function load() {
@@ -23,6 +24,7 @@
       keepDrafts();
       data = res.data;
       render();
+      S.market('reviews/queue').then(function (r2) { if (r2.ok) { rv = r2.data; keepDrafts(); render(); } });
       clearTimeout(timer);
       timer = setTimeout(function () { if (!d.hidden) load(); }, 60000);
     });
@@ -180,6 +182,81 @@
     });
   }
 
+  /* ── reviews: satisfaction, moderation, ideas ─────────────────────── */
+  function rvStars(n) { var h = ''; for (var i = 1; i <= 5; i++) h += i <= n ? '★' : '☆'; return '<span class="lab-rv-stars">' + h + '</span>'; }
+  function reviewsHtml() {
+    if (!rv) return '<div class="v-empty"><span class="v-lc-spin"></span></div>';
+    var s = rv.stats;
+    var head = '<div class="v-stats" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:1rem;">' +
+      stat(t('rvLabSat'), s.avg != null ? esc(S.num(s.avg)) + ' ★' : '—') +
+      stat(t('rvLabNps'), s.nps != null ? (s.nps > 0 ? '+' : '') + s.nps : '—') +
+      stat(t('rvLabAnswers'), S.num(s.n)) + stat(t('rvLabIdeas'), S.num(s.newIdeas)) + '</div>' +
+      (Object.keys(s.topics).length ? '<p class="v-note" style="margin:-0.3rem 0 1.2rem;">' + Object.keys(s.topics).map(function (k) {
+        return esc(t('rvT_' + k)) + ' ' + esc(S.num(s.topics[k].avg)) + ' ★ (' + s.topics[k].n + ')';
+      }).join(' · ') + ' · <a href="/reviews.html" target="_blank" rel="noopener">' + esc(t('rvLabOpenPage')) + ' ↗</a></p>' : '');
+    var card = function (r, done) {
+      var asp = Object.keys(r.aspects || {});
+      var act = '';
+      if (!done) {
+        act = r.publish
+          ? '<div class="v-field" style="margin:0.8rem 0 0.5rem;"><label class="v-label" for="rvrep' + r.id + '"><span>' + esc(t('rvLabReply')) + '</span><small>' + esc(t('optional')) + '</small></label>' +
+              '<textarea class="v-textarea" id="rvrep' + r.id + '" rows="2" maxlength="1500"></textarea></div>' +
+            '<div class="v-btn-row"><button type="button" class="v-btn ok sm" data-rvm="publish" data-id="' + r.id + '">' + esc(t('rvLabPublish')) + '</button>' +
+              '<select class="v-select" id="rvwhy' + r.id + '" style="flex:1;min-width:150px;"><option value="">' + esc(t('rvLabRejectWhy')) + '</option>' +
+                ['spam', 'offensive', 'personal', 'offtopic', 'duplicate'].map(function (k) { return '<option value="' + k + '">' + esc(t('rvRej_' + k)) + '</option>'; }).join('') + '</select>' +
+              '<button type="button" class="v-btn danger sm" data-rvm="reject" data-id="' + r.id + '">' + esc(t('rvLabReject')) + '</button></div>'
+          : '<div class="v-btn-row"><button type="button" class="v-btn ghost sm" data-rvm="archive" data-id="' + r.id + '">' + esc(t('rvLabArchive')) + '</button></div>';
+      } else if (r.status === 'published') {
+        act = '<div class="v-btn-row" style="justify-content:flex-start;"><button type="button" class="v-btn ghost xs" data-rvm="unpublish" data-id="' + r.id + '">' + esc(t('rvLabUnpublish')) + '</button></div>';
+      }
+      return '<article class="v-ticket lab-rv" id="rv-' + r.id + '">' +
+        '<div class="lab-rv-top">' + rvStars(r.rating) + '<b>' + esc(t('rvT_' + r.topic)) + '</b>' +
+          (r.verified ? '<span class="v-chip ok">' + esc(t('rvVerifiedShort')) + '</span>' : '<span class="v-chip">' + esc(t('rvUnverified')) + '</span>') +
+          (!r.publish ? '<span class="v-chip gold">' + esc(t('rvLabPrivate')) + '</span>' : '') +
+          (done ? '<span class="v-chip ' + (r.status === 'published' ? 'ok' : '') + '">' + esc(t('rvSt_' + r.status)) + (r.rejectReason ? ' · ' + esc(t('rvRej_' + r.rejectReason)) : '') + '</span>' : '') +
+          '<span class="v-note">' + esc(S.ago(r.createdAt)) + '</span></div>' +
+        '<p class="v-note" style="margin:0.35rem 0 0.6rem;">' + esc(r.name || '') + (r.email ? ' · <a href="mailto:' + esc(r.email) + '">' + esc(r.email) + '</a>' : '') +
+          (r.refLabelAny ? ' · ' + esc(r.refLabelAny) : '') + (r.nps != null ? ' · ' + esc(t('rvLabNpsOne', { n: r.nps })) : '') + '</p>' +
+        (r.title ? '<b class="lab-rv-title">' + esc(r.title) + '</b>' : '') +
+        (r.body ? '<p class="lab-rv-body">' + esc(r.body) + '</p>' : '') +
+        (asp.length ? '<p class="v-note">' + asp.map(function (a) { return esc(t('rvA_' + a)) + ' ' + r.aspects[a] + '/5'; }).join(' · ') + '</p>' : '') +
+        (r.photos && r.photos.length ? '<div class="lab-rv-ph">' + r.photos.map(function (p, i) {
+          return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener"><img src="' + esc(p.url) + '&amp;s=t" alt=""/></a>';
+        }).join('') + '</div>' : '') +
+        (r.note ? '<div class="lab-rv-note">' + S.ico('lock') + '<div><b>' + esc(t('rvLabNote')) + '</b><p>' + esc(r.note) + '</p></div></div>' : '') +
+        (r.reply ? '<div class="rv-reply"><b>' + esc(t('rvReplyFrom')) + '</b><p>' + esc(r.reply) + '</p></div>' : '') +
+        act + '</article>';
+    };
+    var ideas = rv.ideas.map(function (i) {
+      return '<div class="lab-idea' + (i.status === 'new' ? ' new' : '') + '"><div><b>' + esc(t('rvIT_' + i.topic)) + '</b><span class="v-note"> · ' + esc(S.ago(i.at)) + (i.name ? ' · ' + esc(i.name) : '') +
+        (i.email ? ' · <a href="mailto:' + esc(i.email) + '">' + esc(i.email) + '</a>' : '') + '</span><p>' + esc(i.body) + '</p></div>' +
+        (i.status !== 'done' ? '<button type="button" class="v-btn ghost xs" data-idea="' + i.id + '">' + esc(t('rvLabIdeaDone')) + '</button>' : '<span class="v-chip ok">' + esc(t('rvLabIdeaIsDone')) + '</span>') + '</div>';
+    }).join('');
+    return head +
+      '<h3 class="v-h3" style="margin:0.4rem 0 0.8rem;">' + esc(t('rvLabWaiting')) + '</h3>' +
+      (rv.pending.length ? rv.pending.map(function (r) { return card(r, false); }).join('') : '<p class="v-note" style="margin-bottom:1.2rem;">' + esc(t('rvLabNone')) + '</p>') +
+      '<h3 class="v-h3" style="margin:1.4rem 0 0.8rem;">' + esc(t('rvLabIdeasT')) + '</h3>' +
+      (ideas || '<p class="v-note">' + esc(t('rvLabNoIdeas')) + '</p>') +
+      (rv.recent.length ? '<details class="v-faq" style="margin-top:1.4rem;"><summary>' + esc(t('rvLabRecent')) + '</summary><div>' + rv.recent.map(function (r) { return card(r, true); }).join('') + '</div></details>' : '') +
+      '<p class="v-note" style="margin-top:1.2rem;">' + esc(t('rvLabRule')) + '</p>';
+  }
+  function moderateRv(btn, id, action) {
+    var body = { id: id, action: action };
+    if (action === 'publish') body.reply = (($('rvrep' + id) || {}).value || '').trim();
+    if (action === 'reject') {
+      body.reason = ($('rvwhy' + id) || {}).value;
+      if (!body.reason) { $('rvwhy' + id).classList.add('err'); S.toast(t('rvLabRejectWhy'), 'bad'); return; }
+    }
+    S.busy(btn, true);
+    S.market('reviews/moderate', { body: body }).then(function (res) {
+      S.busy(btn, false);
+      if (!res.ok) { S.toast(S.errText(res), 'bad'); return; }
+      delete drafts['rvrep' + id];
+      S.toast(t('rvLabDone_' + action), 'ok');
+      load();
+    });
+  }
+
   /* ── Legit Checks ─────────────────────────────────────────────────── */
   var LG_TONE = { awaiting_payment: 'warn', checking: 'gold', needs_info: 'warn', review: 'gold', done: '' };
   var LV_TONE = { authentic: 'ok', not_authentic: 'bad', inconclusive: 'warn' };
@@ -327,7 +404,7 @@
     '</article>';
   }
   function keepDrafts() {
-    d.querySelectorAll('[id^="tans"], [id^="lnote"], [id^="note"], [id^="lgnote"]').forEach(function (el) { if (el.value) drafts[el.id] = el.value; else delete drafts[el.id]; });
+    d.querySelectorAll('[id^="tans"], [id^="lnote"], [id^="note"], [id^="lgnote"], [id^="rvrep"]').forEach(function (el) { if (el.value) drafts[el.id] = el.value; else delete drafts[el.id]; });
   }
   function restoreDrafts() {
     Object.keys(drafts).forEach(function (id) { var el = $(id); if (el) el.value = drafts[id]; });
@@ -382,10 +459,13 @@
         stat(t('statRevenue'), money(s.revenue || 0)) + stat(t('statTickets'), S.num(openTickets)) +
       '</div>' +
       storageHtml(s) +
-      '<div class="v-tabs" role="tablist">' + tb('review', t('tabReview'), data.review.length) + tb('legit', t('tabLegit'), legitOpen) + tb('orders', t('tabOrders'), needs) + tb('support', t('tabSupport'), openTickets) + '</div>' +
+      '<div class="v-tabs" role="tablist">' + tb('review', t('tabReview'), data.review.length) + tb('legit', t('tabLegit'), legitOpen) + tb('orders', t('tabOrders'), needs) + tb('support', t('tabSupport'), openTickets) +
+        tb('reviews', t('tabReviews'), rv ? rv.pending.length + rv.stats.newIdeas : 0) + '</div>' +
       (tab === 'review' ? labStateHtml(s) : '') +
       '<div class="v-rows">' + (tab === 'review'
         ? (data.review.length ? data.review.map(reviewHtml).join('') : '<div class="v-empty">' + S.ico('check') + '<h3>' + esc(t('queueEmptyT')) + '</h3><p>' + esc(t('queueEmpty')) + '</p></div>')
+        : tab === 'reviews'
+        ? reviewsHtml()
         : tab === 'legit'
         ? (legits.length ? legits.map(legitHtml).join('') : '<div class="v-empty">' + S.ico('shield') + '<h3>' + esc(t('lgLabEmptyT')) + '</h3><p>' + esc(t('lgLabEmpty')) + '</p></div>')
         : tab === 'orders'
@@ -468,6 +548,11 @@
       S.confirm(t('lcAskT'), t('lcAskQ'), t('lcAsk'), false).then(function (y) { if (y) post(el, 'check/ask', { id: id }, 'lcAskedToast'); });
       return;
     }
+    if (el.getAttribute('data-rvm')) { moderateRv(el, id, el.getAttribute('data-rvm')); return; }
+    if (el.getAttribute('data-idea')) {
+      S.market('reviews/idea-status', { body: { id: +el.getAttribute('data-idea'), status: 'done' } }).then(function (res) { if (res.ok) load(); else S.toast(S.errText(res), 'bad'); });
+      return;
+    }
     if (el.getAttribute('data-lgpaid')) { post(el, 'legit/paid', { id: +el.getAttribute('data-lgpaid') }, 'lgPaidMarked'); return; }
     if (el.getAttribute('data-lgrevoke')) {
       var rk = el.getAttribute('data-lgrevoke') === '1';
@@ -521,7 +606,7 @@
   $('labRefresh').addEventListener('click', function () { load(); });
   w.addEventListener('hashchange', function () {
     var h = (w.location.hash || '').slice(1);
-    if ((h === 'support' || h === 'orders' || h === 'review' || h === 'legit') && h !== tab && data) { keepDrafts(); tab = h; render(); }
+    if ((h === 'support' || h === 'orders' || h === 'review' || h === 'legit' || h === 'reviews') && h !== tab && data) { keepDrafts(); tab = h; render(); }
   });
   d.addEventListener('visibilitychange', function () { if (!d.hidden && data) load(); });
 
