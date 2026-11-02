@@ -245,6 +245,23 @@ const SCHEMA = [
   // one review per booking, order side or Legit Check
   "CREATE UNIQUE INDEX IF NOT EXISTS fb_r_ref ON fb_reviews(ref_kind, ref_id) WHERE ref_kind IS NOT NULL AND kind = 'review'",
   // daily message counts that keep the support assistant from being abused
+  // the console's admin tools (see admin.js): every action, reports from
+  // members and visitors, the Vault's switches, and addresses that may not
+  // sign up again (kept as a hash, not the address)
+  `CREATE TABLE IF NOT EXISTS mk_admin_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id INTEGER, actor_name TEXT, target_kind TEXT NOT NULL, target_id INTEGER,
+    action TEXT NOT NULL, reason TEXT, note TEXT, data TEXT, created_at TEXT NOT NULL
+  )`,
+  'CREATE INDEX IF NOT EXISTS mk_al_target ON mk_admin_log(target_kind, target_id, id)',
+  `CREATE TABLE IF NOT EXISTS mk_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, target_id INTEGER NOT NULL, order_id INTEGER,
+    reason TEXT NOT NULL, details TEXT, reporter_id INTEGER, reporter_name TEXT, reporter_email TEXT NOT NULL, lang TEXT,
+    status TEXT NOT NULL DEFAULT 'open', decision TEXT, answer TEXT, handled_by TEXT, handled_at TEXT, created_at TEXT NOT NULL
+  )`,
+  'CREATE INDEX IF NOT EXISTS mk_rp_status ON mk_reports(status, id)',
+  'CREATE INDEX IF NOT EXISTS mk_rp_target ON mk_reports(kind, target_id)',
+  'CREATE TABLE IF NOT EXISTS mk_settings (k TEXT PRIMARY KEY, v TEXT, updated_at TEXT)',
+  'CREATE TABLE IF NOT EXISTS mk_blocked (hash TEXT PRIMARY KEY, reason TEXT, created_at TEXT NOT NULL)',
   `CREATE TABLE IF NOT EXISTS support_usage (
     k TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (k, day)
   )`,
@@ -259,6 +276,9 @@ const LATER = [
   // the cleaning a buyer added to a Lab Verified order, and featured listings
   ['mk_orders', 'addon', 'TEXT'], ['mk_orders', 'addon_fee', 'INTEGER'], ['mk_listings', 'featured_until', 'TEXT'],
   ['mk_photos', 'review_id', 'INTEGER'],
+  // admin tools: a listing hidden from the Vault; refunds and a payout on hold
+  ['mk_listings', 'hidden_at', 'TEXT'], ['mk_listings', 'hidden_reason', 'TEXT'],
+  ['mk_orders', 'payout_hold', 'INTEGER'], ['mk_orders', 'refunded', 'INTEGER'], ['mk_orders', 'payout_reversed', 'INTEGER'],
 ];
 // indexes on the columns above, made once they exist
 const LATER_INDEXES = [
@@ -478,6 +498,15 @@ export async function orderDelivered(env, o, how) {
 const HOW = { buyer: 'howBuyer', auto: 'howAuto', released: 'howReleased', retry: 'howRetry' };
 
 export async function releasePayout(env, o, how) {
+  // a specialist put the payout on hold (a report, a doubt): it waits
+  const held = await env.DB.prepare('SELECT payout_hold FROM mk_orders WHERE id = ?').bind(o.id).first();
+  if (held && held.payout_hold) {
+    const r = await env.DB.prepare(
+      "UPDATE mk_orders SET payout_status = 'held' WHERE id = ? AND (payout_status IS NULL OR payout_status IN ('waiting','failed'))"
+    ).bind(o.id).run();
+    if (r.meta.changes) await logEvent(env, { orderId: o.id, kind: 'payout_held', note: 'waits for a specialist' });
+    return 'held';
+  }
   const seller = await userById(env, o.seller_id);
   const l = await env.DB.prepare('SELECT brand, model FROM mk_listings WHERE id = ?').bind(o.listing_id).first();
   const title = l ? listingTitle(l) : '#' + o.id;

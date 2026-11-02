@@ -4,6 +4,7 @@ import {
 } from '../../_shared/util.js';
 import { ensureCore, requestLang } from '../../_shared/core.js';
 import { sendVerification } from '../../_shared/verify.js';
+import { emailHash, vaultSettings } from '../../_shared/admin.js';
 
 export async function onRequestOptions() {
   return preflight();
@@ -25,6 +26,15 @@ export async function onRequestPost(context) {
   if (password.length < 8) return json({ error: 'Password must be at least 8 characters' }, 400);
 
   await ensureCore(env);
+  // the console can pause new accounts, and closed accounts may not come back
+  // under the same address (both tables appear with the Vault; until then, no limits)
+  if ((await vaultSettings(env)).pause_signups) {
+    return json({ error: 'New accounts are paused for a moment. Please try again later.', code: 'paused_signups' }, 503);
+  }
+  try {
+    const blocked = await env.DB.prepare('SELECT 1 AS x FROM mk_blocked WHERE hash = ?').bind(await emailHash(email)).first();
+    if (blocked) return json({ error: 'This email address cannot be used for a new account. If you think this is a mistake, write to us.', code: 'email_blocked' }, 403);
+  } catch (e) { /* no Vault tables yet */ }
   const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
   if (existing) return json({ error: 'An account with this email already exists' }, 409);
 
@@ -38,7 +48,7 @@ export async function onRequestPost(context) {
   // the confirmation link brings them back to where they signed up
   await sendVerification(env, { id: uid, name, email }, lang, body.next);
   const token = await signSession(
-    { uid, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 },
+    { uid, iat: Date.now(), exp: Date.now() + 1000 * 60 * 60 * 24 * 30 },
     sessionSecret(env)
   );
 

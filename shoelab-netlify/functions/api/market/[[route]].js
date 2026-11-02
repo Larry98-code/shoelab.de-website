@@ -12,6 +12,9 @@
 //        legit/decide | legit/paid | legit/ask (the Legit Check, see _shared/legit.js)
 //   GET  reviews | reviews/mine | reviews/queue
 //   POST reviews | reviews/idea | reviews/moderate | reviews/idea-status  (see _shared/reviews.js)
+//   POST report                                     (anyone: report a listing or a member)
+//   GET  admin/members | admin/member?id= | admin/listings | admin/orders | admin/reports | admin/log | admin/settings
+//   POST admin/member | admin/listing | admin/order | admin/report | admin/settings   (see _shared/admin.js)
 import { json, preflight, clean, currentUser, stripeApi, sessionSecret, mailTrouble } from '../../_shared/util.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
@@ -30,6 +33,11 @@ import {
 } from '../../_shared/reviews.js';
 import { supportChat, supportTicket, supportAnswer, ticketsForQueue } from '../../_shared/support.js';
 import { runCheck, mayRun, checkView, requestView, latestCheck, latestRequest, askSeller, checkSettings } from '../../_shared/labcheck.js';
+import {
+  isAdmin, standing, tradeBlock, VISIBLE, listingVisible, vaultSettings, setSettings, memberList, memberView, memberAction,
+  listingList, listingAction, orderAction, createReport, reportList, decideReport, logFeed, adminOverview, adminHousekeeping,
+  REASONS as ADM_REASONS, REPORT_REASONS, DURATIONS as ADM_DURATIONS,
+} from '../../_shared/admin.js';
 
 // Errors carry a stable code next to the English message, so the pages can
 // show them in the visitor's language; extra fields (an amount) fill the gaps.
@@ -53,6 +61,17 @@ async function needSpecialist(request, env) {
     fail(403, 'Specialists only', 'specialists');
   }
   return u;
+}
+// The admin tools: specialists, narrowed to VAULT_ADMINS when that is set.
+async function needAdmin(request, env) {
+  const u = await needSpecialist(request, env);
+  if (!isAdmin(env, u)) fail(403, 'Only the Vault admins can do this', 'admins');
+  return u;
+}
+// A member the console limited, suspended or closed — or a Vault paused — cannot trade.
+async function can(env, me, what) {
+  const no = await tradeBlock(env, me, what);
+  if (no) fail(...no);
 }
 // Bidding, buying, offering and selling need a confirmed email address.
 async function needVerified(request, env) {
@@ -124,18 +143,24 @@ async function getConfig({ request, env }) {
     // where a happy customer can also leave a Google review (optional, shown to everyone)
     googleReviewUrl: /^https:\/\//.test(String(env.GOOGLE_REVIEW_URL || '')) ? env.GOOGLE_REVIEW_URL : null,
     connect: connectOn(env), support: !!env.ANTHROPIC_API_KEY,
+    paused: await pausedView(env),
     me: me ? {
       id: me.id, name: me.name, email: me.email, specialist: isSpecialist(env, me), verified: !!me.verified,
-      seller: await sellerState(env, me.id),
+      admin: isAdmin(env, me), standing: standing(me), seller: await sellerState(env, me.id),
     } : null,
   }, 200, { 'Cache-Control': 'no-store' });
+}
+
+async function pausedView(env) {
+  const s = await vaultSettings(env);
+  return s.pause_trading || s.pause_listings ? { trading: s.pause_trading, listings: s.pause_listings, notice: s.notice || null } : null;
 }
 
 // ── GET listings ───────────────────────────────────────────────────────────
 async function getListings({ request, env }) {
   const q = new URL(request.url).searchParams;
   const view = q.get('view') === 'sold' ? 'sold' : 'live';
-  const where = [view === 'sold' ? "l.status = 'sold'" : "l.status = 'live'"];
+  const where = [view === 'sold' ? "l.status = 'sold'" : "l.status = 'live'", VISIBLE];
   const args = [];
   const text = clean(q.get('q') || '', 80);
   if (text) {
@@ -177,10 +202,10 @@ async function getListings({ request, env }) {
 
   // facets for the filter bar, from everything currently live
   const brands = await env.DB.prepare(
-    "SELECT brand, COUNT(*) AS n FROM mk_listings WHERE status = 'live' GROUP BY LOWER(brand) ORDER BY n DESC LIMIT 20"
+    "SELECT l.brand, COUNT(*) AS n FROM mk_listings l WHERE l.status = 'live' AND " + VISIBLE + " GROUP BY LOWER(l.brand) ORDER BY n DESC LIMIT 20"
   ).all();
   const sizes = await env.DB.prepare(
-    "SELECT size, COUNT(*) AS n FROM mk_listings WHERE status = 'live' GROUP BY size ORDER BY CAST(size AS REAL)"
+    "SELECT l.size, COUNT(*) AS n FROM mk_listings l WHERE l.status = 'live' AND " + VISIBLE + " GROUP BY l.size ORDER BY CAST(l.size AS REAL)"
   ).all();
   // a signed-in visitor sees which of these pairs they already watch
   const items = (rows.results || []).map(card);
@@ -208,9 +233,12 @@ async function getListing({ request, env }) {
   const isOwner = me && l && l.seller_id === me.id;
   const spec = isSpecialist(env, me);
   // listings still in review (or turned down) are private to the seller and the lab
-  if (!l || (['review', 'rejected', 'cancelled', 'relisted'].indexOf(l.status) !== -1 && !isOwner && !spec)) {
+  if (!l || (['review', 'rejected', 'cancelled', 'relisted', 'removed'].indexOf(l.status) !== -1 && !isOwner && !spec)) {
     fail(404, 'This listing does not exist or is no longer available', 'gone');
   }
+  // hidden by the console: gone for everyone but its seller and the lab
+  const visible = await listingVisible(env, l);
+  if (!visible && !isOwner && !spec) fail(404, 'This listing does not exist or is no longer available', 'gone');
 
   const photos = await env.DB.prepare("SELECT id, kind FROM mk_photos WHERE listing_id = ? AND COALESCE(kind, '') != 'extra' ORDER BY idx").bind(id).all();
   const seller = await env.DB.prepare('SELECT name, created_at FROM users WHERE id = ?').bind(l.seller_id).first();
@@ -237,6 +265,7 @@ async function getListing({ request, env }) {
     minNext: l.format === 'auction' ? (l.bids ? l.price + increment(l.price) : l.start_price) : null,
     binAvailable: !!l.buy_now && l.status === 'live' && (l.format === 'fixed' || l.bids === 0),
     reviewNote: (isOwner || spec) ? l.review_note : null,
+    hidden: (isOwner || spec) && !visible ? { own: !!l.hidden_at, reason: l.hidden_reason || null } : null,
     fees: { auth: VAULT.fees[l.tier], shipping: VAULT.shipping },
     viewer: null,
   });
@@ -387,6 +416,7 @@ function parseTerms(b) {
 // ── POST listings (create) ─────────────────────────────────────────────────
 async function createListing({ request, env }) {
   const me = await needVerified(request, env);
+  await can(env, me, 'sell');
   await needSellerReady(env, me);
   const b = await body(request);
   const brand = clean(b.brand, 40), model = clean(b.model, 90), size = clean(String(b.size || ''), 8);
@@ -447,6 +477,8 @@ async function placeBid({ request, env }) {
   const b = await body(request);
   const id = intParam(b.id), max = cents(b.max);
   if (!id || !Number.isFinite(max)) fail(400, 'Enter your maximum bid', 'bid_input');
+  await can(env, me, 'buy');
+  if (!(await listingVisible(env, await freshListing(env, id)))) fail(409, 'This auction is not open for bids', 'closed');
   if (max > VAULT.maxPrice) fail(400, 'That bid is above the Vault maximum of ' + euro(VAULT.maxPrice), 'bid_cap', { amount: VAULT.maxPrice });
 
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -525,8 +557,9 @@ async function placeBid({ request, env }) {
 async function buyNow({ request, env }) {
   const me = await needVerified(request, env);
   const id = intParam((await body(request)).id);
+  await can(env, me, 'buy');
   const l = await freshListing(env, id);
-  if (!l || l.status !== 'live' || !l.buy_now) fail(409, 'This pair is no longer available to buy', 'unavailable');
+  if (!l || l.status !== 'live' || !l.buy_now || !(await listingVisible(env, l))) fail(409, 'This pair is no longer available to buy', 'unavailable');
   if (l.seller_id === me.id) fail(403, 'You cannot buy your own listing', 'own');
   if (l.format === 'auction' && l.bids > 0) fail(409, 'Buy Now closed when the first bid came in', 'bin_closed');
   const r = await env.DB.prepare(
@@ -543,8 +576,9 @@ async function makeOffer({ request, env }) {
   const me = await needVerified(request, env);
   const b = await body(request);
   const id = intParam(b.id), amount = cents(b.amount);
+  await can(env, me, 'buy');
   const l = await freshListing(env, id);
-  if (!l || l.status !== 'live' || l.format !== 'fixed' || !l.accept_offers) fail(409, 'This listing does not take offers', 'no_offers');
+  if (!l || l.status !== 'live' || l.format !== 'fixed' || !l.accept_offers || !(await listingVisible(env, l))) fail(409, 'This listing does not take offers', 'no_offers');
   if (l.seller_id === me.id) fail(403, 'You cannot make an offer on your own listing', 'own');
   if (!(amount >= VAULT.minPrice)) fail(400, 'Offers start at ' + euro(VAULT.minPrice), 'offer_min', { amount: VAULT.minPrice });
   if (amount >= l.buy_now) fail(400, 'At that price, just use Buy Now', 'offer_high');
@@ -573,6 +607,7 @@ async function respondOffer({ request, env }) {
   const b = await body(request);
   const o = await env.DB.prepare('SELECT * FROM mk_offers WHERE id = ?').bind(intParam(b.offerId)).first();
   if (!o) fail(404, 'Offer not found', 'offer_locked');
+  if (b.action === 'accept' || b.action === 'counter') await can(env, me, o.seller_id === me.id ? 'sell' : 'buy');
   const l = await freshListing(env, o.listing_id);
   const at = nowIso();
   const set = (status, extra) => env.DB.prepare(
@@ -649,6 +684,7 @@ async function cancelListing({ request, env }) {
 // with new terms; its photos move across, so nothing is stored twice.
 async function relistListing({ request, env }) {
   const me = await needVerified(request, env);
+  await can(env, me, 'sell');
   const b = await body(request);
   const l = await env.DB.prepare('SELECT * FROM mk_listings WHERE id = ?').bind(intParam(b.id)).first();
   if (!l || l.seller_id !== me.id) fail(404, 'Listing not found', 'gone');
@@ -689,7 +725,8 @@ async function orderView(env, o, me, spec) {
     createdAt: o.created_at, updatedAt: o.updated_at,
     // payouts are between the seller and ShoeLab; Stripe references and
     // error texts are for the specialists
-    events: (ev.results || []).filter((e) => spec || asSeller || e.kind.indexOf('payout_') !== 0)
+    // notes from the console are for the lab only
+    events: (ev.results || []).filter((e) => spec || (['note', 'reversal_failed'].indexOf(e.kind) === -1 && (asSeller || e.kind.indexOf('payout_') !== 0)))
       .map((e) => ({ kind: e.kind, note: spec || !/^(payout|refund)_/.test(e.kind) ? e.note : null, at: e.created_at })),
     role: asSeller ? 'seller' : asBuyer ? 'buyer' : 'lab',
   };
@@ -701,13 +738,17 @@ async function orderView(env, o, me, spec) {
     v.payoutStatus = o.payout_status || null; v.payoutAt = o.payout_at || null;
   }
   if (o.refund_ref) v.refunded = true;
+  if (o.refunded) v.refundedAmount = o.refunded;
   // the buyer's address goes to the seller only when the seller posts direct
   const showAddress = asBuyer || spec || (asSeller && o.tier === 'photo' && o.status !== 'awaiting_payment');
   if (showAddress) {
     v.address = { name: o.ship_name, line1: o.ship_line1, line2: o.ship_line2, city: o.ship_city, postal: o.ship_postal, country: o.ship_country };
   }
   if (asSeller && o.status === 'paid') v.shipTo = shipTo(env, o);
-  if (spec) { v.stripePaid = !!o.stripe_pi; v.payoutRef = o.payout_ref || null; v.refundRef = o.refund_ref || null; }
+  if (spec) {
+    v.stripePaid = !!o.stripe_pi; v.payoutRef = o.payout_ref || null; v.refundRef = o.refund_ref || null;
+    v.payoutHold = !!o.payout_hold; v.payoutReversed = o.payout_reversed || 0; v.buyerId = o.buyer_id; v.sellerId = o.seller_id;
+  }
   return v;
 }
 
@@ -904,6 +945,7 @@ async function getMe({ request, env }) {
   });
   return json({
     user: { id: me.id, name: me.name, email: me.email, verified: !!me.verified },
+    standing: standing(me), paused: await pausedView(env),
     specialist: spec,
     connect: connectOn(env),
     seller: await sellerState(env, me.id),
@@ -981,6 +1023,8 @@ async function getQueue({ request, env }) {
     delete it.sellerId; delete it.seller.emailVerifiedAt;
   }
   stats.r2 = !!env.VAULT_PHOTOS;
+  stats.reports = (await env.DB.prepare("SELECT COUNT(*) AS n FROM mk_reports WHERE status = 'open'").first()).n;
+  stats.admin = isAdmin(env, me);
   stats.connect = connectOn(env);
   stats.labCheck = checkSettings(env);
   // pairs the Lab Check put live by itself lately, so a person still sees them
@@ -1507,6 +1551,7 @@ async function featureRoute({ request, env }) {
   const b = await body(request);
   const l = await loadListing(env, intParam(b.id));
   const spec = isSpecialist(env, me);
+  if (!spec) await can(env, me, 'sell');
   if (!l || (l.seller_id !== me.id && !spec)) fail(404, 'Listing not found', 'not_found');
   if (l.status !== 'live') fail(409, 'Only a live listing can be featured', 'wrong_step');
   if (spec && b.free) return json({ ok: true, until: await featureListing(env, l.id, 'free') });
@@ -1529,6 +1574,104 @@ async function featureRoute({ request, env }) {
   });
   if (!s || !s.url) fail(502, (s && s.error && s.error.message) || 'Payment could not be started', 'pay_failed');
   return json({ ok: true, url: s.url });
+}
+
+// ── the console's admin tools (see _shared/admin.js) ──────────────────────
+const qs = (request) => new URL(request.url).searchParams;
+async function admMembers({ request, env }) {
+  await needAdmin(request, env);
+  return json(Object.assign(await memberList(env, qs(request)), { overview: await adminOverview(env) }), 200, { 'Cache-Control': 'no-store' });
+}
+async function admMember({ request, env }) {
+  await needAdmin(request, env);
+  const id = intParam(qs(request).get('id'));
+  return json({ member: await memberView(env, id), reasons: ADM_REASONS, durations: ADM_DURATIONS }, 200, { 'Cache-Control': 'no-store' });
+}
+async function admMemberAct({ request, env }) {
+  const me = await needAdmin(request, env);
+  const b = await body(request);
+  const id = intParam(b.id);
+  if (id === me.id) fail(403, 'You cannot do that to your own account', 'adm_self');
+  return json(await memberAction(env, me, id, b));
+}
+async function admListings({ request, env }) {
+  await needAdmin(request, env);
+  return json(await listingList(env, qs(request)), 200, { 'Cache-Control': 'no-store' });
+}
+async function admListingAct({ request, env }) {
+  const me = await needAdmin(request, env);
+  const b = await body(request);
+  return json(await listingAction(env, me, intParam(b.id), b));
+}
+const O_FILTERS = {
+  open: "status IN ('awaiting_payment','paid','to_lab','in_lab','verified','shipped','disputed')",
+  disputed: "status = 'disputed'", held: 'payout_hold = 1', delivered: "status = 'delivered'",
+  refunded: "status = 'refunded' OR COALESCE(refunded, 0) > 0", cancelled: "status IN ('cancelled','failed')", all: '1 = 1',
+};
+async function admOrders({ request, env }) {
+  const me = await needAdmin(request, env);
+  const q = qs(request);
+  const f = O_FILTERS[q.get('f')] ? q.get('f') : 'open';
+  const where = ['(' + O_FILTERS[f] + ')'], args = [];
+  const text = clean(q.get('q') || '', 80);
+  if (text) {
+    const like = '%' + text.replace(/[\\%_]/g, (c) => '\\' + c) + '%';
+    where.push(`(o.id = ? OR o.buyer_id IN (SELECT id FROM users WHERE email LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\')
+      OR o.seller_id IN (SELECT id FROM users WHERE email LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\')
+      OR o.listing_id IN (SELECT id FROM mk_listings WHERE (brand || ' ' || model) LIKE ? ESCAPE '\\'))`);
+    args.push(parseInt(text.replace(/^#/, ''), 10) || 0, like, like, like, like, like);
+  }
+  const page = Math.max(1, intParam(q.get('page')) || 1), per = 20;
+  const w = where.join(' AND ');
+  const total = (await env.DB.prepare('SELECT COUNT(*) AS n FROM mk_orders o WHERE ' + w).bind(...args).first()).n;
+  const rows = await env.DB.prepare('SELECT * FROM mk_orders o WHERE ' + w + ' ORDER BY o.id DESC LIMIT ? OFFSET ?').bind(...args, per, (page - 1) * per).all();
+  const orders = [];
+  for (const o of rows.results || []) {
+    const v = await orderView(env, o, me, true);
+    const buyer = await userById(env, o.buyer_id), seller = await userById(env, o.seller_id);
+    v.buyer = buyer && { id: buyer.id, name: buyer.name, email: buyer.email };
+    v.seller = seller && { id: seller.id, name: seller.name, email: seller.email };
+    orders.push(v);
+  }
+  const counts = {};
+  for (const k of Object.keys(O_FILTERS)) counts[k] = (await env.DB.prepare('SELECT COUNT(*) AS n FROM mk_orders WHERE ' + O_FILTERS[k]).first()).n;
+  return json({ orders, total, page, pages: Math.max(1, Math.ceil(total / per)), counts, filter: f }, 200, { 'Cache-Control': 'no-store' });
+}
+async function admOrderAct({ request, env }) {
+  const me = await needAdmin(request, env);
+  const b = await body(request);
+  return json(await orderAction(env, me, await loadOrder(env, intParam(b.id)), b));
+}
+async function admReports({ request, env }) {
+  await needSpecialist(request, env);
+  return json(await reportList(env, qs(request)), 200, { 'Cache-Control': 'no-store' });
+}
+async function admReportAct({ request, env }) {
+  const me = await needSpecialist(request, env);
+  const b = await body(request);
+  return json(await decideReport(env, me, intParam(b.id), b));
+}
+async function admLogRoute({ request, env }) {
+  await needAdmin(request, env);
+  return json(await logFeed(env, qs(request)), 200, { 'Cache-Control': 'no-store' });
+}
+async function admSettings({ request, env }) {
+  await needAdmin(request, env);
+  return json({ settings: await vaultSettings(env, true), admins: String(env.VAULT_ADMINS || '').split(',').filter(Boolean).length ? 'list' : 'all' }, 200, { 'Cache-Control': 'no-store' });
+}
+async function admSettingsSave({ request, env }) {
+  const me = await needAdmin(request, env);
+  return json({ ok: true, settings: await setSettings(env, me, await body(request)) });
+}
+// anyone may report a listing (and a member they share an order with), signed in or not
+async function postReport({ request, env }) {
+  const me = await currentUser(request, env);
+  const b = await body(request);
+  if (b.website) return json({ ok: true, id: 0 });            // a bot filled the hidden field
+  if (!await rvAllowed(env, request, me, 'rp', me ? 10 : 4)) fail(429, 'That is enough reports for today — thank you!', 'rp_limit');
+  const out = await createReport(env, me, b);
+  if (!out.again) await rvAllowed(env, request, me, 'rp', 0, true);
+  return json(Object.assign({ ok: true, reasons: REPORT_REASONS }, out));
 }
 
 const ROUTES = {
@@ -1580,6 +1723,19 @@ const ROUTES = {
   'POST support/chat': supportChatRoute,
   'POST support/ticket': supportTicketRoute,
   'POST support/answer': supportAnswerRoute,
+  'POST report': postReport,
+  'GET admin/members': admMembers,
+  'GET admin/member': admMember,
+  'POST admin/member': admMemberAct,
+  'GET admin/listings': admListings,
+  'POST admin/listing': admListingAct,
+  'GET admin/orders': admOrders,
+  'POST admin/order': admOrderAct,
+  'GET admin/reports': admReports,
+  'POST admin/report': admReportAct,
+  'GET admin/log': admLogRoute,
+  'GET admin/settings': admSettings,
+  'POST admin/settings': admSettingsSave,
 };
 
 export async function onRequest(context) {
@@ -1597,10 +1753,10 @@ export async function onRequest(context) {
   if (!handler) return json({ error: 'Not found' }, 404);
   try {
     await ensureSchema(env);
-    if (route !== 'photo') { await housekeeping(env); await sendInvites(env); }
+    if (route !== 'photo') { await housekeeping(env); await sendInvites(env); await adminHousekeeping(env); }
     return await handler(context);
   } catch (e) {
-    if (e instanceof HttpError) return json(Object.assign({ error: e.message }, e.code ? { code: e.code } : null, e.extra), e.status);
+    if (e instanceof HttpError || (e && e.http)) return json(Object.assign({ error: e.message }, e.code ? { code: e.code } : null, e.extra), e.status);
     console.error('vault ' + route + ': ' + (e && e.stack || e));
     return json({ error: 'Something went wrong on our side. Please try again.' }, 500);
   }

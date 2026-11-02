@@ -42,6 +42,12 @@ const COLUMNS = [
   ['bookings', 'lang', 'TEXT'],
   // the customer agreed to be asked for feedback after the appointment; when we did
   ['bookings', 'feedback_ok', 'INTEGER'], ['bookings', 'review_invited', 'TEXT'],
+  // a member's standing, set in the lab console (see _shared/admin.js):
+  // suspended or banned, limits on selling or buying, listings hidden, and
+  // "sign out everywhere" (sessions signed before this time no longer count)
+  ['users', 'status', 'TEXT'], ['users', 'status_until', 'TEXT'], ['users', 'status_reason', 'TEXT'], ['users', 'status_note', 'TEXT'],
+  ['users', 'no_sell_until', 'TEXT'], ['users', 'no_buy_until', 'TEXT'], ['users', 'listings_hidden', 'INTEGER'],
+  ['users', 'sessions_after', 'TEXT'], ['users', 'last_seen', 'TEXT'],
 ];
 const TABLES = [
   // one-time links: email confirmation (and anything like it later)

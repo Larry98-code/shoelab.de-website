@@ -148,14 +148,22 @@ export async function currentUser(request, env) {
   if (!payload || !payload.uid || !env.DB) return null;
   try {
     await ensureCore(env);
+    if (payload.purpose) return null;          // a password-reset link is not a sign-in
     const row = await env.DB.prepare(
-      'SELECT id, name, email, created_at, lang, email_verified_at FROM users WHERE id = ?'
+      `SELECT id, name, email, created_at, lang, email_verified_at, status, status_until, status_reason, status_note,
+         no_sell_until, no_buy_until, listings_hidden, sessions_after, last_seen FROM users WHERE id = ?`
     ).bind(payload.uid).first();
     if (!row) return null;
+    // closed accounts are signed out; "sign out everywhere" ends older sign-ins
+    if (row.status === 'banned' || row.status === 'deleted') return null;
+    if (row.sessions_after && !(payload.iat && payload.iat >= Date.parse(row.sessions_after))) return null;
     const lang = requestLang(request);
-    if (row.lang !== lang) {
-      await env.DB.prepare('UPDATE users SET lang = ? WHERE id = ?').bind(lang, row.id).run();
+    const seen = !row.last_seen || Date.now() - Date.parse(row.last_seen) > 3600000;
+    if (row.lang !== lang || seen) {
+      const now = new Date().toISOString();
+      await env.DB.prepare('UPDATE users SET lang = ?, last_seen = ? WHERE id = ?').bind(lang, seen ? now : row.last_seen, row.id).run();
       row.lang = lang;
+      if (seen) row.last_seen = now;
     }
     row.verified = !!row.email_verified_at;
     return row;

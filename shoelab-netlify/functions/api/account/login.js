@@ -27,8 +27,13 @@ export async function onRequestPost(context) {
     return json({ error: 'Incorrect email or password' }, 401);
   }
 
+  // a closed account cannot sign in (a suspended one can: to finish open orders)
+  if (user.status === 'banned' || user.status === 'deleted') {
+    return json({ error: 'This account has been closed. If you think this is a mistake, reply to the email we sent you.', code: 'acct_closed' }, 403);
+  }
+
   const token = await signSession(
-    { uid: user.id, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 },
+    { uid: user.id, iat: Date.now(), exp: Date.now() + 1000 * 60 * 60 * 24 * 30 },
     sessionSecret(env)
   );
 
