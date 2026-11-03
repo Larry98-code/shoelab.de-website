@@ -729,6 +729,8 @@ async function orderView(env, o, me, spec) {
     events: (ev.results || []).filter((e) => spec || (['note', 'reversal_failed'].indexOf(e.kind) === -1 && (asSeller || e.kind.indexOf('payout_') !== 0)))
       .map((e) => ({ kind: e.kind, note: spec || !/^(payout|refund)_/.test(e.kind) ? e.note : null, at: e.created_at })),
     role: asSeller ? 'seller' : asBuyer ? 'buyer' : 'lab',
+    // the other side, so a member can report them from the order
+    otherId: asSeller ? o.buyer_id : asBuyer ? o.seller_id : null,
   };
   const fb = await env.DB.prepare('SELECT rating, comment FROM mk_feedback WHERE order_id = ?').bind(o.id).first();
   if (fb) v.feedback = { rating: fb.rating, comment: fb.comment };

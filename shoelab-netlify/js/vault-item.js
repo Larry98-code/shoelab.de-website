@@ -228,6 +228,11 @@
 
   function statesHtml() {
     var v = L.viewer || {}, out = [];
+    if (L.status === 'removed' && (isOwner() || v.specialist)) {
+      out.push(stateBox('bad', 'alert', '<b>' + esc(t('ownRemoved')) + '</b> ' + esc(L.reviewNote || '') + ' ' + esc(t('ownRemovedHint'))));
+      return out.join('');
+    }
+    if (L.hidden && (isOwner() || v.specialist)) out.push(stateBox('warn', 'eye', '<b>' + esc(t(L.hidden.own ? 'ownHidden' : 'ownHiddenAll')) + '</b> ' + esc(t('ownHiddenHint'))));
     if (isOwner()) {
       if (L.status === 'review') out.push(stateBox('warn', 'clock', esc(t('ownReview')) + ' <button type="button" class="v-link-btn" data-act="withdraw">' + esc(t('withdraw')) + '</button>'));
       else if (L.status === 'rejected') out.push(stateBox('bad', 'alert', '<b>' + esc(t('ownRejected')) + '</b> ' + esc(L.reviewNote || '') + ' <a href="/vault-sell.html">' + esc(t('listAgain')) + '</a>'));
@@ -389,7 +394,9 @@
       ((sl.feedback || []).length ? '<ul class="v-hist" style="margin-top:0.8rem;">' + sl.feedback.map(function (f) {
         return '<li><span class="who">' + (f.rating > 0 ? '👍' : f.rating < 0 ? '👎' : '➖') + ' ' + esc(f.comment || t('noComment')) + '</span><span class="at">' + esc(f.who) + ' · ' + esc(S.ago(f.at)) + '</span></li>';
       }).join('') + '</ul>' : '') +
-      '<p class="v-note" style="margin-top:0.8rem;">' + esc(t('sellerProtect')) + '</p></div>';
+      '<p class="v-note" style="margin-top:0.8rem;">' + esc(t('sellerProtect')) + '</p></div>' +
+      (isOwner() || ['review', 'rejected', 'removed'].indexOf(L.status) !== -1 ? '' :
+        '<p class="v-rp-link"><button type="button" class="v-link-btn" data-act="report">' + S.ico('flag', 'inl') + ' ' + esc(t('rpListing')) + '</button></p>');
     return '<div>' + left + '</div><div>' + right + '</div>';
   }
   function det(k, v) { return '<div><span>' + esc(k) + '</span><span>' + v + '</span></div>'; }
@@ -661,6 +668,13 @@
   });
   d.addEventListener('slv:ended', function () { if (!pv) setTimeout(function () { load(false); }, 1500); });
   d.addEventListener('visibilitychange', function () { if (!d.hidden && L && !pv && L.status === 'live') load(false); });
+  // "Report this listing", under the seller's box
+  d.addEventListener('click', function (e) {
+    var r = e.target.closest('[data-act="report"]');
+    if (!r || !L || !$('vLower') || !$('vLower').contains(r)) return;
+    if (pv) { S.toast(t('previewOnly'), 'info'); return; }
+    S.reportDialog({ kind: 'listing', id: L.id, title: L.title + ' · EU ' + L.size });
+  });
   d.addEventListener('keydown', function (e) {
     if (!L || (w.SLVViewer && w.SLVViewer.isOpen()) || e.altKey || e.ctrlKey || e.metaKey) return;
     if (/input|textarea|select/i.test((d.activeElement || {}).tagName || '') || (d.activeElement && d.activeElement.isContentEditable)) return;

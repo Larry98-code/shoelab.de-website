@@ -275,6 +275,59 @@ studio, the Vault, the Legit Check and the shop.
   review you on Google. It's shown to everyone, whatever their rating; asking
   only happy customers isn't allowed.
 
+## Running the Vault: the admin tools
+
+The lab console has five more tabs for whoever runs the Vault (every
+specialist, unless `VAULT_ADMINS` names fewer). Everything is checked again on
+the server, and every action lands in **Activity**: who did what, when, why.
+
+**Members.** Search by name, email or member number; filters for *Needs a
+look* (open reports or a problem order), sellers, buyers, limited, suspended,
+closed, new and unconfirmed. A member's page shows their listings, orders,
+reports (about them and by them), support requests, ratings, totals, notes and
+history, and every measure:
+
+| Measure | What it does |
+|---|---|
+| **Message** | An email from the ShoeLab team |
+| **Warn** | A formal warning with a reason; nothing is limited. Warnings are counted on their page |
+| **Limit buying or selling** | For 1 day … 90 days or until further notice. Limiting buying also withdraws their bids and open offers |
+| **Hide listings** | Their listings disappear from the Vault (they still see them in My Vault) |
+| **Suspend** | For a time: listings hidden, no listing, buying, bidding or offers; bids and offers withdrawn (an auction's price is worked out again without them). They can still sign in to finish open orders. Ends by itself |
+| **Close account** | Signed out for good, listings removed (bidders told), bids and offers withdrawn; optionally the address may not sign up again |
+| **Reinstate / Lift limits / Show listings** | Undo, with a "good news" email |
+| **Sign out everywhere** | Every device has to sign in again |
+| **Delete account** | Only when no order is open; you type their email to confirm. Name, email, password, phone and address are erased, listings and photos deleted; orders stay without personal details for the tax-law period |
+
+Every restriction emails the member the reason, the terms clause (§§ 12–13),
+how long it lasts and how to object: the **statement of reasons** the EU
+Digital Services Act asks for (Art. 17). Pick the reason that fits and write
+the details factually — the member reads them. Staff accounts cannot be
+limited from here, and nobody can act on their own account.
+
+**Listings.** Every listing in any state (live, in review, reported, hidden,
+sold, ended, removed). **Hide** takes it out of the Vault until you show it
+again; **Remove** ends it for good (an auction ends without a sale and the
+bidders are told; it cannot be relisted); **Correct the details** fixes brand,
+model, size or description (the old values stay in the log).
+
+**Orders → All orders.** Next to the queue: every order, searchable. On each
+order: **Refund** (in full or a part; tick *Take it from the seller* to pay
+less to the seller, or — if the payout has gone out — reverse that much from
+their Stripe account), **Cancel order** (before shipping; refunds everything
+and the seller may relist), **Hold payout** (it waits even after delivery
+until you release it) and **notes** buyers and sellers never see.
+
+**Reports.** Anyone can report a listing ("Report this listing", under the
+seller), and members can report the other side of an order (in its details).
+The reporter gets a receipt at once; the studio gets `[REPORT] …`. Take action
+first, then answer **Action taken** or **No breach found** — the reporter is
+emailed (Art. 16 DSA).
+
+**Controls.** Switches for emergencies and maintenance: pause new listings,
+pause all trading (bids, buying, offers and new listings; auctions keep
+running), pause new accounts, with a notice every Vault page shows.
+
 ## Emails in everyone's own language
 
 Every email goes out in the recipient's language: the one they picked on the
@@ -311,6 +364,7 @@ language of the account with the `NOTIFY_EMAIL` address.
 | `Legit Check LC-N: …` | A Legit Check was paid: answer it in Lab console → **Legit Checks** |
 | `Payment details needed for Legit Check LC-N` | Card payments are off: email the customer payment details, then **Mark as paid** |
 | `Refund Legit Check LC-N` | You answered "Can't verify" and it was not paid by card: refund it by hand |
+| `[REPORT] Listing: …` / `[REPORT] Member: …` | Lab console → **Reports**: act, then answer the reporter |
 
 ## Turn it on
 
@@ -331,6 +385,7 @@ secrets are always kept:
 | `VAULT_STRIPE_CONNECT` | `on`: Stripe holds the money and pays sellers (below) | Recommended |
 | `ANTHROPIC_API_KEY` | Wesley and the Lab Check (the same key as the site chat) | For Wesley and the Lab Check |
 | `VAULT_LAB_CHECK`, `VAULT_AUTO_APPROVE`, `VAULT_AUTO_APPROVE_MIN`, `VAULT_CHECK_MODEL` | The Lab Check (above) | Optional |
+| `VAULT_ADMINS` | Comma-separated emails of the specialists who may use the admin tools (members, listings, refunds, switches). Empty: every specialist may | Optional |
 | `STUDIO_LANG` | Language of studio emails, e.g. `de` | Optional |
 | `REPLY_TO` | Where replies to emails go; defaults to `NOTIFY_EMAIL` | Optional |
 | `SITE_URL` | Base for links in emails; defaults to `https://shoelabonline.de` | Optional |
@@ -410,7 +465,9 @@ and tell members by email at least 30 days ahead (§ 18 of the terms).
 In place: Vault terms (`vault-terms.html`) modelled on large marketplaces,
 the updated privacy policy (`datenschutz.html`: Vault, Stripe Connect, DAC7,
 Resend, Wesley, R2, retention), confirmed emails, Stripe-verified sellers,
-a report address for illegal listings and a DSA contact point.
+a report address for illegal listings and a DSA contact point, report buttons
+with a receipt and an answer (DSA Art. 16), and a statement of reasons by
+email for every restriction (Art. 17), each logged in the console.
 
 This is a checklist, not legal advice. Have a lawyer review it before the
 Vault takes real money:
@@ -442,8 +499,9 @@ Vault takes real money:
 | `functions/api/market/[[route]].js` | Every `/api/market/*` endpoint |
 | `functions/_shared/vault.js` | Fees, tables, orders, payouts, refunds, emails, housekeeping (auction endings, expiries, auto-delivery, retention) |
 | `functions/_shared/support.js` | Wesley in the Vault and support requests |
+| `functions/_shared/admin.js`, `js/vault-admin.js` | The admin tools: members, listings, refunds, reports, the switches, the log |
 | `functions/_shared/labcheck.js` | The Lab Check: the prompt, the report format, asking the seller, automatic approval |
-| `js/vault-viewer.js` | The console's photo viewer (zoom, compare, the Lab Check's notes per photo) |
+| `js/vault-viewer.js` | The photo viewer: zoom, swipe, compare; with the Lab Check's notes per photo in the console, without them on listings, reviews and certificates |
 | `functions/_shared/legit.js` | The Legit Check: payment, the specialist's answer, refunds, certificates |
 | `legit.html`, `js/vault-legit.js` | The Legit Check page (links from other apps, photos, payment) |
 | `verified.html`, `js/vault-verified.js`, `js/vault-cert.js` | Certificates: the public page, the picture, sharing |

@@ -10,7 +10,16 @@
   'use strict';
   var S = w.SLV, t = S.t, esc = S.esc, money = S.money;
   var $ = function (id) { return d.getElementById(id); };
-  var data = null, tab = /#support$/.test(w.location.hash) ? 'support' : /#orders$/.test(w.location.hash) ? 'orders' : /#legit$/.test(w.location.hash) ? 'legit' : /#reviews$/.test(w.location.hash) ? 'reviews' : 'review', timer = null;
+  // tabs by address: #orders, #members/12 (a member's page), …
+  var TABS = ['review', 'legit', 'orders', 'support', 'reviews', 'members', 'listings', 'reports', 'activity', 'controls'];
+  var ADMIN_TABS = ['members', 'listings', 'reports', 'activity', 'controls'];
+  function fromHash() {
+    var h = (w.location.hash || '').slice(1).split('/');
+    return { tab: TABS.indexOf(h[0]) !== -1 ? h[0] : null, id: h[1] ? +h[1] : null };
+  }
+  var data = null, tab = fromHash().tab || 'review', timer = null;
+  var ordersMode = 'queue';  // the console's queue, or every order (admins)
+  var shown = null;          // the admin view on screen, so the minute refresh leaves it alone
   var rv = null;            // reviews, satisfaction and ideas (reviews/queue)
   var drafts = {};   // answers being written survive the minute-by-minute refresh
 
@@ -23,8 +32,8 @@
       if (!res.ok) { gate('alert', 'emptyErrorT', null, false, S.errText(res)); return; }
       keepDrafts();
       data = res.data;
-      render();
-      S.market('reviews/queue').then(function (r2) { if (r2.ok) { rv = r2.data; keepDrafts(); render(); } });
+      render(true);
+      S.market('reviews/queue').then(function (r2) { if (r2.ok) { rv = r2.data; keepDrafts(); render(true); } });
       clearTimeout(timer);
       timer = setTimeout(function () { if (!d.hidden) load(); }, 60000);
     });
@@ -359,6 +368,7 @@
         '<div class="side"><span class="amt">' + money(o.total, true) + '</span><span class="v-note">' + esc(t('payoutShort', { amount: money(o.payout, true) })) + '</span></div>' +
       '</div>' +
       (act ? '<div class="v-order-act">' + act + '</div>' : '') +
+      (isAdmin() && w.SLVAdmin ? w.SLVAdmin.orderTools(o) : '') +
       '<details class="v-order-more"><summary>' + esc(t('orderDetails')) + '</summary><div class="in">' +
         '<div><dl class="v-kv" style="margin-top:0;">' +
           kv(t('buyer'), o.buyer ? esc(o.buyer.name) + ' · <a href="mailto:' + esc(o.buyer.email) + '">' + esc(o.buyer.email) + '</a>' : '') +
@@ -438,8 +448,13 @@
     step();
   }
 
-  function render() {
+  function isAdmin() { return !!(data && data.stats && data.stats.admin); }
+  function adminView() { return ADMIN_TABS.indexOf(tab) !== -1 || (tab === 'orders' && ordersMode === 'all'); }
+  function render(quiet) {
     var s = data.stats || {};
+    // only specialists who are admins see the admin tabs (reports: every specialist)
+    if (ADMIN_TABS.indexOf(tab) !== -1 && tab !== 'reports' && !isAdmin()) tab = 'review';
+    if (!w.SLVAdmin && adminView()) tab = 'review';
     var tickets = data.tickets || [];
     var needs = data.orders.filter(function (o) { return ['awaiting_payment', 'to_lab', 'in_lab', 'verified', 'disputed', 'delivered'].indexOf(o.status) !== -1; }).length;
     var openTickets = tickets.filter(function (k) { return k.status === 'open'; }).length;
@@ -448,7 +463,8 @@
       return '<button type="button" role="tab" data-tab="' + k + '" class="' + (tab === k ? 'on' : '') + '" aria-selected="' + (tab === k ? 'true' : 'false') + '">' + esc(label) + (n ? '<span class="n">' + n + '</span>' : '') + '</button>';
     };
     var mf = s.mail_failures && s.mail_failure_last;
-    $('labBody').innerHTML =
+    if (!$('labHead')) $('labBody').innerHTML = '<div id="labHead"></div><div id="labMain"></div>';
+    $('labHead').innerHTML =
       // emails that did not go out this week: hard to miss until it is fixed
       (mf ? '<div class="v-state bad" role="alert" style="margin-bottom:1.2rem;">' + S.ico('alert') + '<div><b>' + esc(t('mailFailT')) + '</b> ' +
         esc(t('mailFailP', { n: S.num(s.mail_failures), when: S.fmtShort(s.mail_failure_last.created_at), reason: s.mail_failure_last.reason })) +
@@ -460,8 +476,24 @@
       '</div>' +
       storageHtml(s) +
       '<div class="v-tabs" role="tablist">' + tb('review', t('tabReview'), data.review.length) + tb('legit', t('tabLegit'), legitOpen) + tb('orders', t('tabOrders'), needs) + tb('support', t('tabSupport'), openTickets) +
-        tb('reviews', t('tabReviews'), rv ? rv.pending.length + rv.stats.newIdeas : 0) + '</div>' +
+        tb('reviews', t('tabReviews'), rv ? rv.pending.length + rv.stats.newIdeas : 0) +
+        (w.SLVAdmin ? tb('reports', t('tabReports'), s.reports || 0) : '') +
+        (w.SLVAdmin && isAdmin() ? '<span class="v-tabs-sep" aria-hidden="true"></span>' + tb('members', t('tabMembers'), 0) + tb('listings', t('tabListings'), 0) +
+          tb('activity', t('tabActivity'), 0) + tb('controls', t('tabControls'), 0) : '') + '</div>';
+    // an admin view draws itself (SLVAdmin); the minute refresh only updates the numbers above
+    if (adminView()) {
+      var view = tab + (tab === 'members' ? '/' + (fromHash().id || '') : '');
+      if (quiet && shown === view && $('admPane')) return;
+      shown = view;
+      $('labMain').innerHTML = (tab === 'orders' ? ordersSwitch() : '') + '<div id="admPane" class="adm"></div>';
+      if (tab === 'members') w.SLVAdmin.member(fromHash().id);
+      w.SLVAdmin.show(tab === 'orders' ? 'orders' : tab, $('admPane'), { renderOrder: orderHtml });
+      return;
+    }
+    shown = null;
+    $('labMain').innerHTML =
       (tab === 'review' ? labStateHtml(s) : '') +
+      (tab === 'orders' ? ordersSwitch() : '') +
       '<div class="v-rows">' + (tab === 'review'
         ? (data.review.length ? data.review.map(reviewHtml).join('') : '<div class="v-empty">' + S.ico('check') + '<h3>' + esc(t('queueEmptyT')) + '</h3><p>' + esc(t('queueEmpty')) + '</p></div>')
         : tab === 'reviews'
@@ -472,12 +504,18 @@
         ? (data.orders.length ? data.orders.map(orderHtml).join('') : '<div class="v-empty">' + S.ico('box') + '<h3>' + esc(t('ordersEmptyT')) + '</h3><p>' + esc(t('ordersEmpty')) + '</p></div>')
         : (tickets.length ? tickets.map(ticketHtml).join('') : '<div class="v-empty">' + S.ico('chat') + '<h3>' + esc(t('ticketsEmptyT')) + '</h3><p>' + esc(t('ticketsEmpty')) + '</p></div>')) +
       '</div>';
+    if (w.SLVAdmin) w.SLVAdmin.seeOrders(data.orders);
     restoreDrafts();
     autoCheck();
     var r2 = $('labToR2');
     if (r2) r2.onclick = function () { moveToR2(r2); };
   }
 
+  function ordersSwitch() {
+    if (!isAdmin() || !w.SLVAdmin) return '';
+    var b = function (k, label) { return '<button type="button" class="' + (ordersMode === k ? 'on' : '') + '" data-omode="' + k + '" aria-pressed="' + (ordersMode === k) + '">' + esc(t(label)) + '</button>'; };
+    return '<div class="adm-seg">' + b('queue', 'adOrdersQueue') + b('all', 'adOrdersAll') + '</div>';
+  }
   function labStateHtml(s) {
     var st = s.labCheck || {};
     var line = '<p class="v-note v-lc-state">' + S.ico('sparkle') + esc(t('lcTitle')) + ': ' + esc(t(st.on ? 'lcStateOn' : 'lcStateOff')) +
@@ -519,6 +557,7 @@
       S.busy(btn, false);
       if (!res.ok) { S.toast(S.errText(res), 'bad'); return; }
       S.toast(t(okKey), 'ok');
+      if (shown && w.SLVAdmin) w.SLVAdmin.reload();   // an order moved on in "All orders"
       load();
     });
   }
@@ -528,10 +567,13 @@
     if (!el) return;
     var tb = el.getAttribute('data-tab');
     if (tb) {
-      keepDrafts(); tab = tb; render();
+      keepDrafts(); tab = tb; shown = null;
       try { w.history.replaceState(null, '', w.location.pathname + '#' + tb); } catch (e2) {}
+      render();
       return;
     }
+    var om = el.getAttribute('data-omode');
+    if (om) { keepDrafts(); ordersMode = om; shown = null; render(); return; }
     var vw = el.getAttribute('data-view');
     if (vw) { openViewer(vw); return; }
     var id = +el.getAttribute('data-id');
@@ -605,9 +647,15 @@
   });
   $('labRefresh').addEventListener('click', function () { load(); });
   w.addEventListener('hashchange', function () {
-    var h = (w.location.hash || '').slice(1);
-    if ((h === 'support' || h === 'orders' || h === 'review' || h === 'legit' || h === 'reviews') && h !== tab && data) { keepDrafts(); tab = h; render(); }
+    var h = fromHash();
+    if (h.tab && data) { keepDrafts(); tab = h.tab; shown = null; render(); }
   });
+  // what the admin views (vault-admin.js) ask of the console
+  w.SLVLab = {
+    reload: function () { return load(); },
+    setTab: function (name) { if (!data) return; keepDrafts(); tab = name; shown = null; render(); },
+    ordersAll: function () { ordersMode = 'all'; shown = null; if (data) render(); }
+  };
   d.addEventListener('visibilitychange', function () { if (!d.hidden && data) load(); });
 
   S.boot({

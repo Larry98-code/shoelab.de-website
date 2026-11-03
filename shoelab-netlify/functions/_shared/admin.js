@@ -309,7 +309,7 @@ export async function memberView(env, id) {
      WHERE (r.kind = 'user' AND r.target_id = ?) OR (r.kind = 'listing' AND r.target_id IN (SELECT id FROM mk_listings WHERE seller_id = ?)) OR r.reporter_id = ?
      ORDER BY r.id DESC LIMIT 40`
   ).bind(id, id, id).all();
-  m.reports = (rp.results || []).map((x) => Object.assign(reportRow(x), { mine: x.reporter_id === id }));
+  m.reportList = (rp.results || []).map((x) => Object.assign(reportRow(x), { mine: x.reporter_id === id }));
   const tk = await env.DB.prepare('SELECT id, topic, summary, status, created_at FROM mk_tickets WHERE user_id = ? OR LOWER(email) = LOWER(?) ORDER BY id DESC LIMIT 20').bind(id, r.email).all();
   m.tickets = (tk.results || []).map((x) => ({ id: x.id, topic: x.topic, summary: x.summary, status: x.status, at: x.created_at }));
   const fb = await env.DB.prepare('SELECT order_id, rating, comment, created_at FROM mk_feedback WHERE seller_id = ? ORDER BY created_at DESC LIMIT 10').bind(id).all();

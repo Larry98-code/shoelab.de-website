@@ -212,7 +212,8 @@
         '<div><div class="v-lines">' + lines + '</div>' +
           trackingLine(t('trackingIn'), o.trackingIn) + trackingLine(t('trackingOut'), o.trackingOut) + '</div>' +
         '<div>' + (addr ? '<p class="v-label">' + esc(t('deliveryTo')) + '</p><p class="v-addr">' + esc(addr) + '</p>' : '') +
-          (events ? '<p class="v-label" style="margin-top:' + (addr ? '1rem' : '0') + ';">' + esc(t('history')) + '</p><ul class="v-events">' + events + '</ul>' : '') + '</div>' +
+          (events ? '<p class="v-label" style="margin-top:' + (addr ? '1rem' : '0') + ';">' + esc(t('history')) + '</p><ul class="v-events">' + events + '</ul>' : '') +
+          (o.otherId && o.status !== 'awaiting_payment' ? '<p class="v-rp-link"><button type="button" class="v-link-btn" data-report-member="' + o.id + '">' + S.ico('flag', 'inl') + ' ' + esc(t(buyer ? 'rpSeller' : 'rpBuyer')) + '</button></p>' : '') + '</div>' +
       '</div></details>' +
     '</article>';
   }
@@ -746,6 +747,11 @@
       return;
     }
     if (g('data-problem')) { problem(+g('data-problem')); return; }
+    if (g('data-report-member')) {
+      var ro = findOrder(+g('data-report-member'));
+      if (ro) S.reportDialog({ kind: 'user', id: ro.otherId, orderId: ro.id, title: ro.title });
+      return;
+    }
     if (g('data-rate')) {
       var row = el.closest('[data-rate-row]'), orderId = +row.getAttribute('data-rate-row');
       var comment = ($('fbc' + orderId) || {}).value || '';

@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '8';   // bump together with the ?v= of the translation files
+  var V = '9';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },
@@ -233,11 +233,14 @@
     var dt = (res && res.data) || {};
     if (dt.code === 'verify_email' || dt.code === 'seller_unverified') return '';   // a dialog explains these
     if (dt.code && has('e_' + dt.code)) {
-      return t('e_' + dt.code, {
+      // a limit with an end date reads "… until 12 Nov 2026"
+      var key = 'e_' + dt.code + (dt.until && has('e_' + dt.code + '_until') ? '_until' : '');
+      return t(key, {
         amount: dt.amount != null ? money(dt.amount, true) : '',
         min: dt.min != null ? money(dt.min) : '', max: dt.max != null ? money(dt.max) : '',
+        until: dt.until ? fmtDate(dt.until) : '', n: dt.n != null ? dt.n : '',
         list: (dt.missing || []).map(function (k) { return t('kind_' + k); }).join(', ')
-      });
+      }) + (dt.notice ? ' ' + dt.notice : '');
     }
     if (res && res.status === 503) return t('e_offline');
     return dt.error || t('e_generic');
@@ -381,7 +384,7 @@
           if (res.status === 401) return bad('e_login');
           if (res.status === 409) return bad('e_exists');
           if (res.status === 0) return bad('e_network');
-          msg.textContent = res.data.error || t('e_generic'); msg.className = 'v-msg bad';
+          msg.textContent = errText(res) || t('e_generic'); msg.className = 'v-msg bad';
           return;
         }
         loadConfig().then(function () {
@@ -691,6 +694,7 @@
       '<a class="book" href="/booking.html">' + esc(t('bookCleaning')) + ' →</a>';
 
     renderVerifyBar();
+    renderNoticeBar();
     var tab = d.getElementById('vTabbar');
     if (tab) {
       var tb = function (k, href, icon, label, cls) {
@@ -784,6 +788,75 @@
       '<button type="button" class="v-btn xs gold" id="vVerifyResend">' + esc(t('verifyResend')) + '</button>';
     d.getElementById('vVerifyResend').onclick = function () { resendVerification(this); };
   }
+  // The bar for what everyone should know right now: the Vault paused by the
+  // team, or — for a member — a limit, suspension or hidden listings on their
+  // own account (the email we sent them has the reasons and how to object).
+  function renderNoticeBar() {
+    var nav = d.getElementById('vNav');
+    if (!nav) return;
+    var bar = d.getElementById('vNotice');
+    if (!bar) { bar = d.createElement('div'); bar.id = 'vNotice'; bar.className = 'v-notice-bar'; bar.setAttribute('role', 'status'); nav.parentNode.insertBefore(bar, nav.nextSibling); }
+    var out = [], p = config && config.paused, st = me && me.standing;
+    if (p) out.push('<div class="v-nb paused">' + ico('clock') + '<span><b>' + esc(t(p.trading ? 'pausedTrading' : 'pausedListings')) + '</b>' + (p.notice ? ' ' + esc(p.notice) : '') + '</span></div>');
+    if (st && page.key !== 'lab') {
+      var lines = [];
+      if (st.status === 'suspended') lines.push(st.until ? t('standSuspendedUntil', { date: fmtDate(st.until) }) : t('standSuspended'));
+      else {
+        if (st.noSell) lines.push(st.noSell !== 'open' ? t('standNoSellUntil', { date: fmtDate(st.noSell) }) : t('standNoSell'));
+        if (st.noBuy) lines.push(st.noBuy !== 'open' ? t('standNoBuyUntil', { date: fmtDate(st.noBuy) }) : t('standNoBuy'));
+        if (st.hidden) lines.push(t('standHidden'));
+      }
+      if (lines.length) out.push('<div class="v-nb standing">' + ico('alert') + '<span><b>' + esc(lines.join(' ')) + '</b> ' + esc(t('standEmail')) + '</span></div>');
+    }
+    bar.innerHTML = out.join('');
+    bar.hidden = !out.length;
+  }
+
+  // Report a listing (anyone) or the other side of an order (members): the
+  // EU Digital Services Act's notice form (Art. 16). The team answers by email.
+  var RP_REASONS = ['counterfeit', 'misleading', 'prohibited', 'offplatform', 'fraud', 'abuse', 'other'];
+  function reportDialog(o) {
+    var sent = false;
+    var m = modal({
+      title: t(o.kind === 'listing' ? 'rpTitleListing' : 'rpTitleMember'), wide: true,
+      html: '<div class="v-rp">' +
+        '<p class="v-note">' + esc(t(o.kind === 'listing' ? 'rpLeadListing' : 'rpLeadMember', { what: o.title || '' })) + '</p>' +
+        '<label class="v-label" for="rpReason">' + esc(t('rpReason')) + '</label><select class="v-select" id="rpReason"><option value="">' + esc(t('rpPick')) + '</option>' +
+          RP_REASONS.map(function (k) { return '<option value="' + k + '">' + esc(t('rp_' + k)) + '</option>'; }).join('') + '</select>' +
+        '<label class="v-label" for="rpDetails">' + esc(t('rpDetails')) + '</label><textarea class="v-textarea" id="rpDetails" rows="4" maxlength="2000" placeholder="' + esc(t('rpDetailsPh')) + '"></textarea>' +
+        (me ? '' : '<div class="v-row"><div><label class="v-label" for="rpName">' + esc(t('rpName')) + '</label><input class="v-input" id="rpName" maxlength="80" autocomplete="name"/></div>' +
+          '<div><label class="v-label" for="rpEmail">' + esc(t('rpEmail')) + '</label><input class="v-input" id="rpEmail" type="email" maxlength="254" autocomplete="email"/></div></div>') +
+        '<label class="v-check"><input type="checkbox" id="rpAccurate"/><span>' + esc(t('rpAccurate')) + '</span></label>' +
+        '<input type="text" id="rpWebsite" class="rv-hp" tabindex="-1" autocomplete="off" aria-hidden="true"/>' +
+        '<p class="v-note">' + ico('lock', 'inl') + ' ' + esc(t('rpPrivacy')) + '</p><p class="v-msg" id="rpMsg" role="alert"></p></div>',
+      foot: '<button type="button" class="v-btn ghost" data-no>' + esc(t('cancel')) + '</button><button type="button" class="v-btn danger" data-go>' + esc(t('rpSend')) + '</button>'
+    });
+    var msg = m.$('#rpMsg'), bad = function (k) { msg.textContent = k; msg.className = 'v-msg bad'; };
+    m.$('[data-no]').addEventListener('click', function () { m.close(); });
+    m.$('[data-go]').addEventListener('click', function () {
+      if (sent) { m.close(); return; }
+      var btn = this, b = { kind: o.kind, id: o.id, orderId: o.orderId, reason: m.$('#rpReason').value, details: m.$('#rpDetails').value.trim(),
+        accurate: m.$('#rpAccurate').checked, website: m.$('#rpWebsite').value, lang: lang };
+      if (!b.reason) return bad(t('e_rp_reason'));
+      if (b.details.length < 15) return bad(t('e_rp_details'));
+      if (!me) {
+        b.name = m.$('#rpName').value.trim(); b.email = m.$('#rpEmail').value.trim();
+        if (!b.name) return bad(t('e_name'));
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(b.email)) return bad(t('e_email'));
+      }
+      if (!b.accurate) return bad(t('e_rp_accurate'));
+      busy(btn, true);
+      api('/api/market/report', { body: b }).then(function (res) {
+        busy(btn, false);
+        if (!res.ok) return bad(errText(res));
+        sent = true;
+        m.$('.v-modal-body').innerHTML = '<div class="v-rp-done">' + ico('check') + '<h3>' + esc(t('rpThanksT')) + '</h3><p>' + esc(t('rpThanksP')) + '</p></div>';
+        m.$('[data-no]').hidden = true;
+        btn.className = 'v-btn'; btn.textContent = t('close');
+      });
+    });
+  }
+
   // Confirmed in another tab: the bar goes as soon as this one is looked at.
   d.addEventListener('visibilitychange', function () {
     if (!d.hidden && me && me.verified === false) loadConfig().then(renderVerifyBar);
@@ -1104,7 +1177,7 @@
     me: function () { return me; }, config: function () { return config; }, reloadConfig: loadConfig,
     requireAuth: requireAuth, requireVerified: requireVerified, signOut: signOut, verifyPrompt: verifyPrompt, resendVerification: resendVerification,
     sellerPrompt: sellerPrompt, payoutsSetup: payoutsSetup,
-    busy: busy, toast: toast, modal: modal, confirm: confirmBox,
+    busy: busy, toast: toast, modal: modal, confirm: confirmBox, reportDialog: reportDialog,
     tierBadge: tierBadge, condLabel: condLabel, countdownHtml: countdownHtml, photoHtml: photoHtml,
     totalsHtml: totalsHtml, lineHtml: lineHtml, payFlow: payFlow, relistFlow: relistFlow, shareListing: shareListing, freshlyLive: freshlyLive,
     card: card, skeletonCards: skeletonCards, itemHref: itemHref, heartHtml: heartHtml,
