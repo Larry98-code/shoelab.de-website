@@ -42,7 +42,6 @@
     return u && u.id ? '<a href="#members/' + u.id + '" data-adm-member="' + u.id + '">' + esc(label || u.name || ('#' + u.id)) + '</a>' : esc(label || '—');
   }
   function when(iso) { return iso ? S.fmtShort(iso) : '—'; }
-  function untilText(v) { return !v || v === 'open' ? t('adForever') : S.fmtDate(v); }
   function filterBar(kind, keys, counts, prefix) {
     return '<div class="adm-filters" role="tablist">' + keys.map(function (k) {
       var on = q[kind].f === k;
@@ -181,8 +180,10 @@
       if (s.status === 'suspended') lines.push(s.until ? t('adSuspendedUntil', { date: S.fmtDate(s.until) }) : t('adSuspendedOpen'));
       if (s.status === 'banned') lines.push(t('adS_banned'));
       if (s.status === 'deleted') lines.push(t('adS_deleted'));
-      if (s.noSell) lines.push(t('adLimit', { what: t('adS_noSell'), until: untilText(s.noSell) }));
-      if (s.noBuy) lines.push(t('adLimit', { what: t('adS_noBuy'), until: untilText(s.noBuy) }));
+      // a date reads "No selling until 10 Nov 2026"; an open-ended limit "No selling · until further notice"
+      var lim = function (v, k) { return v === 'open' ? t(k) + ' · ' + t('adForever') : t('adLimit', { what: t(k), until: S.fmtDate(v) }); };
+      if (s.noSell) lines.push(lim(s.noSell, 'adS_noSell'));
+      if (s.noBuy) lines.push(lim(s.noBuy, 'adS_noBuy'));
       if (s.hidden) lines.push(t('adS_hidden'));
       standingBox = '<div class="v-state ' + (s.status === 'banned' || s.status === 'deleted' ? 'bad' : 'warn') + '">' + S.ico('alert') + '<div><b>' + esc(lines.join(' · ')) + '</b>' +
         (s.reason ? ' ' + esc(t('rs_' + s.reason)) : '') + (s.note ? '<br><small>' + esc(s.note) + '</small>' : '') + '</div></div>';

@@ -1,6 +1,34 @@
 // ShoeLab emails — Italiano: the Italian translation of en.js (format and rules in en.js's header).
 export default {
   _: {
+    // the console's admin tools: the reasons we give (DSA Art. 17), reports (Art. 16)
+    rs_counterfeit: 'Articoli contraffatti o non autentici', rs_misleading: 'Un annuncio ingannevole: l’articolo non corrisponde alla descrizione',
+    rs_nonpayment: 'Mancato pagamento di articoli vinti o acquistati', rs_nonshipment: 'Mancata spedizione di articoli venduti',
+    rs_fraud: 'Frode, o un tentativo di ingannare altri membri', rs_offplatform: 'Richiesta di pagare o trattare fuori dal Vault',
+    rs_abuse: 'Comportamento offensivo o minaccioso', rs_prohibited: 'Un articolo che non può essere venduto sul Vault',
+    rs_multiple: 'Più account, o aggiramento di una restrizione precedente', rs_terms: 'Un’altra violazione dei termini del Vault',
+    rs_request: 'Su tua richiesta', rs_other: 'Un altro motivo (vedi sotto)',
+    rsWhy: 'Motivo', admScope: 'Limitato', admUntil: 'Fine', untilNotice: 'nessuna data fissata (fino a nuovo avviso)',
+    scopeSell: 'la vendita (nuovi annunci, rimesse in vendita e accettazione di proposte)', scopeBuy: 'l’acquisto (offerte, Compralo Subito e proposte)', scopeBoth: 'l’acquisto e la vendita',
+    admTermsRef: 'Questa decisione si basa sulle sezioni 12 e 13 dei termini e condizioni dello ShoeLab Vault: https://shoelabonline.de/vault-terms.html#en-13',
+    admAppeal: 'Se non sei d’accordo, rispondi a questa email entro sei mesi spiegandoci perché. Una persona del nostro team che non ha partecipato a questa decisione la riesaminerà e ti risponderà. Il tuo diritto di rivolgerti a un tribunale non è pregiudicato.',
+    admOpenOrders: 'Gli ordini che hai già avviato vanno comunque completati: puoi ancora accedere per pagarli, spedirli o confermarli.',
+    admOpenOrdersBan: 'Ti contatteremo separatamente per gli ordini ancora aperti.',
+    liftRestrict: 'puoi di nuovo acquistare e vendere sul Vault senza limiti', liftHide: 'i tuoi annunci sono di nuovo visibili nel Vault',
+    liftAccount: 'il tuo account è di nuovo pienamente attivo', liftListing: 'il tuo annuncio {title} è di nuovo visibile nel Vault',
+    delByRequest: 'Come ci hai chiesto, abbiamo eliminato il tuo account ShoeLab.', delByUs: 'Abbiamo eliminato il tuo account ShoeLab.',
+    refundFull: 'un rimborso totale', refundPart: 'un rimborso parziale',
+    refundStripe: 'Il denaro torna sulla carta o sul conto con cui hai pagato. A seconda della banca, sarà visibile entro 5–10 giorni lavorativi.',
+    refundBank: 'Te lo restituiremo con bonifico bancario e ti contatteremo entro un giorno lavorativo.',
+    refundCut: 'Abbiamo recuperato {cutAmount} dal tuo accredito per questo ordine.',
+    cancelRefundStripe: 'Il tuo pagamento di {refundAmount} torna sulla carta o sul conto con cui hai pagato (5–10 giorni lavorativi, a seconda della banca).',
+    cancelRefundBank: 'Ti rimborseremo il pagamento di {refundAmount} con bonifico bancario e ti contatteremo entro un giorno lavorativo.',
+    admRelist: 'Il tuo annuncio è terminato: puoi rimettere in vendita il paio in Il mio Vault con un clic.',
+    rp_counterfeit: 'Contraffatto o falso', rp_misleading: 'Non come descritto o ingannevole', rp_prohibited: 'Non consentito sul Vault',
+    rp_offplatform: 'Chiede di pagare fuori dal Vault', rp_fraud: 'Truffa o frode', rp_abuse: 'Comportamento offensivo', rp_other: 'Altro',
+    rpListing: 'Annuncio', rpMember: 'Membro', rpWhat: 'Segnalato', rpWhy: 'Motivo',
+    rpActioned: 'Abbiamo riscontrato una violazione dei nostri termini e abbiamo preso provvedimenti. Per proteggere la privacy di tutti, non possiamo dirti esattamente cosa abbiamo fatto.',
+    rpDismissed: 'Abbiamo esaminato la segnalazione con attenzione e non abbiamo riscontrato violazioni dei nostri termini né della legge, quindi per ora non prendiamo provvedimenti.',
     // a listing just went live
     itemNo: 'Numero articolo',
     startPrice: 'Prezzo di partenza',
@@ -418,6 +446,87 @@ export default {
   sIdea: {
     s: '[IDEA] {topic}',
     b: ['Qualcuno ha un’idea per ShoeLab:', '%rows', '%message'],
+    c: 'Apri la console del lab',
+  },
+  // the console's admin tools (see functions/_shared/admin.js)
+  admWarning: {
+    s: 'Un avvertimento sul tuo account ShoeLab',
+    b: ['Ciao {name},', 'Ti scriviamo per il modo in cui è stato usato il tuo account sullo ShoeLab Vault. Questo è un avvertimento formale: per ora il tuo account non ha alcuna limitazione.', '%rows', '%message',
+      'Se dovesse succedere di nuovo, potremmo limitare, sospendere o chiudere il tuo account.', '{terms}', '{appeal}'],
+  },
+  admRestricted: {
+    s: 'Il tuo account ShoeLab è stato limitato',
+    b: ['Ciao {name},', 'Abbiamo limitato ciò che il tuo account può fare sullo ShoeLab Vault: {scope}.', '%rows', '%message',
+      'Tutto il resto funziona come prima e gli ordini già avviati si possono completare normalmente.', '{terms}', '{appeal}'],
+  },
+  admHidden: {
+    s: 'I tuoi annunci sono nascosti nel Vault',
+    b: ['Ciao {name},', 'Abbiamo nascosto i tuoi annunci nello ShoeLab Vault: per ora gli altri membri non possono vederli né acquistarli. Tu continui a vederli in Il mio Vault.', '%rows', '%message', '{terms}', '{appeal}'],
+  },
+  admListingHidden: {
+    s: 'Il tuo annuncio {title} è nascosto',
+    b: ['Ciao {name},', 'Abbiamo nascosto il tuo annuncio {title} nello ShoeLab Vault: per ora gli altri membri non possono vederlo né acquistarlo.', '%rows', '%message', '{terms}', '{appeal}'],
+    c: 'Vedi il tuo annuncio',
+  },
+  admListingRemoved: {
+    s: 'Abbiamo rimosso il tuo annuncio {title}',
+    b: ['Ciao {name},', 'Abbiamo rimosso il tuo annuncio {title} dallo ShoeLab Vault. Se era un’asta, è terminata senza vendita e gli offerenti sono stati avvisati.', '%rows', '%message', '{terms}', '{appeal}'],
+  },
+  admSuspended: {
+    s: 'Il tuo account ShoeLab è sospeso',
+    b: ['Ciao {name},', 'Abbiamo sospeso il tuo account ShoeLab Vault. Fine della sospensione: {until}. Finché è sospeso, non puoi pubblicare, acquistare, fare offerte o proposte, e i tuoi annunci sono nascosti. Le tue offerte nelle aste in corso e le tue proposte aperte sono state ritirate.',
+      '%rows', '%message', '{open}', '{terms}', '{appeal}'],
+  },
+  admBanned: {
+    s: 'Il tuo account ShoeLab è stato chiuso',
+    b: ['Ciao {name},', 'Abbiamo chiuso il tuo account ShoeLab Vault. Non puoi più accedere, i tuoi annunci sono stati rimossi e le tue offerte e proposte aperte sono state ritirate.',
+      '%rows', '%message', '{open}', '{terms}', '{appeal}'],
+  },
+  admLifted: {
+    s: 'Buone notizie sul tuo account ShoeLab',
+    b: ['Ciao {name},', 'Buone notizie: {what}.', 'Grazie di far parte dello ShoeLab Vault.'],
+    c: 'Vedi il tuo annuncio',
+  },
+  admMessage: {
+    s: 'Un messaggio dal team ShoeLab',
+    b: ['Ciao {name},', '%message', 'Domande? Rispondi pure a questa email.'],
+  },
+  admDeleted: {
+    s: 'Il tuo account ShoeLab è stato eliminato',
+    b: ['Ciao {name},', '{why}', '%message',
+      'I tuoi dati personali sono stati cancellati. I dati degli ordini passati vengono conservati per il tempo richiesto dalla legge fiscale tedesca (fino a dieci anni) e non vengono usati per nient’altro.',
+      'Se pensi che si tratti di un errore, rispondi a questa email.'],
+  },
+  admRefund: {
+    s: 'Rimborso per l’ordine #{order}',
+    b: ['Ciao {name},', 'Abbiamo emesso {which} di {amount} per l’ordine #{order} ({title}).', '%message', '{how}'],
+  },
+  admRefundSeller: {
+    s: 'Ordine #{order}: l’acquirente è stato rimborsato',
+    b: ['Ciao {name},', 'Abbiamo rimborsato {amount} all’acquirente dell’ordine #{order} ({title}).', '%message', '{cut}', 'Domande? Rispondi pure a questa email.'],
+  },
+  admOrderCancelled: {
+    s: 'L’ordine #{order} è stato annullato',
+    b: ['Ciao {name},', 'Il team ShoeLab ha annullato l’ordine #{order} ({title}).', '%message', '{refund}', '{relist}'],
+    c: 'Apri Il mio Vault',
+  },
+  admAuctionEnded: {
+    s: 'L’asta per {title} è terminata',
+    b: ['Ciao {name},', 'Il team ShoeLab ha chiuso l’asta per {title} a cui avevi partecipato. È terminata senza vendita: la tua offerta non è più valida e non devi pagare nulla.',
+      'Ci scusiamo per il disagio: nel Vault ti aspettano molte altre paia.'],
+  },
+  reportReceived: {
+    s: 'Abbiamo ricevuto la tua segnalazione #{report}',
+    b: ['Ciao {name},', 'Grazie: abbiamo ricevuto la tua segnalazione su {what} ({reason}). Una persona del nostro team esamina ogni segnalazione, di solito entro due giorni lavorativi, e ti invieremo la nostra decisione via email.',
+      'Le segnalazioni sono riservate: non diciamo al membro segnalato chi sei.'],
+  },
+  reportDecided: {
+    s: 'La tua segnalazione #{report}: la nostra decisione',
+    b: ['Ciao {name},', 'Abbiamo esaminato la tua segnalazione su {what}.', '{outcome}', '%message', 'Grazie per aiutarci a mantenere il Vault sicuro.'],
+  },
+  sReport: {
+    s: '[REPORT] {kind}: {what}',
+    b: ['Qualcuno ha segnalato qualcosa sul Vault:', '%rows', '%message'],
     c: 'Apri la console del lab',
   },
   sTest: {
