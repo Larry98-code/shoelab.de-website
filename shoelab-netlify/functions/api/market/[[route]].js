@@ -16,6 +16,7 @@
 //   GET  admin/members | admin/member?id= | admin/listings | admin/orders | admin/reports | admin/log | admin/settings
 //   POST admin/member | admin/listing | admin/order | admin/report | admin/settings   (see _shared/admin.js)
 import { json, preflight, clean, currentUser, stripeApi, sessionSecret, mailTrouble } from '../../_shared/util.js';
+import { onHold } from '../../_shared/core.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
   siteUrl, isSpecialist, onSpecialistList, shortName, maskName, fees, ensureSchema, logEvent, userById,
@@ -152,6 +153,7 @@ async function getConfig({ request, env }) {
 }
 
 async function pausedView(env) {
+  if (onHold(env)) return { trading: true, listings: true, hold: true, notice: null };
   const s = await vaultSettings(env);
   return s.pause_trading || s.pause_listings ? { trading: s.pause_trading, listings: s.pause_listings, notice: s.notice || null } : null;
 }
@@ -1313,6 +1315,7 @@ async function saveAnswers(env, subj, q, b) {
 // may only have the other seller's pictures, so three will do.
 async function createLegit({ request, env }) {
   const me = await needVerified(request, env);
+  if (onHold(env)) fail(503, 'ShoeLab is taking a short pause, so this is not possible right now. We will be back soon.', 'on_hold');
   const b = await body(request);
   const mode = b.mode === 'sell' ? 'sell' : b.mode === 'buy' ? 'buy' : null;
   if (!mode) fail(400, 'Choose whether you are buying or selling', 'legit_mode');
@@ -1366,6 +1369,7 @@ async function ownLegit(request, env, b) {
   return { me, g, spec };
 }
 async function payLegit({ request, env }) {
+  if (onHold(env)) fail(503, 'ShoeLab is taking a short pause, so this is not possible right now. We will be back soon.', 'on_hold');
   const b = await body(request);
   const { me, g } = await ownLegit(request, env, b);
   if (g.user_id !== me.id) fail(404, 'Legit Check not found', 'not_found');

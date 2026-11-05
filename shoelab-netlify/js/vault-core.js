@@ -10,7 +10,7 @@
 (function (w, d) {
   'use strict';
 
-  var V = '9';   // bump together with the ?v= of the translation files
+  var V = '10';   // bump together with the ?v= of the translation files
   var I18N = w.SLV_I18N = w.SLV_I18N || {};
   var LANGS = [
     { c: 'en', n: 'English', f: '🇬🇧' }, { c: 'de', n: 'Deutsch', f: '🇩🇪' },
@@ -797,7 +797,8 @@
     var bar = d.getElementById('vNotice');
     if (!bar) { bar = d.createElement('div'); bar.id = 'vNotice'; bar.className = 'v-notice-bar'; bar.setAttribute('role', 'status'); nav.parentNode.insertBefore(bar, nav.nextSibling); }
     var out = [], p = config && config.paused, st = me && me.standing;
-    if (p) out.push('<div class="v-nb paused">' + ico('clock') + '<span><b>' + esc(t(p.trading ? 'pausedTrading' : 'pausedListings')) + '</b>' + (p.notice ? ' ' + esc(p.notice) : '') + '</span></div>');
+    if (p) out.push('<div class="v-nb paused' + (p.hold ? ' hold' : '') + '">' + (p.hold ? '<span class="v-nb-dot" aria-hidden="true"></span>' : ico('clock')) +
+      '<span><b>' + esc(t(p.hold ? 'pausedHold' : p.trading ? 'pausedTrading' : 'pausedListings')) + '</b>' + (p.notice ? ' ' + esc(p.notice) : '') + '</span></div>');
     if (st && page.key !== 'lab') {
       var lines = [];
       if (st.status === 'suspended') lines.push(st.until ? t('standSuspendedUntil', { date: fmtDate(st.until) }) : t('standSuspended'));

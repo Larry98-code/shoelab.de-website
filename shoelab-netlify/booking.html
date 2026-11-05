@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<script src="/js/site-status.js?v=1"></script>
 <script src="/js/consent.js?v=1" defer></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="theme-color" content="#080808"/>
@@ -29,7 +30,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
-<link rel="stylesheet" href="/css/flow.css?v=1"/>
+<link rel="stylesheet" href="/css/flow.css?v=2"/>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -110,6 +111,13 @@
 </nav>
 
 <main class="fl-main">
+  <!-- ON HOLD (js/site-status.js): shown instead of the form -->
+  <section class="fl-hold" role="note" aria-labelledby="flHoldT">
+    <span class="fl-hold-badge"><span class="fl-hold-dot" aria-hidden="true"></span><span data-t="holdBadge">Temporarily closed</span></span>
+    <h1 class="fl-hold-title" id="flHoldT" data-t="holdTitle">Bookings are paused</h1>
+    <p class="fl-hold-text" data-t="holdText">ShoeLab is taking a short pause, so we aren’t taking bookings or orders right now. We’ll be back soon — thank you for your patience and your trust.</p>
+    <div class="fl-hold-actions"><a class="fl-hold-btn" href="/" data-t="holdBack">Back to ShoeLab</a><a class="fl-hold-link" href="/#contact" data-t="holdContact">Contact us</a></div>
+  </section>
   <header class="fl-head">
     <p class="fl-eyebrow" data-t="bEyebrow">Step 1 of 3</p>
     <h1 class="fl-title"><span data-t="bTitleA">Book Your</span> <span class="red" data-t="bTitleB">Appointment</span></h1>
@@ -212,7 +220,7 @@
 </footer>
 
 <script src="/js/sl-geo.js?v=2"></script>
-<script src="/js/flow.js?v=3"></script>
+<script src="/js/flow.js?v=4"></script>
 <script>
 (function(){
   var F = window.SLFlow, G = window.SLGeo;

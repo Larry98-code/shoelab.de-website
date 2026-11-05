@@ -19,6 +19,8 @@
      degrades to readable rather than blank. */
   var T = {
     en: {
+      holdBadge: 'Temporarily closed', holdTitle: 'Bookings are paused', holdBack: 'Back to ShoeLab', holdContact: 'Contact us',
+      holdText: 'ShoeLab is taking a short pause, so we aren’t taking bookings or orders right now. We’ll be back soon — thank you for your patience and your trust.',
       back: '← Back to site', step1: 'Service', step2: 'Payment', step3: 'Confirmed',
       required: 'Required', invalidEmail: 'Enter a valid email address', secure: 'Secure checkout · SSL encrypted',
       bEyebrow: 'Step 1 of 3', bTitleA: 'Book Your', bTitleB: 'Appointment',
@@ -54,6 +56,8 @@
       backHome: 'Back to ShoeLab', questions: 'Questions? Contact the team'
     },
     de: {
+      holdBadge: 'Vorübergehend geschlossen', holdTitle: 'Buchungen ruhen gerade', holdBack: 'Zurück zu ShoeLab', holdContact: 'Kontakt aufnehmen',
+      holdText: 'ShoeLab legt eine kurze Pause ein, deshalb nehmen wir gerade keine Buchungen oder Bestellungen an. Wir sind bald zurück — danke für deine Geduld und dein Vertrauen.',
       back: '← Zurück zur Seite', step1: 'Service', step2: 'Zahlung', step3: 'Bestätigt',
       required: 'Pflichtfeld', invalidEmail: 'Bitte eine gültige E-Mail-Adresse eingeben', secure: 'Sichere Zahlung · SSL-verschlüsselt',
       bEyebrow: 'Schritt 1 von 3', bTitleA: 'Termin', bTitleB: 'Buchen',
@@ -89,6 +93,8 @@
       backHome: 'Zurück zu ShoeLab', questions: 'Fragen? Kontaktiere das Team'
     },
     pl: {
+      holdBadge: 'Tymczasowo zamknięte', holdTitle: 'Rezerwacje są wstrzymane', holdBack: 'Wróć do ShoeLab', holdContact: 'Skontaktuj się z nami',
+      holdText: 'ShoeLab robi krótką przerwę, dlatego obecnie nie przyjmujemy rezerwacji ani zamówień. Wkrótce wracamy — dziękujemy za cierpliwość i zaufanie.',
       back: '← Powrót do strony', step1: 'Usługa', step2: 'Płatność', step3: 'Potwierdzone',
       required: 'Pole wymagane', invalidEmail: 'Podaj poprawny adres e-mail', secure: 'Bezpieczna płatność · szyfrowanie SSL',
       bEyebrow: 'Krok 1 z 3', bTitleA: 'Zarezerwuj', bTitleB: 'Termin',
@@ -124,6 +130,8 @@
       backHome: 'Powrót do ShoeLab', questions: 'Pytania? Skontaktuj się z zespołem'
     },
     ru: {
+      holdBadge: 'Временно закрыто', holdTitle: 'Запись приостановлена', holdBack: 'Вернуться на ShoeLab', holdContact: 'Связаться с нами',
+      holdText: 'ShoeLab берёт небольшую паузу, поэтому сейчас мы не принимаем записи и заказы. Скоро вернёмся — спасибо за терпение и доверие.',
       back: '← Назад на сайт',
       step1: 'Услуга',
       step2: 'Оплата',
@@ -202,6 +210,8 @@
       questions: 'Вопросы? Свяжись с командой'
     },
     uk: {
+      holdBadge: 'Тимчасово зачинено', holdTitle: 'Запис призупинено', holdBack: 'Повернутися на ShoeLab', holdContact: 'Зв’язатися з нами',
+      holdText: 'ShoeLab бере невелику паузу, тож зараз ми не приймаємо записів і замовлень. Незабаром повернемося — дякуємо за терпіння й довіру.',
       back: '← Назад на сайт', step1: 'Послуга', step2: 'Оплата', step3: 'Підтверджено',
       required: 'Обов’язкове поле', invalidEmail: 'Введи дійсну електронну адресу', secure: 'Безпечна оплата · SSL-шифрування',
       bEyebrow: 'Крок 1 з 3', bTitleA: 'Забронюй', bTitleB: 'візит',
@@ -237,6 +247,8 @@
       backHome: 'Назад до ShoeLab', questions: 'Питання? Зв’яжися з командою'
     },
     it: {
+      holdBadge: 'Temporaneamente chiuso', holdTitle: 'Le prenotazioni sono sospese', holdBack: 'Torna a ShoeLab', holdContact: 'Contattaci',
+      holdText: 'ShoeLab si prende una breve pausa, quindi al momento non accettiamo prenotazioni né ordini. Torniamo presto: grazie per la pazienza e la fiducia.',
       back: '← Torna al sito',
       step1: 'Servizio',
       step2: 'Pagamento',
@@ -315,6 +327,8 @@
       questions: 'Domande? Contatta il team'
     },
     es: {
+      holdBadge: 'Cerrado temporalmente', holdTitle: 'Las reservas están en pausa', holdBack: 'Volver a ShoeLab', holdContact: 'Contáctanos',
+      holdText: 'ShoeLab se toma un breve descanso, así que ahora mismo no aceptamos reservas ni pedidos. Volvemos pronto. Gracias por tu paciencia y tu confianza.',
       back: '← Volver al sitio',
       step1: 'Servicio',
       step2: 'Pago',
@@ -393,6 +407,8 @@
       questions: '¿Preguntas? Contacta con el equipo'
     },
     fr: {
+      holdBadge: 'Fermé temporairement', holdTitle: 'Les réservations sont suspendues', holdBack: 'Retour à ShoeLab', holdContact: 'Nous contacter',
+      holdText: 'ShoeLab fait une courte pause : nous ne prenons ni réservations ni commandes pour le moment. Nous revenons bientôt — merci pour ta patience et ta confiance.',
       back: '← Retour au site', step1: 'Service', step2: 'Paiement', step3: 'Confirmé',
       required: 'Champ obligatoire', invalidEmail: 'Saisis une adresse e-mail valide', secure: 'Paiement sécurisé · chiffrement SSL',
       bEyebrow: 'Étape 1 sur 3', bTitleA: 'Prends', bTitleB: 'Rendez-vous',

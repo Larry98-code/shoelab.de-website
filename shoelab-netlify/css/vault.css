@@ -1552,3 +1552,9 @@ html.v-vw-lock,html.v-vw-lock body{overflow:hidden;}
 .v-rp-link .v-link-btn{color:var(--muted);font-size:0.76rem;}
 .v-rp-link .v-link-btn:hover{color:#ff9a9a;}
 .v-rp-link svg{width:13px;height:13px;vertical-align:-2px;}
+
+/* ShoeLab on hold: the notice on every Vault page */
+.v-nb.paused.hold{background:linear-gradient(90deg,rgba(18,14,6,0.96),rgba(30,23,8,0.97) 50%,rgba(18,14,6,0.96));border-bottom:1px solid rgba(232,184,74,0.3);color:#f1dfae;}
+.v-nb-dot{width:8px;height:8px;border-radius:50%;background:#e8b84a;flex-shrink:0;animation:vNbPulse 2.4s ease-out infinite;}
+@keyframes vNbPulse{0%{box-shadow:0 0 0 0 rgba(232,184,74,0.55);}70%{box-shadow:0 0 0 9px rgba(232,184,74,0);}100%{box-shadow:0 0 0 0 rgba(232,184,74,0);}}
+@media(prefers-reduced-motion:reduce){ .v-nb-dot{animation:none;} }

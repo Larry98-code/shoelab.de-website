@@ -729,5 +729,7 @@
   e_restricted_sell: 'Ahora mismo no puedes vender con tu cuenta.', e_restricted_sell_until: 'No puedes vender con tu cuenta hasta el {until}.',
   e_restricted_buy: 'Ahora mismo no puedes comprar con tu cuenta.', e_restricted_buy_until: 'No puedes comprar con tu cuenta hasta el {until}.',
   e_paused_trading: 'El Vault está en pausa por un momento. Inténtalo de nuevo más tarde.', e_paused_listings: 'Los anuncios nuevos están en pausa por un momento. Inténtalo de nuevo más tarde.',
-  e_paused_signups: 'Las cuentas nuevas están en pausa por un momento. Inténtalo de nuevo más tarde.', e_email_blocked: 'Esta dirección de email no se puede usar para una cuenta nueva. Si crees que es un error, escríbenos.'
+  e_paused_signups: 'Las cuentas nuevas están en pausa por un momento. Inténtalo de nuevo más tarde.', e_email_blocked: 'Esta dirección de email no se puede usar para una cuenta nueva. Si crees que es un error, escríbenos.',
+  // ShoeLab on hold (functions/_shared/core.js)
+  pausedHold: 'ShoeLab se toma un breve descanso: comprar, vender y el Legit Check están en pausa. Volvemos pronto.', e_on_hold: 'ShoeLab se toma un breve descanso, así que ahora mismo no es posible. Volvemos pronto.'
 };

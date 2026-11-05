@@ -6,7 +6,7 @@
 // Plain fetch to the Messages API: the site deploys without a build step, so
 // there is no SDK bundle to import (the same approach as /api/wesley).
 import { clean, validEmail, notifyAddress } from './util.js';
-import { pickLang, requestLang } from './core.js';
+import { pickLang, requestLang, onHold, HOLD_NOTE } from './core.js';
 import { LANG_NAMES } from './mail.js';
 import {
   VAULT, nowIso, euro, listingTitle, userById, tell, tellStudio, connectOn, sellerRow, firstName,
@@ -83,6 +83,7 @@ const SORRY = {
 async function memberContext(env, me, lang, page) {
   const lines = ['Date: ' + nowIso().slice(0, 10), 'Member language: ' + LANG_NAMES[lang] + ' (' + lang + ')',
     'Page the member is on: ' + (page || 'unknown')];
+  if (onHold(env)) lines.unshift(HOLD_NOTE);
   if (!me) {
     lines.push('The visitor is not signed in. You cannot see any orders. To hand over to a specialist they need to leave an email address in the "Talk to a specialist" form, or sign in.');
     return lines.join('\n');

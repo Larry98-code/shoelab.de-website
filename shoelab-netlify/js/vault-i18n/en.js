@@ -728,5 +728,7 @@
   e_restricted_sell: 'Selling is not available on your account right now.', e_restricted_sell_until: 'Selling is not available on your account until {until}.',
   e_restricted_buy: 'Buying is not available on your account right now.', e_restricted_buy_until: 'Buying is not available on your account until {until}.',
   e_paused_trading: 'The Vault is paused for a moment — please try again later.', e_paused_listings: 'New listings are paused for a moment — please try again later.',
-  e_paused_signups: 'New accounts are paused for a moment — please try again later.', e_email_blocked: 'This email address cannot be used for a new account. If you think this is a mistake, write to us.'
+  e_paused_signups: 'New accounts are paused for a moment — please try again later.', e_email_blocked: 'This email address cannot be used for a new account. If you think this is a mistake, write to us.',
+  // ShoeLab on hold (functions/_shared/core.js)
+  pausedHold: 'ShoeLab is taking a short pause — buying, selling and the Legit Check are on hold. We’ll be back soon.', e_on_hold: 'ShoeLab is taking a short pause, so this isn’t possible right now. We’ll be back soon.'
 };

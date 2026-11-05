@@ -4,6 +4,22 @@
 
 export const LANGS = ['en', 'de', 'pl', 'ru', 'uk', 'it', 'es', 'fr'];
 
+// ── ON HOLD ────────────────────────────────────────────────────────────────
+// ShoeLab is on a short pause: no bookings, no Vault trading, no Legit Checks.
+// Visitors see the notice on the homepage, the booking pages and every Vault
+// page. To reopen: set HOLD to false here AND in js/site-status.js, deploy.
+// (The SITE_HOLD variable, "on" or "off", overrides this; the tests use it.)
+const HOLD = true;
+export function onHold(env) {
+  const v = env && env.SITE_HOLD ? String(env.SITE_HOLD).toLowerCase() : '';
+  return v === 'on' ? true : v === 'off' ? false : HOLD;
+}
+// what the chat assistants are told while ShoeLab is on hold
+export const HOLD_NOTE = 'IMPORTANT, overrides everything else: ShoeLab is temporarily on hold and not operating. ' +
+  'All services are paused: studio cleanings and bookings, the shop, buying and selling in the Vault, and the Legit Check. ' +
+  'Do not offer or try to make bookings, orders or checks, and do not quote dates. Explain kindly that ShoeLab is taking a short pause ' +
+  'and will be back soon, and that questions are still welcome through the contact options on the website.';
+
 export function siteUrl(env) {
   return String((env && env.SITE_URL) || 'https://shoelabonline.de').replace(/\/$/, '');
 }

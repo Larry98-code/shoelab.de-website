@@ -6,6 +6,8 @@
 // so Wesley keeps answering even if the account lacks access to a newer
 // model. The real API error is logged for the Cloudflare dashboard.
 
+import { onHold, HOLD_NOTE } from '../_shared/core.js';
+
 const MODELS = ['claude-sonnet-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'];
 
 // Some model generations return multiple content blocks (reasoning first,
@@ -74,7 +76,9 @@ export async function onRequestPost(context) {
     return json({ error: 'Messages required' }, 400);
   }
 
-  const sys = system || 'You are Wesley, the helpful AI assistant for ShoeLab.de shoe cleaning studio in Bremen, Germany.';
+  let sys = system || 'You are Wesley, the helpful AI assistant for ShoeLab.de shoe cleaning studio in Bremen, Germany.';
+  // ShoeLab is on a short pause: Wesley must not take bookings (see core.js)
+  if (onHold(env)) sys = Array.isArray(sys) ? sys.concat([{ type: 'text', text: HOLD_NOTE }]) : String(sys) + '\n\n' + HOLD_NOTE;
 
   try {
     let last = null;

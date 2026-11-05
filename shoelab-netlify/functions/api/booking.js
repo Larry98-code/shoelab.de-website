@@ -1,5 +1,5 @@
 import { json, preflight, clean, validEmail, currentUser } from '../_shared/util.js';
-import { pickLang, requestLang, ensureCore } from '../_shared/core.js';
+import { pickLang, requestLang, ensureCore, onHold } from '../_shared/core.js';
 import { sendMail, sendStudio, LANG_NAMES } from '../_shared/mail.js';
 
 export async function onRequestOptions() {
@@ -14,6 +14,9 @@ export async function onRequestOptions() {
 // lost just because someone abandoned the card form.
 export async function onRequestPost(context) {
   const { request, env } = context;
+
+  // ShoeLab is on a short pause: no new bookings (see core.js)
+  if (onHold(env)) return json({ error: 'ShoeLab is taking a short pause, so we are not taking bookings right now. We will be back soon.', code: 'on_hold' }, 503);
 
   let body;
   try { body = await request.json(); } catch (e) { return json({ error: 'Invalid JSON' }, 400); }

@@ -275,6 +275,22 @@ studio, the Vault, the Legit Check and the shop.
   review you on Google. It's shown to everyone, whatever their rating; asking
   only happy customers isn't allowed.
 
+## ShoeLab on hold: pausing everything
+
+While ShoeLab is on a break, one switch pauses the whole business: no studio
+bookings (the booking and checkout pages show a notice instead of the form,
+and `/api/booking` refuses), no Vault trading or listings, no Legit Checks,
+and Wesley and the Vault help chat are told not to take bookings. Visitors see
+a strip under the menu bar on the homepage (it stays while they scroll and
+leads to the full message in the hero, which replaces "Book your slot"), a
+note in the booking section, and a notice on every Vault page — in all eight
+languages. Orders already placed in the Vault can still be paid, shipped and
+finished; contact options stay open.
+
+To **reopen**, set `HOLD` to `false` in both `functions/_shared/core.js` and
+`js/site-status.js`, then deploy. (The `SITE_HOLD` variable, `on` or `off`,
+overrides the server side; the tests use it.)
+
 ## Running the Vault: the admin tools
 
 The lab console has five more tabs for whoever runs the Vault (every

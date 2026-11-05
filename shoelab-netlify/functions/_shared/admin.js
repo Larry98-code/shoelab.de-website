@@ -21,6 +21,7 @@
 // Who may: specialists (VAULT_SPECIALISTS). VAULT_ADMINS, when set, narrows
 // the admin tools to those addresses; otherwise every specialist has them.
 import { clean, validEmail, stripeApi } from './util.js';
+import { onHold } from './core.js';
 import {
   nowIso, isoIn, listingTitle, tell, tellStudio, userById, logEvent, increment, isSpecialist, onSpecialistList, shortName,
   connectOn, releasePayout,
@@ -102,6 +103,7 @@ export function standing(u) {
 }
 // null when the member may; otherwise [status, message, code, extra] for the route's fail()
 export async function tradeBlock(env, u, what) {
+  if (onHold(env)) return [503, 'ShoeLab is taking a short pause, so this is not possible right now. We will be back soon.', 'on_hold'];
   const s = await vaultSettings(env);
   if (s.pause_trading) return [503, 'The Vault is paused for a moment — please try again later', 'paused_trading', { notice: s.notice || null }];
   if (what === 'sell' && s.pause_listings) return [503, 'New listings are paused for a moment — please try again later', 'paused_listings', { notice: s.notice || null }];

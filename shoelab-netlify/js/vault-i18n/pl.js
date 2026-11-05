@@ -731,5 +731,7 @@
   e_restricted_sell: 'Sprzedaż jest teraz niedostępna na Twoim koncie.', e_restricted_sell_until: 'Sprzedaż jest niedostępna na Twoim koncie do {until}.',
   e_restricted_buy: 'Kupowanie jest teraz niedostępne na Twoim koncie.', e_restricted_buy_until: 'Kupowanie jest niedostępne na Twoim koncie do {until}.',
   e_paused_trading: 'Vault jest na chwilę wstrzymany — spróbuj ponownie później.', e_paused_listings: 'Nowe ogłoszenia są na chwilę wstrzymane — spróbuj ponownie później.',
-  e_paused_signups: 'Zakładanie kont jest na chwilę wstrzymane — spróbuj ponownie później.', e_email_blocked: 'Tego adresu e-mail nie można użyć do założenia nowego konta. Jeśli uważasz, że to pomyłka, napisz do nas.'
+  e_paused_signups: 'Zakładanie kont jest na chwilę wstrzymane — spróbuj ponownie później.', e_email_blocked: 'Tego adresu e-mail nie można użyć do założenia nowego konta. Jeśli uważasz, że to pomyłka, napisz do nas.',
+  // ShoeLab on hold (functions/_shared/core.js)
+  pausedHold: 'ShoeLab robi krótką przerwę — kupowanie, sprzedawanie i Legit Check są wstrzymane. Wkrótce wracamy.', e_on_hold: 'ShoeLab robi krótką przerwę, dlatego teraz nie jest to możliwe. Wkrótce wracamy.'
 };
