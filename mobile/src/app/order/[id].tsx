@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
@@ -36,7 +36,8 @@ export default function OrderScreen() {
     const hit = all.find((x) => String(x.id) === String(id));
     if (hit) setO(hit); else setMissing(true);
   }, [id]);
-  useEffect(() => { load(); store.get('addr').then((v) => { if (v) try { setAddr(JSON.parse(v)); } catch { /* old */ } }); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useEffect(() => { store.get('addr').then((v) => { if (v) try { setAddr(JSON.parse(v)); } catch { /* old */ } }); }, []);
 
   const say = (k: string) => { setFlash(t(k)); setTimeout(() => setFlash(''), 3000); };
   const act = async (key: string, route: string, body: object, ok: string) => {

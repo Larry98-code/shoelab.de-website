@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native';
 import { API, market } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useI18n } from '../../lib/i18n';
@@ -34,7 +33,7 @@ export default function ListingScreen() {
     const r = await market<{ listing: Listing }>('listing?id=' + encodeURIComponent(String(id)));
     if (r.ok) { setL(r.data.listing); setGone(false); } else if (r.status === 404) setGone(true);
   }, [id]);
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
   // a live auction refreshes itself
   useEffect(() => {
     if (!L || L.status !== 'live' || L.format !== 'auction') return;

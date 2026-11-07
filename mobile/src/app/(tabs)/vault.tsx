@@ -47,7 +47,7 @@ export default function Vault() {
     setItems((x) => (pg === 1 ? r.data.items : (x || []).concat(r.data.items)));
     if (pg === 1 && r.data.facets) setBrands(r.data.facets.brands || []);
   }, []);
-  useEffect(() => { load(q, 1); }, [q, load]);
+  useEffect(() => { const h = setTimeout(() => load(q, 1), 0); return () => clearTimeout(h); }, [q, load]);
   // search as you type, after a short pause
   useEffect(() => { const h = setTimeout(() => setQ((x) => (x.q === text.trim() ? x : { ...x, q: text.trim() })), 350); return () => clearTimeout(h); }, [text]);
 

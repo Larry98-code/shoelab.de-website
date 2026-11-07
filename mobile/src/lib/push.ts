@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
@@ -27,7 +28,7 @@ export async function enablePush(): Promise<'on' | 'denied' | 'unavailable'> {
   if (!perm.granted) perm = await Notifications.requestPermissionsAsync();
   if (!perm.granted) return 'denied';
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', { name: 'ShoeLab', importance: Notifications.AndroidImportance.HIGH, lightColor: '#CC1111' });
+    await Notifications.setNotificationChannelAsync('default', { name: 'ShoeLab', importance: AndroidImportance.HIGH, lightColor: '#CC1111' });
   }
   const projectId = (Constants.expoConfig?.extra as any)?.eas?.projectId ?? (Constants as any).easConfig?.projectId;
   try {

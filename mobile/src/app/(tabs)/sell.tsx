@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
@@ -34,10 +34,8 @@ export default function Sell() {
   const [busy, setBusy] = useState(false), [msg, setMsg] = useState(''), [gate, setGate] = useState(false), [done, setDone] = useState<number | null>(null);
 
   const required: string[] = (config?.required && config.required[tier]) || (tier === 'photo' ? ['side_out', 'side_in', 'sole', 'size_tag', 'box_label', 'insole'] : ['side_out', 'side_in', 'size_tag']);
-  const kinds: string[] = useMemo(() => {
-    const all: string[] = (config?.photoKinds as string[]) || ['side_out', 'side_in', 'sole', 'size_tag', 'box_label', 'insole', 'heel', 'toe', 'other'];
-    return required.concat(all.filter((k) => required.indexOf(k) === -1));
-  }, [config, tier]);
+  const allKinds: string[] = (config?.photoKinds as string[]) || ['side_out', 'side_in', 'sole', 'size_tag', 'box_label', 'insole', 'heel', 'toe', 'other'];
+  const kinds = required.concat(allKinds.filter((k) => required.indexOf(k) === -1));
   const missing = required.filter((k) => !shots[k]).length;
   const cents = parseEuro(price);
   const rate = (config?.commission as number) ?? 0.08, ship = (config?.shipping as number) ?? 699;

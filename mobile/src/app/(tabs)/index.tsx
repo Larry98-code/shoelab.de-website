@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, Image, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { LinearGradient } from 'expo-linear-gradient';
 import { API, market } from '../../lib/api';
@@ -28,7 +28,7 @@ export default function Home() {
     const r = await market<{ items: Card[] }>('listings?sort=new&per=8');
     if (r.ok) setFresh(r.data.items || []);
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
   const refresh = async () => { setRefreshing(true); await Promise.all([load(), reload()]); setRefreshing(false); };
   const svcText = (studio.text as Record<string, Record<string, string>>)[lang] || studio.text.en;
   const cardW = Math.min(170, width * 0.42);

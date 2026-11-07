@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
@@ -37,7 +37,6 @@ export default function Me() {
   const [counter, setCounter] = useState<Record<number, string>>({}), [busy, setBusy] = useState('');
   const load = useCallback(async () => { if (!me) { setD(null); return; } const r = await market<MeData>('me'); if (r.ok) setD(r.data); }, [me]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
-  useEffect(() => { load(); }, [load]);
 
   const header = (
     <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
