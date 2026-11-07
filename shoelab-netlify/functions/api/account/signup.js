@@ -53,7 +53,7 @@ export async function onRequestPost(context) {
   );
 
   return json(
-    { user: { id: uid, name, email, verified: false } },
+    Object.assign({ user: { id: uid, name, email, verified: false } }, body.app === true ? { token } : {}),
     200,
     { 'Set-Cookie': setCookie('shoelab_session', token) }
   );

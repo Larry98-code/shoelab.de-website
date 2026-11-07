@@ -17,6 +17,7 @@
 //   POST admin/member | admin/listing | admin/order | admin/report | admin/settings   (see _shared/admin.js)
 import { json, preflight, clean, currentUser, stripeApi, sessionSecret, mailTrouble } from '../../_shared/util.js';
 import { onHold } from '../../_shared/core.js';
+import { TOKEN_RE as PUSH_TOKEN } from '../../_shared/push.js';
 import {
   VAULT, CONDITIONS, TIERS, PHOTO_KINDS, REQUIRED_KINDS, increment, nowIso, isoIn, euro,
   siteUrl, isSpecialist, onSpecialistList, shortName, maskName, fees, ensureSchema, logEvent, userById,
@@ -1669,6 +1670,26 @@ async function admSettingsSave({ request, env }) {
   const me = await needAdmin(request, env);
   return json({ ok: true, settings: await setSettings(env, me, await body(request)) });
 }
+// ── the app's push notifications (see _shared/push.js) ─────────────────────
+async function pushRegister({ request, env }) {
+  const me = await needUser(request, env);
+  const b = await body(request);
+  const token = String(b.token || '');
+  if (!PUSH_TOKEN.test(token)) fail(400, 'Not a push token', 'push_token');
+  const platform = b.platform === 'ios' || b.platform === 'android' ? b.platform : null;
+  const at = nowIso();
+  // a phone belongs to whoever signed in on it last
+  await env.DB.prepare(
+    'INSERT INTO mk_push (token, user_id, platform, created_at, seen_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(token) DO UPDATE SET user_id = excluded.user_id, platform = excluded.platform, seen_at = excluded.seen_at'
+  ).bind(token, me.id, platform, at, at).run();
+  return json({ ok: true });
+}
+async function pushUnregister({ request, env }) {
+  const b = await body(request);
+  await env.DB.prepare('DELETE FROM mk_push WHERE token = ?').bind(String(b.token || '')).run();
+  return json({ ok: true });
+}
+
 // anyone may report a listing (and a member they share an order with), signed in or not
 async function postReport({ request, env }) {
   const me = await currentUser(request, env);
@@ -1730,6 +1751,8 @@ const ROUTES = {
   'POST support/ticket': supportTicketRoute,
   'POST support/answer': supportAnswerRoute,
   'POST report': postReport,
+  'POST push/register': pushRegister,
+  'POST push/unregister': pushUnregister,
   'GET admin/members': admMembers,
   'GET admin/member': admMember,
   'POST admin/member': admMemberAct,

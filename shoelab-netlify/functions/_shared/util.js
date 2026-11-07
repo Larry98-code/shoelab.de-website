@@ -142,7 +142,12 @@ export function setCookie(name, value, maxAgeSec) {
 // The signed-in member, or null. Also remembers the language they are using,
 // so emails written to them later (by someone else's action) match it.
 export async function currentUser(request, env) {
-  const token = readCookie(request, 'shoelab_session');
+  // the website sends the session as a cookie; the app as "Authorization: Bearer …"
+  let token = readCookie(request, 'shoelab_session');
+  if (!token) {
+    const m = /^Bearer\s+(\S+)$/i.exec(request.headers.get('Authorization') || '');
+    if (m) token = m[1];
+  }
   if (!token) return null;
   const payload = await verifySession(token, sessionSecret(env));
   if (!payload || !payload.uid || !env.DB) return null;

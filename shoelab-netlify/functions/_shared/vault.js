@@ -5,6 +5,7 @@
 // correctly as text, so "ends_at <= ?" comparisons work in SQL directly.
 
 import { notifyAddress, stripeApi, stripeGet } from './util.js';
+import { pushTo } from './push.js';
 import { siteUrl, ensureCore, addMissingColumns } from './core.js';
 import { sendMail, sendStudio } from './mail.js';
 
@@ -262,6 +263,9 @@ const SCHEMA = [
   'CREATE INDEX IF NOT EXISTS mk_rp_target ON mk_reports(kind, target_id)',
   'CREATE TABLE IF NOT EXISTS mk_settings (k TEXT PRIMARY KEY, v TEXT, updated_at TEXT)',
   'CREATE TABLE IF NOT EXISTS mk_blocked (hash TEXT PRIMARY KEY, reason TEXT, created_at TEXT NOT NULL)',
+  // the app's push tokens: one row per phone that allowed notifications
+  'CREATE TABLE IF NOT EXISTS mk_push (token TEXT PRIMARY KEY, user_id INTEGER NOT NULL, platform TEXT, created_at TEXT NOT NULL, seen_at TEXT)',
+  'CREATE INDEX IF NOT EXISTS mk_push_user ON mk_push(user_id)',
   `CREATE TABLE IF NOT EXISTS support_usage (
     k TEXT NOT NULL, day TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (k, day)
   )`,
@@ -323,10 +327,10 @@ export function listingTitle(l) {
 // from the templates in mail-i18n/. The studio gets its copies in its own.
 export async function tell(env, user, key, params) {
   if (!user || !user.email) return;
-  await sendMail(env, {
-    to: user.email, lang: user.lang, key, vault: true,
-    params: Object.assign({ name: firstName(user.name) }, params || {}),
-  });
+  const p = Object.assign({ name: firstName(user.name) }, params || {});
+  await sendMail(env, { to: user.email, lang: user.lang, key, vault: true, params: p });
+  // and to their phones, if they use the app and allowed notifications
+  await pushTo(env, user, key, p);
 }
 export async function tellStudio(env, key, params, replyTo) {
   await sendStudio(env, key, params || {}, replyTo, true);

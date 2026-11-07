@@ -432,35 +432,44 @@ export async function memberAction(env, actor, id, b) {
     case 'delete': {
       if (String(b.confirm || '').trim().toLowerCase() !== String(u.email).toLowerCase()) fail(400, 'Type the member\'s email address to confirm', 'adm_confirm');
       const reason = REASONS.indexOf(b.reason) !== -1 ? b.reason : 'request';
-      const open = await openOrders(env, id);
-      if (open) fail(409, 'This member still has ' + open + ' open order(s) — finish or cancel them first', 'adm_open_orders', { n: open });
-      // the goodbye goes out while we still know where to send it
-      await tell(env, user, 'admDeleted', { message: reason === 'request' ? '' : clean(b.details || '', 1500), why: { k: reason === 'request' ? 'delByRequest' : 'delByUs' } });
-      const ls = await env.DB.prepare("SELECT * FROM mk_listings WHERE seller_id = ? AND status NOT IN ('sold','relisted')").bind(id).all();
-      for (const l of ls.results || []) {
-        await takeDown(env, l, 'removed', 'account deleted');
-        await deletePhotos(env, 'listing_id', l.id);
-      }
-      await windDown(env, u, 'deleted');
-      await env.DB.prepare('DELETE FROM mk_watch WHERE user_id = ?').bind(id).run();
-      await env.DB.prepare('DELETE FROM mk_ticket_msgs WHERE ticket_id IN (SELECT id FROM mk_tickets WHERE user_id = ? OR LOWER(email) = LOWER(?))').bind(id, u.email).run();
-      await env.DB.prepare('DELETE FROM mk_tickets WHERE user_id = ? OR LOWER(email) = LOWER(?)').bind(id, u.email).run();
-      // published reviews stay, without a name or address; the rest goes
-      const rv = await env.DB.prepare("SELECT id FROM fb_reviews WHERE (user_id = ? OR LOWER(email) = LOWER(?)) AND status != 'published'").bind(id, u.email).all();
-      for (const x of rv.results || []) { await deletePhotos(env, 'review_id', x.id); await env.DB.prepare('DELETE FROM fb_reviews WHERE id = ?').bind(x.id).run(); }
-      await env.DB.prepare("UPDATE fb_reviews SET name = 'Former customer', email = '', user_id = NULL, private_note = NULL WHERE user_id = ? OR LOWER(email) = LOWER(?)").bind(id, u.email).run();
-      await env.DB.prepare('DELETE FROM email_tokens WHERE user_id = ?').bind(id).run();
-      await env.DB.prepare(
-        `UPDATE users SET name = 'Deleted member', email = ?, pw_salt = '', pw_hash = '', phone = NULL, address = NULL, city = NULL, postal = NULL,
-           country = NULL, stripe_customer_id = NULL, email_verified_at = NULL, status = 'deleted', status_until = NULL, status_reason = ?,
-           status_note = NULL, sessions_after = ?, listings_hidden = 1 WHERE id = ?`
-      ).bind('deleted-' + id + '@deleted.invalid', reason, at, id).run();
-      if (b.block) await env.DB.prepare('INSERT OR IGNORE INTO mk_blocked (hash, reason, created_at) VALUES (?, ?, ?)').bind(await emailHash(u.email), reason, at).run();
-      await admLog(env, actor, 'user', id, 'delete', reason, reason === 'request' ? null : clean(b.details || '', 1500), { blocked: !!b.block });
+      await eraseAccount(env, u, { reason, details: clean(b.details || '', 1500), block: !!b.block, actor });
       return { ok: true };
     }
     default: fail(400, 'Unknown action', 'bad_action');
   }
+}
+// Deleting an account, from the console or by the member themselves (the app
+// must offer it, and GDPR asks for it): personal data erased, listings and
+// photos deleted, orders kept without the personal details (tax law).
+export async function eraseAccount(env, u, o) {
+  const id = u.id, at = nowIso(), reason = o.reason || 'request';
+  const user = { id: u.id, name: u.name, email: u.email, lang: u.lang };
+  const open = await openOrders(env, id);
+  if (open) fail(409, 'There are still ' + open + ' open order(s) — they have to be finished first', 'adm_open_orders', { n: open });
+  // the goodbye goes out while we still know where to send it
+  await tell(env, user, 'admDeleted', { message: reason === 'request' ? '' : (o.details || ''), why: { k: reason === 'request' ? 'delByRequest' : 'delByUs' } });
+  const ls = await env.DB.prepare("SELECT * FROM mk_listings WHERE seller_id = ? AND status NOT IN ('sold','relisted')").bind(id).all();
+  for (const l of ls.results || []) {
+    await takeDown(env, l, 'removed', 'account deleted');
+    await deletePhotos(env, 'listing_id', l.id);
+  }
+  await windDown(env, u, 'deleted');
+  await env.DB.prepare('DELETE FROM mk_watch WHERE user_id = ?').bind(id).run();
+  await env.DB.prepare('DELETE FROM mk_push WHERE user_id = ?').bind(id).run();
+  await env.DB.prepare('DELETE FROM mk_ticket_msgs WHERE ticket_id IN (SELECT id FROM mk_tickets WHERE user_id = ? OR LOWER(email) = LOWER(?))').bind(id, u.email).run();
+  await env.DB.prepare('DELETE FROM mk_tickets WHERE user_id = ? OR LOWER(email) = LOWER(?)').bind(id, u.email).run();
+  // published reviews stay, without a name or address; the rest goes
+  const rv = await env.DB.prepare("SELECT id FROM fb_reviews WHERE (user_id = ? OR LOWER(email) = LOWER(?)) AND status != 'published'").bind(id, u.email).all();
+  for (const x of rv.results || []) { await deletePhotos(env, 'review_id', x.id); await env.DB.prepare('DELETE FROM fb_reviews WHERE id = ?').bind(x.id).run(); }
+  await env.DB.prepare("UPDATE fb_reviews SET name = 'Former customer', email = '', user_id = NULL, private_note = NULL WHERE user_id = ? OR LOWER(email) = LOWER(?)").bind(id, u.email).run();
+  await env.DB.prepare('DELETE FROM email_tokens WHERE user_id = ?').bind(id).run();
+  await env.DB.prepare(
+    `UPDATE users SET name = 'Deleted member', email = ?, pw_salt = '', pw_hash = '', phone = NULL, address = NULL, city = NULL, postal = NULL,
+       country = NULL, stripe_customer_id = NULL, email_verified_at = NULL, status = 'deleted', status_until = NULL, status_reason = ?,
+       status_note = NULL, sessions_after = ?, listings_hidden = 1 WHERE id = ?`
+  ).bind('deleted-' + id + '@deleted.invalid', reason, at, id).run();
+  if (o.block) await env.DB.prepare('INSERT OR IGNORE INTO mk_blocked (hash, reason, created_at) VALUES (?, ?, ?)').bind(await emailHash(u.email), reason, at).run();
+  await admLog(env, o.actor || null, 'user', id, 'delete', reason, reason === 'request' ? (o.actor ? null : 'by the member') : (o.details || null), { blocked: !!o.block, self: !o.actor });
 }
 async function deletePhotos(env, col, id) {
   const ph = await env.DB.prepare('SELECT data, thumb FROM mk_photos WHERE ' + col + ' = ?').bind(id).all();
