@@ -1,5 +1,6 @@
 // The website's icon set (shoelab-netlify/js/vault-core.js), 24×24 stroke icons.
 export const ICON_PATHS: Record<string, string> = {
+ "calendar": "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15\" rx=\"2\"/><path d=\"M3.5 9.5h17M8 3v4M16 3v4\"/>",
  "shield": "<path d=\"M12 3l7 3v6c0 4.4-3 8.3-7 9-4-.7-7-4.6-7-9V6z\"/><path d=\"M8.8 12.2l2.2 2.2 4.4-4.6\"/>",
  "camera": "<path d=\"M4 8h3l1.6-2.4h6.8L17 8h3v11H4z\"/><circle cx=\"12\" cy=\"13.3\" r=\"3.4\"/>",
  "clock": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>",

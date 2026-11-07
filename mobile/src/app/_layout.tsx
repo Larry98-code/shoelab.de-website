@@ -11,6 +11,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } f
 import { I18nProvider } from '../lib/i18n';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { LockScreen } from '../components/LockScreen';
+import { usePushRouting } from '../lib/push';
 import { C } from '../theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -36,6 +37,7 @@ export default function Root() {
 
 function Gate({ fonts }: { fonts: boolean }) {
   const { ready, locked } = useAuth();
+  usePushRouting();
   useEffect(() => { if (fonts && ready) SplashScreen.hideAsync().catch(() => {}); }, [fonts, ready]);
   if (!fonts || !ready) return <View style={{ flex: 1, backgroundColor: C.black }} />;
   if (locked) return <LockScreen />;
@@ -43,6 +45,9 @@ function Gate({ fonts }: { fonts: boolean }) {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.black }, animation: 'slide_from_right' }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="auth" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="listing/[id]" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="order/[id]" />
+      <Stack.Screen name="settings" />
     </Stack>
   );
 }
