@@ -1,0 +1,58 @@
+# Builds the ShoeLab app on Expo (EAS). Started by hand from the Actions tab
+# (or by Claude). Needs the repository secret EXPO_TOKEN (an Expo access token).
+name: App build (Expo)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'build = start a build; status = list the latest builds'
+        type: choice
+        options: [build, status]
+        default: build
+      platform:
+        description: 'Which phones'
+        type: choice
+        options: [android, ios, all]
+        default: android
+      profile:
+        description: 'preview = a test copy to install; production = for the stores'
+        type: choice
+        options: [preview, production]
+        default: preview
+
+permissions:
+  contents: read
+
+jobs:
+  eas:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      PLATFORM: ${{ inputs.platform }}
+      PROFILE: ${{ inputs.profile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - name: Check the Expo token
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then echo "::error::Add the EXPO_TOKEN repository secret first"; exit 1; fi
+          npx --yes eas-cli@latest whoami
+      - run: npm ci
+      - name: Link the project to the Expo account
+        run: |
+          npx --yes eas-cli@latest init --non-interactive --force
+          node -e "const e=require('./app.json').expo; console.log('Expo project ID:', e.extra && e.extra.eas && e.extra.eas.projectId, '| owner:', e.owner || '(token account)')"
+      - name: Start the build
+        if: inputs.action == 'build'
+        run: npx --yes eas-cli@latest build --platform "$PLATFORM" --profile "$PROFILE" --non-interactive --no-wait
+      - name: Latest builds
+        if: inputs.action == 'status'
+        run: npx --yes eas-cli@latest build:list --limit 5 --non-interactive
