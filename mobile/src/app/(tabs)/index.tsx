@@ -37,7 +37,7 @@ export default function Home() {
     <Screen refreshing={refreshing} onRefresh={refresh} pad={false}>
       <View style={st.top}>
         <Row gap={10}>
-          <Image source={require('../../../assets/logo.png')} style={st.logo} />
+          <Image source={require('../../../assets/mark.png')} style={st.logo} />
           <Text style={st.word}>SHOE<Text style={{ color: C.red }}>LAB</Text></Text>
         </Row>
         <Pressable accessibilityLabel={t('meNotifications')} onPress={() => router.push('/(tabs)/me')} hitSlop={10}>
@@ -110,7 +110,7 @@ export default function Home() {
 
 const st = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: S.lg, paddingTop: 6, paddingBottom: S.lg },
-  logo: { width: 34, height: 34, borderRadius: 17 },
+  logo: { width: 34, height: 34, borderRadius: 8 },
   word: { fontFamily: F.display, fontSize: 26, color: C.text, letterSpacing: 2 },
   pad: { paddingHorizontal: S.lg },
   tag: { fontFamily: F.medium, fontSize: 12, color: C.red, marginTop: 3, letterSpacing: 0.3 },

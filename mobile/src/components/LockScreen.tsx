@@ -13,7 +13,7 @@ export function LockScreen() {
   return (
     <Screen scroll={false} edges={['top', 'bottom']}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 18 }}>
-        <Image source={require('../../assets/logo.png')} style={{ width: 96, height: 96, borderRadius: 48 }} />
+        <Image source={require('../../assets/mark.png')} style={{ width: 96, height: 96, borderRadius: 22 }} />
         <H2 style={{ textAlign: 'center' }}>{t('lockT')}</H2>
         <Button title={t('lockBtn')} icon="faceid" onPress={unlock} style={{ alignSelf: 'stretch' }} />
         <Button title={t('lockFallback')} kind="ghost" onPress={signOut} style={{ alignSelf: 'stretch' }} />

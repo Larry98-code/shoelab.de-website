@@ -14,8 +14,12 @@
       "bundleIdentifier": "de.shoelabonline.app",
       "buildNumber": "1",
       "supportsTablet": false,
-      "associatedDomains": ["applinks:shoelabonline.de"],
-      "config": { "usesNonExemptEncryption": false },
+      "associatedDomains": [
+        "applinks:shoelabonline.de"
+      ],
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "ShoeLab uses your photos so you can add pictures of your pair to a listing, a Legit Check or a review."
       }
@@ -24,18 +28,34 @@
       "package": "de.shoelabonline.app",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#080808",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["CAMERA", "USE_BIOMETRIC", "USE_FINGERPRINT", "POST_NOTIFICATIONS"],
-      "blockedPermissions": ["android.permission.RECORD_AUDIO"],
+      "permissions": [
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "POST_NOTIFICATIONS"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "shoelabonline.de", "pathPrefix": "/vault" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "https",
+              "host": "shoelabonline.de",
+              "pathPrefix": "/vault"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "predictiveBackGestureEnabled": false
@@ -51,7 +71,11 @@
       "expo-web-browser",
       [
         "expo-splash-screen",
-        { "image": "./assets/splash-icon.png", "imageWidth": 160, "backgroundColor": "#080808" }
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#000000"
+        }
       ],
       [
         "expo-camera",
@@ -63,17 +87,26 @@
       ],
       [
         "expo-local-authentication",
-        { "faceIDPermission": "ShoeLab uses Face ID so you can unlock your account without typing your password." }
+        {
+          "faceIDPermission": "ShoeLab uses Face ID so you can unlock your account without typing your password."
+        }
       ],
       [
         "expo-secure-store",
-        { "faceIDPermission": "ShoeLab uses Face ID to protect your sign-in on this phone." }
+        {
+          "faceIDPermission": "ShoeLab uses Face ID to protect your sign-in on this phone."
+        }
       ],
       [
         "expo-notifications",
-        { "icon": "./assets/notification-icon.png", "color": "#CC1111" }
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#CC1111"
+        }
       ]
     ],
-    "experiments": { "typedRoutes": false }
+    "experiments": {
+      "typedRoutes": false
+    }
   }
 }
