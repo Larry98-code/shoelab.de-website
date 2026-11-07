@@ -1,0 +1,79 @@
+{
+  "expo": {
+    "name": "ShoeLab",
+    "slug": "shoelab",
+    "scheme": "shoelab",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#080808",
+    "primaryColor": "#CC1111",
+    "description": "Sneaker cleaning, the ShoeLab Vault and Legit Check — from ShoeLab, Bremen.",
+    "ios": {
+      "bundleIdentifier": "de.shoelabonline.app",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "associatedDomains": ["applinks:shoelabonline.de"],
+      "config": { "usesNonExemptEncryption": false },
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "ShoeLab uses your photos so you can add pictures of your pair to a listing, a Legit Check or a review."
+      }
+    },
+    "android": {
+      "package": "de.shoelabonline.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#080808",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["CAMERA", "USE_BIOMETRIC", "USE_FINGERPRINT", "POST_NOTIFICATIONS"],
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "shoelabonline.de", "pathPrefix": "/vault" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-localization",
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        { "image": "./assets/splash-icon.png", "imageWidth": 160, "backgroundColor": "#080808" }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "ShoeLab uses the camera so you can photograph your pair for a listing or a Legit Check, with guides for each required shot.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-local-authentication",
+        { "faceIDPermission": "ShoeLab uses Face ID so you can unlock your account without typing your password." }
+      ],
+      [
+        "expo-secure-store",
+        { "faceIDPermission": "ShoeLab uses Face ID to protect your sign-in on this phone." }
+      ],
+      [
+        "expo-notifications",
+        { "icon": "./assets/notification-icon.png", "color": "#CC1111" }
+      ]
+    ],
+    "experiments": { "typedRoutes": false }
+  }
+}
