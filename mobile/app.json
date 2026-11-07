@@ -2,6 +2,7 @@
   "expo": {
     "name": "ShoeLab",
     "slug": "shoelab",
+    "owner": "shoelabdes-team",
     "scheme": "shoelab",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -36,7 +37,10 @@
         "CAMERA",
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
@@ -107,6 +111,16 @@
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "e1a016aa-ff5e-48ae-a68d-18ca77cfb39d"
+      }
     }
   }
 }
