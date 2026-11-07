@@ -13,7 +13,6 @@
     "description": "Sneaker cleaning, the ShoeLab Vault and Legit Check — from ShoeLab, Bremen.",
     "ios": {
       "bundleIdentifier": "de.shoelabonline.app",
-      "buildNumber": "1",
       "supportsTablet": false,
       "associatedDomains": [
         "applinks:shoelabonline.de"
@@ -27,7 +26,6 @@
     },
     "android": {
       "package": "de.shoelabonline.app",
-      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
