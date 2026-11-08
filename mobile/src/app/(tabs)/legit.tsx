@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import { abs, API, market } from '../../lib/api';
@@ -11,6 +11,8 @@ import { GuidedCamera, type Shot } from '../../components/GuidedCamera';
 import { HoldCard } from '../../components/HoldCard';
 import { Icon } from '../../components/Icon';
 import { Body, Button, Card, Chip, Empty, Eyebrow, H1, H3, Row, Screen, tap } from '../../components/ui';
+import { Appear } from '../../components/motion';
+import { AuthButtons, Steps } from '../../components/Guest';
 import { C, F, R, S } from '../../theme';
 
 type Check = { id: number; ref: string; mode: 'buy' | 'sell'; title: string; size: string; status: string; verdict: string | null; resultNote: string | null;
@@ -67,7 +69,13 @@ export default function Legit() {
     </View>
   );
   if (hold) return <Screen>{head}<View style={{ marginTop: S.xl }}><HoldCard /></View></Screen>;
-  if (!me) return <Screen>{head}<Button title={t('signIn')} onPress={() => router.push('/auth')} style={{ marginTop: S.xl }} /></Screen>;
+  if (!me) return (
+    <Screen>
+      <Appear>{head}</Appear>
+      <Steps start={1} items={[1, 2, 3, 4].map((n) => ({ title: t('lgHow' + n + 'T'), text: t('lgHow' + n) }))} />
+      <AuthButtons why="authNeeded" i={5} />
+    </Screen>
+  );
 
   if (form) {
     const input = (k: keyof typeof f, label: string, ph?: string, kb?: 'decimal-pad' | 'url') => (

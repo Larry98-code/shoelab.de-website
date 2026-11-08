@@ -2,7 +2,7 @@
 export default {
   tabHome: 'Start', tabVault: 'Vault', tabSell: 'Sprzedaj', tabLegit: 'Legit', tabMe: 'Profil',
   homeHi: 'Cześć, {name}', homeWelcome: 'Witamy w ShoeLab', homeLead: 'Pielęgnacja, odsprzedaż i weryfikacja sneakersów — z naszego laboratorium w Bremie.',
-  homeBook: 'Zarezerwuj czyszczenie', homeBookP: 'Przynieś swoją parę do laboratorium — przywrócimy ją do życia.', homeServices: 'Nasze usługi',
+  homeBook: 'Zarezerwuj czyszczenie', homeBookBtn: 'Wybierz termin', homeBookP: 'Przynieś swoją parę do laboratorium — przywrócimy ją do życia.', homeServices: 'Nasze usługi',
   homeVaultT: 'Nowości w Vault', homeSeeAll: 'Zobacz wszystkie', homeLegitT: 'Para wypatrzona gdzie indziej?',
   homeLegitP: 'Wyślij nam zdjęcia — nasze laboratorium powie Ci, czy jest oryginalna.', homeLegitBtn: 'Rozpocznij Legit Check',
   homeSellT: 'Sprzedawaj z dowodem', homeSellP: 'Każdą parę sprawdza specjalista. Kupujący płacą za to więcej.', homeSellBtn: 'Sprzedaj parę',
@@ -12,7 +12,7 @@ export default {
   holdText: 'ShoeLab robi krótką przerwę. Przygotowując nasz powrót, wstrzymujemy wszystkie usługi — czyszczenie i rezerwacje w studiu, Vault oraz Legit Check. Dziękujemy za cierpliwość i zaufanie. Nie możemy się doczekać, aż znów powitamy Ciebie i Twoje sneakersy.',
   holdSign: '— Zespół ShoeLab',
   authWelcome: 'Witamy w ShoeLab', authLead: 'Jedno konto do rezerwacji, Vault i Legit Check.',
-  authName: 'Imię i nazwisko', authHaveAccount: 'Masz już konto?', authNoAccount: 'Pierwszy raz w ShoeLab?',
+  authName: 'Imię i nazwisko', authShowPw: 'Pokaż hasło', authHidePw: 'Ukryj hasło', authHaveAccount: 'Masz już konto?', authNoAccount: 'Pierwszy raz w ShoeLab?',
   authResetEmail: 'Najpierw wpisz powyżej swój adres e-mail.', authResetSent: 'Jeśli istnieje konto z tym adresem, wysłaliśmy Ci e-mail z linkiem do ustawienia nowego hasła.',
   authSignedOut: 'Wylogowano.', authNeeded: 'Zaloguj się, aby kontynuować.',
   meGuestT: 'Twój ShoeLab', meGuestP: 'Zaloguj się, aby śledzić swoje zamówienia, licytacje i propozycje cenowe, sprzedawać pary i przechowywać swoje certyfikaty.',

@@ -2,7 +2,7 @@
 export default {
   tabHome: 'Главная', tabVault: 'Vault', tabSell: 'Продать', tabLegit: 'Legit', tabMe: 'Профиль',
   homeHi: 'Здравствуйте, {name}', homeWelcome: 'Добро пожаловать в ShoeLab', homeLead: 'Уход за кроссовками, перепродажа и проверка подлинности — из нашей лаборатории в Бремене.',
-  homeBook: 'Записаться на чистку', homeBookP: 'Принесите пару в лабораторию — мы вернём её к жизни.', homeServices: 'Наши услуги',
+  homeBook: 'Записаться на чистку', homeBookBtn: 'Выбрать время', homeBookP: 'Принесите пару в лабораторию — мы вернём её к жизни.', homeServices: 'Наши услуги',
   homeVaultT: 'Новое в Vault', homeSeeAll: 'Смотреть все', homeLegitT: 'Нашли пару в другом месте?',
   homeLegitP: 'Пришлите нам фото — наша лаборатория скажет, оригинал ли это.', homeLegitBtn: 'Начать Legit Check',
   homeSellT: 'Продавайте с проверкой', homeSellP: 'Каждую пару проверяет специалист. За это покупатели платят больше.', homeSellBtn: 'Продать пару',
@@ -12,7 +12,7 @@ export default {
   holdText: 'ShoeLab берёт небольшую паузу. Пока мы готовимся к возвращению, все наши услуги приостановлены — чистка и запись в студию, Vault и Legit Check. Спасибо за терпение и доверие. Мы с нетерпением ждём новой встречи с тобой и твоими кроссовками.',
   holdSign: '— Команда ShoeLab',
   authWelcome: 'Добро пожаловать в ShoeLab', authLead: 'Один аккаунт для записи в студию, Vault и Legit Check.',
-  authName: 'Имя и фамилия', authHaveAccount: 'Уже есть аккаунт?', authNoAccount: 'Впервые в ShoeLab?',
+  authName: 'Имя и фамилия', authShowPw: 'Показать пароль', authHidePw: 'Скрыть пароль', authHaveAccount: 'Уже есть аккаунт?', authNoAccount: 'Впервые в ShoeLab?',
   authResetEmail: 'Сначала введите адрес эл. почты выше.', authResetSent: 'Если аккаунт с этим адресом существует, мы отправили на него ссылку для выбора нового пароля.',
   authSignedOut: 'Вы вышли из аккаунта.', authNeeded: 'Войдите, чтобы продолжить.',
   meGuestT: 'Ваш ShoeLab', meGuestP: 'Войдите, чтобы следить за заказами, ставками и предложениями, продавать пары и хранить свои сертификаты.',

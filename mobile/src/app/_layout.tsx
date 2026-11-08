@@ -11,10 +11,13 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } f
 import { I18nProvider } from '../lib/i18n';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { LockScreen } from '../components/LockScreen';
+import { ToastProvider } from '../components/Toast';
 import { usePushRouting } from '../lib/push';
 import { C } from '../theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+// the red S fades into the app instead of cutting
+try { SplashScreen.setOptions({ fade: true, duration: 350 }); } catch { /* web */ }
 const theme = { ...DarkTheme, colors: { ...DarkTheme.colors, background: C.black, card: C.black, primary: C.red, text: C.text, border: C.border } };
 
 export default function Root() {
@@ -25,8 +28,10 @@ export default function Root() {
         <ThemeProvider value={theme}>
           <I18nProvider>
             <AuthProvider>
-              <StatusBar style="light" />
-              <Gate fonts={fonts} />
+              <ToastProvider>
+                <StatusBar style="light" />
+                <Gate fonts={fonts} />
+              </ToastProvider>
             </AuthProvider>
           </I18nProvider>
         </ThemeProvider>

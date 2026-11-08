@@ -2,7 +2,7 @@
 export default {
   tabHome: 'Home', tabVault: 'Vault', tabSell: 'Vendi', tabLegit: 'Legit', tabMe: 'Profilo',
   homeHi: 'Ciao {name}', homeWelcome: 'Ti diamo il benvenuto in ShoeLab', homeLead: 'Cura, rivendita e autenticazione delle sneaker — dal nostro lab di Brema.',
-  homeBook: 'Prenota una pulizia', homeBookP: 'Porta il tuo paio al lab — lo riportiamo in vita.', homeServices: 'I nostri servizi',
+  homeBook: 'Prenota una pulizia', homeBookBtn: 'Scegli l’orario', homeBookP: 'Porta il tuo paio al lab — lo riportiamo in vita.', homeServices: 'I nostri servizi',
   homeVaultT: 'Novità nel Vault', homeSeeAll: 'Vedi tutti', homeLegitT: 'Hai visto un paio altrove?',
   homeLegitP: 'Mandaci le foto — il nostro lab ti dice se è originale.', homeLegitBtn: 'Avvia un Legit Check',
   homeSellT: 'Vendita verificata', homeSellP: 'Ogni paio viene controllato da uno specialista. Per questo gli acquirenti pagano di più.', homeSellBtn: 'Vendi un paio',
@@ -12,7 +12,7 @@ export default {
   holdText: 'ShoeLab si prende una breve pausa. Mentre prepariamo il nostro ritorno, tutti i nostri servizi sono sospesi: pulizie e prenotazioni in studio, il Vault e il Legit Check. Grazie per la pazienza e la fiducia. Non vediamo l’ora di accogliere di nuovo te e le tue sneaker.',
   holdSign: '— Il team ShoeLab',
   authWelcome: 'Ti diamo il benvenuto in ShoeLab', authLead: 'Un solo account per prenotazioni, il Vault e il Legit Check.',
-  authName: 'Nome e cognome', authHaveAccount: 'Hai già un account?', authNoAccount: 'Prima volta su ShoeLab?',
+  authName: 'Nome e cognome', authShowPw: 'Mostra password', authHidePw: 'Nascondi password', authHaveAccount: 'Hai già un account?', authNoAccount: 'Prima volta su ShoeLab?',
   authResetEmail: 'Inserisci prima il tuo indirizzo email qui sopra.', authResetSent: 'Se esiste un account con questo indirizzo, ti abbiamo inviato un’email con un link per scegliere una nuova password.',
   authSignedOut: 'Hai effettuato l’uscita.', authNeeded: 'Accedi per continuare.',
   meGuestT: 'Il tuo ShoeLab', meGuestP: 'Accedi per seguire ordini, offerte e proposte, vendere paia e conservare i tuoi certificati.',

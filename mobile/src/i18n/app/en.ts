@@ -3,7 +3,7 @@
 export default {
   tabHome: 'Home', tabVault: 'Vault', tabSell: 'Sell', tabLegit: 'Legit', tabMe: 'Me',
   homeHi: 'Hi {name}', homeWelcome: 'Welcome to ShoeLab', homeLead: 'Sneaker care, resale and authentication — from our lab in Bremen.',
-  homeBook: 'Book a cleaning', homeBookP: 'Drop your pair at the lab — we bring it back to life.', homeServices: 'Our services',
+  homeBook: 'Book a cleaning', homeBookBtn: 'Pick your slot', homeBookP: 'Drop your pair at the lab — we bring it back to life.', homeServices: 'Our services',
   homeVaultT: 'Fresh in the Vault', homeSeeAll: 'See all', homeLegitT: 'Spotted a pair somewhere else?',
   homeLegitP: 'Send us the photos — our lab tells you if it is real.', homeLegitBtn: 'Start a Legit Check',
   homeSellT: 'Sell with proof', homeSellP: 'Every pair is checked by a specialist. Buyers pay more for that.', homeSellBtn: 'Sell a pair',
@@ -13,7 +13,7 @@ export default {
   holdText: 'ShoeLab is taking a short pause. While we prepare our return, all of our services are on hold — studio cleanings and bookings, the Vault and the Legit Check. Thank you for your patience and your trust. We can’t wait to welcome you and your sneakers back.',
   holdSign: '— The ShoeLab team',
   authWelcome: 'Welcome to ShoeLab', authLead: 'One account for bookings, the Vault and the Legit Check.',
-  authName: 'Full name', authHaveAccount: 'Already have an account?', authNoAccount: 'New to ShoeLab?',
+  authName: 'Full name', authShowPw: 'Show password', authHidePw: 'Hide password', authHaveAccount: 'Already have an account?', authNoAccount: 'New to ShoeLab?',
   authResetEmail: 'Enter your email address above first.', authResetSent: 'If there is an account with this address, we have emailed you a link to choose a new password.',
   authSignedOut: 'You are signed out.', authNeeded: 'Sign in to continue.',
   meGuestT: 'Your ShoeLab', meGuestP: 'Sign in to follow your orders, bids and offers, sell pairs and keep your certificates.',

@@ -2,7 +2,7 @@
 export default {
   tabHome: 'Accueil', tabVault: 'Vault', tabSell: 'Vendre', tabLegit: 'Legit', tabMe: 'Profil',
   homeHi: 'Salut {name}', homeWelcome: 'Bienvenue chez ShoeLab', homeLead: 'Soin, revente et authentification de sneakers — depuis notre lab de Brême.',
-  homeBook: 'Réserver un nettoyage', homeBookP: 'Dépose ta paire au lab — on lui redonne vie.', homeServices: 'Nos services',
+  homeBook: 'Réserver un nettoyage', homeBookBtn: 'Choisir un créneau', homeBookP: 'Dépose ta paire au lab — on lui redonne vie.', homeServices: 'Nos services',
   homeVaultT: 'Nouveautés dans le Vault', homeSeeAll: 'Tout voir', homeLegitT: 'Tu as repéré une paire ailleurs ?',
   homeLegitP: 'Envoie-nous les photos — notre lab te dit si elle est authentique.', homeLegitBtn: 'Lancer un Legit Check',
   homeSellT: 'Vente vérifiée', homeSellP: 'Chaque paire est contrôlée par un spécialiste. Les acheteurs paient plus pour ça.', homeSellBtn: 'Vendre une paire',
@@ -12,7 +12,7 @@ export default {
   holdText: 'ShoeLab fait une courte pause. Pendant que nous préparons notre retour, tous nos services sont suspendus : nettoyages et réservations au studio, le Vault et le Legit Check. Merci pour ta patience et ta confiance. Nous avons hâte de t’accueillir à nouveau, toi et tes sneakers.',
   holdSign: '— L’équipe ShoeLab',
   authWelcome: 'Bienvenue chez ShoeLab', authLead: 'Un seul compte pour les réservations, le Vault et le Legit Check.',
-  authName: 'Nom complet', authHaveAccount: 'Tu as déjà un compte ?', authNoAccount: 'Première fois sur ShoeLab ?',
+  authName: 'Nom complet', authShowPw: 'Afficher le mot de passe', authHidePw: 'Masquer le mot de passe', authHaveAccount: 'Tu as déjà un compte ?', authNoAccount: 'Première fois sur ShoeLab ?',
   authResetEmail: 'Saisis d’abord ton adresse e-mail ci-dessus.', authResetSent: 'Si un compte existe avec cette adresse, nous t’avons envoyé un e-mail avec un lien pour choisir un nouveau mot de passe.',
   authSignedOut: 'Déconnexion effectuée.', authNeeded: 'Connecte-toi pour continuer.',
   meGuestT: 'Ton ShoeLab', meGuestP: 'Connecte-toi pour suivre tes commandes, enchères et offres, vendre des paires et garder tes certificats.',

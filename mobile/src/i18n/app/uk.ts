@@ -2,7 +2,7 @@
 export default {
   tabHome: 'Головна', tabVault: 'Vault', tabSell: 'Продати', tabLegit: 'Legit', tabMe: 'Профіль',
   homeHi: 'Вітаємо, {name}', homeWelcome: 'Ласкаво просимо до ShoeLab', homeLead: 'Догляд за кросівками, перепродаж і перевірка автентичності — з нашої лабораторії в Бремені.',
-  homeBook: 'Записатися на чистку', homeBookP: 'Принесіть пару в лабораторію — ми повернемо її до життя.', homeServices: 'Наші послуги',
+  homeBook: 'Записатися на чистку', homeBookBtn: 'Обрати час', homeBookP: 'Принесіть пару в лабораторію — ми повернемо її до життя.', homeServices: 'Наші послуги',
   homeVaultT: 'Нове у Vault', homeSeeAll: 'Переглянути всі', homeLegitT: 'Знайшли пару деінде?',
   homeLegitP: 'Надішліть нам фото — наша лабораторія скаже, чи це оригінал.', homeLegitBtn: 'Почати Legit Check',
   homeSellT: 'Продавайте з перевіркою', homeSellP: 'Кожну пару перевіряє спеціаліст. За це покупці платять більше.', homeSellBtn: 'Продати пару',
@@ -12,7 +12,7 @@ export default {
   holdText: 'ShoeLab бере невелику паузу. Поки ми готуємося до повернення, усі наші послуги призупинено — чищення та запис у студію, Vault і Legit Check. Дякуємо за терпіння й довіру. Ми з нетерпінням чекаємо нової зустрічі з тобою та твоїми кросівками.',
   holdSign: '— Команда ShoeLab',
   authWelcome: 'Ласкаво просимо до ShoeLab', authLead: 'Один акаунт для запису в студію, Vault і Legit Check.',
-  authName: 'Повне ім’я', authHaveAccount: 'Уже маєте акаунт?', authNoAccount: 'Уперше в ShoeLab?',
+  authName: 'Повне ім’я', authShowPw: 'Показати пароль', authHidePw: 'Сховати пароль', authHaveAccount: 'Уже маєте акаунт?', authNoAccount: 'Уперше в ShoeLab?',
   authResetEmail: 'Спершу введіть адресу ел. пошти вище.', authResetSent: 'Якщо акаунт із цією адресою існує, ми надіслали на неї посилання для вибору нового пароля.',
   authSignedOut: 'Ви вийшли з акаунта.', authNeeded: 'Увійдіть, щоб продовжити.',
   meGuestT: 'Ваш ShoeLab', meGuestP: 'Увійдіть, щоб стежити за замовленнями, ставками й пропозиціями ціни, продавати пари та зберігати свої сертифікати.',

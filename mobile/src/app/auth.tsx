@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Image } from 'expo-image';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useI18n } from '../lib/i18n';
-import { Body, Button, Eyebrow, H1, Screen, tap } from '../components/ui';
+import { Body, Button, Eyebrow, H1, Row, Screen, tap } from '../components/ui';
+import { Appear } from '../components/motion';
 import { Icon } from '../components/Icon';
 import { C, F, R, S } from '../theme';
 
@@ -12,7 +14,9 @@ import { C, F, R, S } from '../theme';
 export default function AuthScreen() {
   const { signIn, signUp } = useAuth();
   const { t } = useI18n();
-  const [mode, setMode] = useState<'in' | 'up'>('in');
+  const p = useLocalSearchParams<{ mode?: string; why?: string }>();
+  const [mode, setMode] = useState<'in' | 'up'>(p.mode === 'up' ? 'up' : 'in');
+  const why = p.why && t(p.why) !== p.why ? t(p.why) : '';
   const [name, setName] = useState(''), [email, setEmail] = useState(''), [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false), [msg, setMsg] = useState(''), [note, setNote] = useState('');
   const go = async () => {
@@ -39,15 +43,21 @@ export default function AuthScreen() {
   return (
     <Screen edges={['top', 'bottom']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={s.head}>
-          <Pressable onPress={() => router.back()} accessibilityLabel={t('close')} hitSlop={12} style={s.x}><Icon name="x" size={20} color={C.text} /></Pressable>
-        </View>
-        <Eyebrow color={C.red}>ShoeLab</Eyebrow>
-        <H1 style={{ marginTop: 8 }}>{mode === 'up' ? t('createAccount') : t('signIn')}</H1>
-        <Body muted style={{ marginTop: 6, marginBottom: S.xl }}>{t('authLead')}</Body>
-        {mode === 'up' ? <Field label={t('authName')} value={name} onChange={setName} auto="name" /> : null}
-        <Field label={t('email')} value={email} onChange={setEmail} auto="email" keyboard="email-address" />
-        <Field label={t('password')} value={pw} onChange={setPw} auto={mode === 'up' ? 'new-password' : 'password'} secure onSubmit={go} />
+        <Row style={s.head}>
+          <Image source={require('../../assets/mark.png')} style={s.mark} accessibilityIgnoresInvertColors />
+          <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={t('close')} hitSlop={12} style={s.x}><Icon name="x" size={20} color={C.text} /></Pressable>
+        </Row>
+        <Appear>
+          <Eyebrow color={C.redText}>ShoeLab</Eyebrow>
+          <H1 style={{ marginTop: 8 }}>{mode === 'up' ? t('createAccount') : t('signIn')}</H1>
+          <Body muted style={{ marginTop: 6 }}>{t('authLead')}</Body>
+          {why ? <Row style={s.why} gap={10}><Icon name="info" size={16} color={C.goldHi} /><Text style={s.whyText}>{why}</Text></Row> : null}
+        </Appear>
+        <Appear i={1} style={{ marginTop: S.xl }}>
+          {mode === 'up' ? <Field icon="user" label={t('authName')} value={name} onChange={setName} auto="name" /> : null}
+          <Field icon="mail" label={t('email')} value={email} onChange={setEmail} auto="email" keyboard="email-address" />
+          <Field icon="lock" label={t('password')} value={pw} onChange={setPw} auto={mode === 'up' ? 'new-password' : 'password'} secure onSubmit={go} />
+        </Appear>
         {msg ? <Text style={s.msg} accessibilityRole="alert">{msg}</Text> : null}
         {note ? <Text style={[s.msg, { color: '#6ee7a0' }]}>{note}</Text> : null}
         <Button title={mode === 'up' ? t('createAccount') : t('signIn')} busy={busy} onPress={go} style={{ marginTop: S.md }} />
@@ -67,26 +77,40 @@ export default function AuthScreen() {
   );
 }
 
-function Field({ label, value, onChange, auto, keyboard, secure, onSubmit }: {
-  label: string; value: string; onChange: (v: string) => void; auto?: 'name' | 'email' | 'password' | 'new-password'; keyboard?: 'email-address'; secure?: boolean; onSubmit?: () => void;
+function Field({ label, value, onChange, auto, keyboard, secure, onSubmit, icon }: {
+  label: string; value: string; onChange: (v: string) => void; auto?: 'name' | 'email' | 'password' | 'new-password'; keyboard?: 'email-address'; secure?: boolean; onSubmit?: () => void; icon: string;
 }) {
-  const [focus, setFocus] = useState(false);
+  const { t } = useI18n();
+  const [focus, setFocus] = useState(false), [show, setShow] = useState(false);
   return (
     <View style={{ marginBottom: S.md }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput value={value} onChangeText={onChange} autoComplete={auto} keyboardType={keyboard} secureTextEntry={secure}
-        autoCapitalize={auto === 'name' ? 'words' : 'none'} autoCorrect={false} onSubmitEditing={onSubmit} returnKeyType={onSubmit ? 'go' : 'next'}
-        onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} placeholderTextColor={C.muted}
-        style={[s.input, focus && { borderColor: C.goldLine }]} accessibilityLabel={label} />
+      <View style={[s.box, focus && s.boxOn]}>
+        <Icon name={icon} size={18} color={focus ? C.goldHi : C.muted} />
+        <TextInput value={value} onChangeText={onChange} autoComplete={auto} keyboardType={keyboard} secureTextEntry={secure && !show}
+          autoCapitalize={auto === 'name' ? 'words' : 'none'} autoCorrect={false} onSubmitEditing={onSubmit} returnKeyType={onSubmit ? 'go' : 'next'}
+          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} placeholderTextColor={C.muted} selectionColor={C.gold}
+          style={s.input} accessibilityLabel={label} />
+        {secure ? (
+          <Pressable onPress={() => { tap('select'); setShow(!show); }} hitSlop={10} accessibilityRole="button" accessibilityLabel={t(show ? 'authHidePw' : 'authShowPw')}>
+            <Icon name={show ? 'eyeOff' : 'eye'} size={19} color={C.muted2} />
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: S.lg },
+  head: { justifyContent: 'space-between', marginBottom: S.xl },
+  mark: { width: 38, height: 38, borderRadius: 9 },
+  why: { marginTop: S.md, backgroundColor: C.goldSoft, borderWidth: 1, borderColor: C.goldLine, borderRadius: R.md, padding: 12, alignItems: 'flex-start' },
+  whyText: { flex: 1, fontFamily: F.medium, fontSize: 13.5, lineHeight: 19, color: C.amberText },
+  box: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.card, borderWidth: 1, borderColor: C.borderHi, borderRadius: R.md, paddingHorizontal: 14 },
+  boxOn: { borderColor: C.goldLine, backgroundColor: '#17150f' },
   x: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.card2, alignItems: 'center', justifyContent: 'center' },
   label: { fontFamily: F.medium, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.muted2, marginBottom: 7 },
-  input: { backgroundColor: C.card, borderWidth: 1, borderColor: C.borderHi, borderRadius: R.md, paddingHorizontal: 15, paddingVertical: 14, fontFamily: F.regular, fontSize: 16, color: C.text },
+  input: { flex: 1, paddingVertical: 14, fontFamily: F.regular, fontSize: 16, color: C.text },
   msg: { fontFamily: F.medium, fontSize: 13.5, color: '#ff9a9a', marginBottom: S.sm },
   link: { fontFamily: F.semibold, fontSize: 13, color: C.goldHi, textAlign: 'center' },
   switch: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: S.xxl, flexWrap: 'wrap' },

@@ -12,6 +12,8 @@ import type { ListingCard as Card } from '../../lib/types';
 import { ListingCard } from '../../components/ListingCard';
 import { Icon } from '../../components/Icon';
 import { Body, Button, Card as Box, Chip, Empty, Eyebrow, H1, H3, Row, Screen, tap } from '../../components/ui';
+import { Appear } from '../../components/motion';
+import { AuthButtons, Steps } from '../../components/Guest';
 import { C, F, R, S } from '../../theme';
 
 type Order = { id: number; title: string; photo: string | null; status: string; total: number; payout?: number; role: string; createdAt: string };
@@ -50,11 +52,13 @@ export default function Me() {
   if (!me) {
     return (
       <Screen>
-        {header}
-        <Box style={{ marginTop: S.xl }} gold>
-          <Body muted>{t('meGuestP')}</Body>
-          <Button title={t('signIn')} onPress={() => router.push('/auth')} style={{ marginTop: S.lg }} />
-        </Box>
+        <Appear>{header}<Body muted style={{ marginTop: 8 }}>{t('meGuestP')}</Body></Appear>
+        <Steps start={1} items={[
+          { icon: 'bell', title: t('pushAskT'), text: t('pushAskP') },
+          { icon: 'tag', title: t('homeSellT'), text: t('homeSellP') },
+          { icon: 'shield', title: t('navLegit'), text: t('homeLegitP') },
+        ]} />
+        <AuthButtons i={4} />
       </Screen>
     );
   }

@@ -12,6 +12,8 @@ import { GuidedCamera, type Shot } from '../../components/GuidedCamera';
 import { HoldCard } from '../../components/HoldCard';
 import { Icon } from '../../components/Icon';
 import { Body, Button, Card, Chip, Empty, Eyebrow, H1, H3, Row, Screen, tap } from '../../components/ui';
+import { Appear } from '../../components/motion';
+import { AuthButtons, Steps } from '../../components/Guest';
 import { C, F, R, S } from '../../theme';
 
 type Tier = 'photo' | 'lab';
@@ -44,8 +46,14 @@ export default function Sell() {
   const paused = config?.paused;
   const slotW = (Math.min(width, 640) - S.lg * 2 - 12) / 2;
 
-  if (!me) return <Screen><Eyebrow color={C.red}>{t('sellEyebrow')}</Eyebrow><H1 style={{ marginTop: 6 }}>{t('homeSellT')}</H1>
-    <Body muted style={{ marginTop: 8 }}>{t('homeSellP')}</Body><Button title={t('signIn')} onPress={() => router.push('/auth')} style={{ marginTop: S.xl }} /></Screen>;
+  if (!me) return (
+    <Screen>
+      <Appear><Eyebrow color={C.redText}>{t('sellEyebrow')}</Eyebrow><H1 style={{ marginTop: 6 }}>{t('homeSellT')}</H1>
+        <Body muted style={{ marginTop: 8 }}>{t('homeSellP')}</Body></Appear>
+      <Steps accent={C.redText} start={1} items={[1, 2, 3, 4].map((n) => ({ title: t('how' + n + 'T'), text: t('how' + n) }))} />
+      <AuthButtons why="authNeeded" i={5} />
+    </Screen>
+  );
   if (paused && (paused.hold || paused.trading || paused.listings)) return <Screen>{paused.hold ? <HoldCard /> : <Empty icon="clock" title={t(paused.trading ? 'pausedTrading' : 'pausedListings')} text={paused.notice || ''} />}</Screen>;
   if (done) return (
     <Screen><Empty icon="check" title={t('sellDoneT')} text={t('sellDoneP')}>

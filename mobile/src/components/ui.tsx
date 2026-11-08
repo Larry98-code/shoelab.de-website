@@ -5,8 +5,9 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, T
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { C, F, GOLD_GRAD, R, S } from '../theme';
+import { C, F, GOLD_GRAD, MAX_SCALE, R, S } from '../theme';
 import { Icon } from './Icon';
+import { PressableScale } from './motion';
 
 export function tap(kind: 'light' | 'select' | 'success' | 'warn' = 'light') {
   try {
@@ -24,7 +25,7 @@ export function Screen({ children, scroll = true, refreshing, onRefresh, edges =
     <SafeAreaView edges={edges} style={[st.screen, style]}>
       {scroll ? (
         <ScrollView contentContainerStyle={[pad && st.pad, { paddingBottom: 120 }]} keyboardShouldPersistTaps="handled"
-          refreshControl={onRefresh ? <RefreshControl tintColor={C.gold} refreshing={!!refreshing} onRefresh={onRefresh} /> : undefined}>
+          refreshControl={onRefresh ? <RefreshControl tintColor={C.gold} colors={[C.gold]} progressBackgroundColor={C.card2} refreshing={!!refreshing} onRefresh={onRefresh} /> : undefined}>
           {children}
         </ScrollView>
       ) : <View style={[{ flex: 1 }, pad && st.pad]}>{children}</View>}
@@ -32,13 +33,13 @@ export function Screen({ children, scroll = true, refreshing, onRefresh, edges =
   );
 }
 
-export const H1 = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => <Text style={[st.h1, style]}>{children}</Text>;
-export const H2 = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => <Text style={[st.h2, style]}>{children}</Text>;
-export const H3 = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => <Text style={[st.h3, style]}>{children}</Text>;
+export const H1 = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => <Text accessibilityRole="header" maxFontSizeMultiplier={MAX_SCALE.display} style={[st.h1, style]}>{children}</Text>;
+export const H2 = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => <Text accessibilityRole="header" maxFontSizeMultiplier={MAX_SCALE.display} style={[st.h2, style]}>{children}</Text>;
+export const H3 = ({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) => <Text maxFontSizeMultiplier={MAX_SCALE.text} style={[st.h3, style]}>{children}</Text>;
 export const Eyebrow = ({ children, color = C.gold, style }: { children: ReactNode; color?: string; style?: StyleProp<TextStyle> }) =>
-  <Text style={[st.eyebrow, { color }, style]}>{children}</Text>;
+  <Text maxFontSizeMultiplier={MAX_SCALE.display} style={[st.eyebrow, { color }, style]}>{children}</Text>;
 export const Body = ({ children, style, muted, small, numberOfLines }: { children: ReactNode; style?: StyleProp<TextStyle>; muted?: boolean; small?: boolean; numberOfLines?: number }) =>
-  <Text numberOfLines={numberOfLines} style={[st.body, muted && { color: C.muted2 }, small && { fontSize: 13, lineHeight: 19 }, style]}>{children}</Text>;
+  <Text numberOfLines={numberOfLines} maxFontSizeMultiplier={MAX_SCALE.text} style={[st.body, muted && { color: C.muted2 }, small && { fontSize: 13, lineHeight: 19 }, style]}>{children}</Text>;
 
 type BtnKind = 'red' | 'gold' | 'ghost' | 'danger' | 'ok';
 export function Button({ title, onPress, kind = 'red', busy, disabled, icon, small, style }: {
@@ -49,26 +50,27 @@ export function Button({ title, onPress, kind = 'red', busy, disabled, icon, sma
     <View style={[st.btnIn, small && st.btnSmall]}>
       {busy ? <ActivityIndicator color={fg} /> : <>
         {icon ? <Icon name={icon} size={small ? 16 : 18} color={fg} /> : null}
-        <Text style={[st.btnText, small && { fontSize: 15 }, { color: fg }]}>{title}</Text>
+        <Text maxFontSizeMultiplier={MAX_SCALE.display} numberOfLines={1} adjustsFontSizeToFit style={[st.btnText, small && { fontSize: 15 }, { color: fg }]}>{title}</Text>
       </>}
     </View>
   );
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={title} disabled={disabled || busy}
+    <PressableScale accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ disabled: !!(disabled || busy), busy: !!busy }} disabled={disabled || busy}
       onPress={() => { tap(); onPress?.(); }}
-      style={({ pressed }) => [st.btn, kind === 'red' && { backgroundColor: C.red }, kind === 'ok' && { backgroundColor: C.ok },
-        (kind === 'ghost' || kind === 'danger') && { borderWidth: 1, borderColor: kind === 'danger' ? 'rgba(255,77,77,0.45)' : C.borderHi },
-        (disabled && !busy) && { opacity: 0.45 }, pressed && { transform: [{ scale: 0.98 }], opacity: 0.9 }, style]}>
-      {kind === 'gold' ? <LinearGradient colors={GOLD_GRAD} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} /> : null}
+      style={[st.btn, kind === 'red' && st.btnRed, kind === 'ok' && { backgroundColor: C.ok },
+        kind === 'ghost' && st.btnGhost, kind === 'danger' && { borderWidth: 1, borderColor: 'rgba(255,77,77,0.45)' },
+        (disabled && !busy) && { opacity: 0.45 }, style]}>
+      {kind === 'gold' ? <LinearGradient colors={GOLD_GRAD} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.fill} /> : null}
+      {kind === 'red' ? <LinearGradient colors={['rgba(255,255,255,0.14)', 'rgba(255,255,255,0)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={st.fill} /> : null}
       {inner}
-    </Pressable>
+    </PressableScale>
   );
 }
 
 export function Card({ children, style, onPress, gold }: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; gold?: boolean }) {
   const s = [st.card, gold && { borderColor: C.goldLine }, style];
   if (!onPress) return <View style={s}>{children}</View>;
-  return <Pressable onPress={() => { tap('select'); onPress(); }} style={({ pressed }) => [s, pressed && { opacity: 0.85 }]}>{children}</Pressable>;
+  return <PressableScale accessibilityRole="button" scaleTo={0.985} onPress={() => { tap('select'); onPress(); }} style={s}>{children}</PressableScale>;
 }
 
 const TONES: Record<string, [string, string, string]> = {
@@ -122,10 +124,13 @@ export const st = StyleSheet.create({
   h3: { fontFamily: F.semibold, fontSize: 17, lineHeight: 23, color: C.text },
   eyebrow: { fontFamily: F.medium, fontSize: 11, letterSpacing: 3.2, textTransform: 'uppercase' },
   body: { fontFamily: F.regular, fontSize: 15, lineHeight: 23, color: C.text },
-  btn: { borderRadius: R.md, overflow: 'hidden', minHeight: 52, justifyContent: 'center' },
+  btn: { borderRadius: R.md, minHeight: 52, justifyContent: 'center' },
+  fill: { ...StyleSheet.absoluteFill, borderRadius: R.md },
   btnIn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: S.xl, paddingVertical: 14 },
   btnSmall: { paddingHorizontal: S.lg, paddingVertical: 9 },
   btnText: { fontFamily: F.display, fontSize: 19, letterSpacing: 2.2 },
+  btnRed: { backgroundColor: C.red, shadowColor: C.red, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
+  btnGhost: { borderWidth: 1, borderColor: C.borderHi, backgroundColor: 'rgba(255,255,255,0.03)' },
   card: { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 1, borderColor: C.border, padding: S.lg },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 4, borderRadius: R.pill, borderWidth: 1 },
   chipText: { fontFamily: F.semibold, fontSize: 11, letterSpacing: 0.3 },
