@@ -42,7 +42,7 @@ over the air (EAS Update), on the channel of the build (`preview` for the
 test APK, `production` for the stores):
 
 ```bash
-npx eas-cli@latest update --channel preview --message "what changed"
+npx eas-cli@latest update --channel preview --environment preview --message "what changed"
 ```
 
 The app looks for an update while the 0–100 % opening plays and restarts
