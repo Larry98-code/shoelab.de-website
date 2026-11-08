@@ -14,6 +14,8 @@ import { Showcase } from '../../components/Showcase';
 import { MenuButton } from '../../components/Menu';
 import { HoldCard } from '../../components/HoldCard';
 import { Icon } from '../../components/Icon';
+import { WesleyFab } from '../../components/Wesley';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C, CONTENT_MAX, F, MAX_SCALE, NUM, R, S } from '../../theme';
 
 const MARK = require('../../../assets/mark.png');
@@ -25,6 +27,7 @@ export default function Home() {
   const { me, config, reload } = useAuth();
   const { t, lang, money } = useI18n();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const hold = !!config?.paused?.hold;
   const refresh = async () => { setRefreshing(true); await reload(); setRefreshing(false); };
@@ -34,6 +37,7 @@ export default function Home() {
   const go = (path: '/(tabs)/vault' | '/(tabs)/sell' | '/(tabs)/legit') => { tap('select'); router.push(path); };
 
   return (
+    <View style={{ flex: 1 }}>
     <Screen refreshing={refreshing} onRefresh={refresh} pad={false}>
       <View style={st.top}>
         <Row gap={10}>
@@ -98,6 +102,8 @@ export default function Home() {
         <Text style={st.footText}>{t('homeLead')}</Text>
       </View>
     </Screen>
+    <WesleyFab bottom={insets.bottom + 92} />
+    </View>
   );
 }
 

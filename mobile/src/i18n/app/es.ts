@@ -36,4 +36,5 @@ export default {
   sellView: 'Ver tu anuncio', sellAnother: 'Vender otro par',
   camAllowT: 'Acceso a la cámara', camAllowP: 'ShoeLab usa la cámara para fotografiar tu par, con una silueta guía para cada foto. Tus fotos solo se usan para tu anuncio.', camAllow: 'Permitir acceso',
   offline: 'Sin conexión: te mostramos lo último que se cargó.', retry: 'Reintentar', pullRefresh: 'Desliza hacia abajo para actualizar',
+  wesAsk: 'Pregunta a Wesley', wesHello: 'Hola, soy Wesley, el asistente de IA de ShoeLab. Pregúntame por las limpiezas, el Vault, el Legit Check o tus pedidos, o envíame una foto de tu par y te diré qué tratamiento necesita. Si algo necesita a una persona, se lo paso a un especialista.', wesQPhoto: '¿Qué tratamiento necesita mi par?', wesQBook: '¿Cómo reservo una limpieza?', wesPhoto: 'Envía una foto de tu par', wesPhotoQ: '¿Qué tratamiento necesita este par?', wesNew: 'Nuevo chat',
 } as Record<string, string>;

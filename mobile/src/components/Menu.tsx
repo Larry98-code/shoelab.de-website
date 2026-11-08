@@ -15,6 +15,7 @@ import { LANGS, LANG_NAMES, useI18n } from '../lib/i18n';
 import { C, F, R, SHADOW } from '../theme';
 import { Icon } from './Icon';
 import { tap } from './ui';
+import { WesleyAvatar } from './Wesley';
 
 export const WHATSAPP = 'https://wa.me/491772258878';
 export const EMAIL = 'mailto:Shoelab.de@gmail.com';
@@ -74,6 +75,15 @@ function Menu({ onClose }: { onClose: () => void }) {
             </View>
           </View>
 
+          <Pressable onPress={() => { tap(); close(() => router.push('/wesley')); }} style={({ pressed }) => [s.wes, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel={t('wesAsk')}>
+            <WesleyAvatar size={38} online />
+            <View style={{ flex: 1 }}>
+              <Text style={s.label}>{t('wesAsk')}</Text>
+              <Text style={s.sub} numberOfLines={2}>{t('wesQPhoto')}</Text>
+            </View>
+            <Icon name="chevron" size={14} color={C.goldHi} />
+          </Pressable>
+
           <Text style={s.group}>{t('homeContact')}</Text>
           <MenuItem icon="chat" label={t('homeWhatsApp')} sub="+49 177 2258878" color="#4ade80" onPress={() => close(() => Linking.openURL(WHATSAPP))} />
           <MenuItem icon="mail" label={t('homeEmail')} sub="Shoelab.de@gmail.com" onPress={() => close(() => Linking.openURL(EMAIL))} />
@@ -123,6 +133,7 @@ const s = StyleSheet.create({
   ico: { width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
   label: { fontFamily: F.medium, fontSize: 14.5, color: C.text },
   sub: { fontFamily: F.regular, fontSize: 11.5, color: C.muted, marginTop: 1 },
+  wes: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 12, marginBottom: 8, padding: 10, borderRadius: 16, backgroundColor: C.redSoft, borderWidth: 1, borderColor: C.redLine },
   rule: { height: 1, backgroundColor: C.border, marginVertical: 6, marginHorizontal: 16 },
   langs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, paddingLeft: 60, paddingBottom: 8 },
   lang: { minWidth: 42, paddingVertical: 6, paddingHorizontal: 8, borderRadius: R.pill, borderWidth: 1, borderColor: C.borderHi, alignItems: 'center' },

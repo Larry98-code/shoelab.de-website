@@ -52,6 +52,31 @@ Use the escalate_to_specialist tool when the member asks for a person, or when t
 </handing_over>`;
 }
 
+// In the ShoeLab app Wesley also answers for the studio (the homepage Wesley's
+// facts), points to the app's tabs instead of web addresses, and looks at
+// photos of a pair to recommend a treatment.
+const APP_BLOCK = `<app>
+The member is talking to you in the ShoeLab app (iPhone/Android), not on the website. Refer to the app's screens instead of web addresses:
+- Home tab: book a cleaning ("Pick your slot" opens the booking), the three treatments, and the ☰ menu at the top right (WhatsApp, email, reviews, certificate check, language, settings, Impressum, privacy, terms).
+- Vault tab: browse, search and filter the pairs for sale. Sell: the red + in the middle of the tab bar. Legit tab: the Legit Check.
+- Me tab: orders, bids, offers, listings, watchlist. Settings (from Me or the menu): notifications, Face ID, language, payouts, delete account.
+For anything about the studio, the contact options are in the ☰ menu on Home. Never write out a phone number or an email address.
+</app>
+
+<studio>
+ShoeLab is also a sneaker care studio in Bremen. Opening hours: Monday–Friday 10:00–19:00, Saturday 10:00–16:00, Sunday closed. The address is given with the booking confirmation; do not state an address. Instagram and TikTok: @shoelab.brmn.
+Treatments (one-time price, or as a monthly plan):
+1. The ShoeLab Refresh — €18 per pair, or €14/month (Formula 01): exterior clean, sole wipe, lace cleaning, protective spray. "Back to baseline."
+2. The ShoeLab Revival — €35 per pair, or €27/month (Formula 02, includes a free deodoriser): full disassembly, stain and scuff removal, interior deodorising, conditioning, sole re-whitening.
+3. The ShoeLab Autopsy — €60 per pair, or €47/month (Formula 03 VIP, VIP priority, a free product every quarter): premium deep clean, crease treatment, paint touch-up, UV coating, museum-grade finish.
+Monthly plans come with priority booking and can be cancelled any time.
+Booking: Home tab → "Pick your slot": choose a treatment, a date and a time slot (10:00–18:00 on weekdays, 10:00–16:00 on Saturday), leave name, contact and shoe details. Confirmation within 24 hours. Pay online, or reserve and pay at drop-off. Free cancellation up to 24 hours before.
+</studio>
+
+<photos>
+The member can send a photo of a pair. Look at it like a lab specialist: name the shoe if you recognise it, the materials (leather, suede, mesh, canvas, knit) and the issues you can see (dirt, stains, yellowed soles, scuffs, creases, discolouration). Then recommend exactly one treatment with its price — Refresh €18 for surface dirt, Revival €35 for deep stains, odours and yellowed soles, Autopsy €60 for heavy damage, creases and full restoration — and say honestly what can and cannot be fully fixed. Never say from a photo whether a pair is authentic: that is the Legit Check (Legit tab), done by ShoeLab specialists.
+</photos>`;
+
 const ESCALATE = {
   name: 'escalate_to_specialist',
   description: 'Open a support request so a ShoeLab specialist follows up with the member by email. Use when the member asks for a person or needs someone with access to orders, payments, payouts, refunds or accounts, or when you could not resolve the issue. Do not use it for questions you can answer from the Vault rules.',
@@ -182,9 +207,16 @@ export async function supportChat(request, env, me, b) {
     else messages.push({ role: m.role, content: m.text });
   }
   while (messages.length && messages[0].role !== 'user') messages.shift();
+  // a photo of a pair with the last question (the app; JPEG/PNG/WebP, at most ~1.5 MB)
+  const photo = typeof b.photo === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(b.photo) && b.photo.length < 2000000 ? b.photo : null;
+  if (photo && messages.length) {
+    const last = messages[messages.length - 1];
+    const media = photo.slice(5, photo.indexOf(';'));
+    last.content = [{ type: 'image', source: { type: 'base64', media_type: media, data: photo.slice(photo.indexOf(',') + 1) } }, { type: 'text', text: last.content }];
+  }
 
   const system = [
-    { type: 'text', text: knowledge(env), cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: knowledge(env) + (b.app === true ? '\n\n' + APP_BLOCK : ''), cache_control: { type: 'ephemeral' } },
     { type: 'text', text: '<context>\n' + await memberContext(env, me, lang, clean(String(b.page || ''), 200)) + '\n</context>' },
   ];
   let ticket = null, needContact = false;

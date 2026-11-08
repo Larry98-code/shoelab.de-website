@@ -68,6 +68,7 @@ function Gate({ fonts }: { fonts: boolean }) {
           </Stack.Protected>
           <Stack.Screen name="auth" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="wesley" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         </Stack>
       )) : null}
       {intro ? <Preloader ready={ready} onFull={full} onDone={done} /> : null}
