@@ -35,6 +35,22 @@ is used for automated screenshots and tests only.
 - Links in emails (`/vault-item.html?id=…`, `/vault-me.html#order-…`) open the matching screen.
 - While ShoeLab is on hold (`functions/_shared/core.js`), the app shows the same message.
 
+## Updates without reinstalling
+
+Design, text and feature changes that need no new native module go out
+over the air (EAS Update), on the channel of the build (`preview` for the
+test APK, `production` for the stores):
+
+```bash
+npx eas-cli@latest update --channel preview --message "what changed"
+```
+
+The app looks for an update while the 0–100 % opening plays and restarts
+straight into it if it arrives within three seconds; otherwise it uses it on
+the next launch (`src/lib/updates.ts`). The runtime version is the native
+"fingerprint", so an update never reaches an app whose native parts differ —
+a new native module needs a new build (and one more install).
+
 ## Releasing (needs the owner's accounts)
 
 1. **Accounts:** Apple Developer Program (about $99 a year), Google Play

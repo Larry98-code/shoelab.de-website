@@ -14,6 +14,7 @@ import { LockScreen } from '../components/LockScreen';
 import { ToastProvider } from '../components/Toast';
 import { Preloader } from '../components/Preloader';
 import { usePushRouting } from '../lib/push';
+import { useLaunchUpdate } from '../lib/updates';
 import { C } from '../theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -42,7 +43,9 @@ export default function Root() {
 }
 
 function Gate({ fonts }: { fonts: boolean }) {
-  const { ready, locked, inside } = useAuth();
+  const { ready: signedIn, locked, inside } = useAuth();
+  const updated = useLaunchUpdate();
+  const ready = signedIn && updated;
   usePushRouting();
   // the website's 0–100 % opening plays on every launch; the app appears as it fades
   const [intro, setIntro] = useState(true), [shown, setShown] = useState(false);
