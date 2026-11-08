@@ -57,11 +57,14 @@ export function Showcase({ size, caption = 'full' }: { size: number; caption?: '
   const rot = useSharedValue(0), tx = useSharedValue(0), sc = useSharedValue(1), op = useSharedValue(1);
   const fy = useSharedValue(0), fr = useSharedValue(-1.2), prog = useSharedValue(0);
   const next = useRef<() => void>(() => {});
+  // Called from the animation (UI) thread when the timer runs out: it must be a
+  // function made here on the JS thread, never one built inside the animation.
+  const advance = useCallback(() => next.current(), []);
 
   const run = useCallback((from = 0) => {
     if (reduced) return;
-    prog.set(withSequence(withTiming(from, { duration: 0 }), withTiming(1, { duration: INTERVAL * (1 - from), easing: Easing.linear }, (fin) => { if (fin) scheduleOnRN(() => next.current()); })));
-  }, [prog, reduced]);
+    prog.set(withSequence(withTiming(from, { duration: 0 }), withTiming(1, { duration: INTERVAL * (1 - from), easing: Easing.linear }, (fin) => { if (fin) scheduleOnRN(advance); })));
+  }, [prog, reduced, advance]);
 
   const show = useCallback((to: number) => {
     if (busy.current || to === idxRef.current) return;
