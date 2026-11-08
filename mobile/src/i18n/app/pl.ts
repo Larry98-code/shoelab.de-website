@@ -12,7 +12,7 @@ export default {
   holdText: 'ShoeLab robi krótką przerwę. Przygotowując nasz powrót, wstrzymujemy wszystkie usługi — czyszczenie i rezerwacje w studiu, Vault oraz Legit Check. Dziękujemy za cierpliwość i zaufanie. Nie możemy się doczekać, aż znów powitamy Ciebie i Twoje sneakersy.',
   holdSign: '— Zespół ShoeLab',
   authWelcome: 'Witamy w ShoeLab', authLead: 'Jedno konto do rezerwacji, Vault i Legit Check.',
-  authName: 'Imię i nazwisko', welcomeGuest: 'Najpierw się rozejrzę', authShowPw: 'Pokaż hasło', authHidePw: 'Ukryj hasło', authHaveAccount: 'Masz już konto?', authNoAccount: 'Pierwszy raz w ShoeLab?',
+  authName: 'Imię i nazwisko', menu: 'Menu', welcomeGuest: 'Najpierw się rozejrzę', authShowPw: 'Pokaż hasło', authHidePw: 'Ukryj hasło', authHaveAccount: 'Masz już konto?', authNoAccount: 'Pierwszy raz w ShoeLab?',
   authResetEmail: 'Najpierw wpisz powyżej swój adres e-mail.', authResetSent: 'Jeśli istnieje konto z tym adresem, wysłaliśmy Ci e-mail z linkiem do ustawienia nowego hasła.',
   authSignedOut: 'Wylogowano.', authNeeded: 'Zaloguj się, aby kontynuować.',
   meGuestT: 'Twój ShoeLab', meGuestP: 'Zaloguj się, aby śledzić swoje zamówienia, licytacje i propozycje cenowe, sprzedawać pary i przechowywać swoje certyfikaty.',

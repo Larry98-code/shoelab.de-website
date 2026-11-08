@@ -32,3 +32,27 @@ for (const l of ['en', 'de', 'pl', 'ru', 'uk', 'it', 'es', 'fr']) {
 fs.writeFileSync(path.join(here, '../src/i18n/studio.json'), JSON.stringify(studio));
 console.log('studio: ' + SERVICES.length + ' treatments, ' + Object.keys(studio.text.de).length + ' texts per language');
 
+
+// The hero showcase (the turning pairs): the pairs, their colours and the texts
+// per language, from the website's js/hero-showcase.js.
+{
+  const js = fs.readFileSync(path.join(here, '../../shoelab-netlify/js/hero-showcase.js'), 'utf8');
+  const grab = (name, open, close) => {
+    const at = js.indexOf('var ' + name + ' = ' + open);
+    if (at < 0) throw new Error('showcase: ' + name + ' not found');
+    let depth = 0, i = js.indexOf(open, at);
+    for (let j = i; j < js.length; j++) {
+      if (js[j] === open) depth++;
+      else if (js[j] === close && --depth === 0) return vm.runInNewContext('(' + js.slice(i, j + 1) + ')');
+    }
+    throw new Error('showcase: ' + name + ' not closed');
+  };
+  const shoes = grab('SHOES', '[', ']'), desc = grab('DESC', '{', '}'), tr = grab('T', '{', '}');
+  const showcase = { shoes: shoes.map((s) => ({ ...s, img: path.basename(s.img, '.webp') })), desc, tr };
+  fs.writeFileSync(path.join(here, '../src/i18n/showcase.json'), JSON.stringify(showcase));
+  for (const s of showcase.shoes) {
+    const to = path.join(here, '../assets/img/showcase-' + s.img + '.webp');
+    fs.copyFileSync(path.join(here, '../../shoelab-netlify/img/showcase/' + s.img + '.webp'), to);
+  }
+  console.log('showcase: ' + shoes.length + ' pairs');
+}

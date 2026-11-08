@@ -16,6 +16,8 @@ export const F = {
 };
 export const R = { sm: 10, md: 14, lg: 20, xl: 26, pill: 999 };
 export const S = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
+// On tablets the content stays a comfortable column in the middle.
+export const CONTENT_MAX = 720;
 // Numbers that change (prices, countdowns) keep their width so nothing jumps.
 export const NUM = { fontVariant: ['tabular-nums' as const] };
 // Big display type stays legible but never breaks the layout with huge system font sizes.

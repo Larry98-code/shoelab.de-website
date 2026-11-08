@@ -6,11 +6,11 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { Easing, FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '../lib/auth';
 import { LANGS, LANG_NAMES, useI18n } from '../lib/i18n';
 import { Button, Row, tap } from '../components/ui';
-import { Floating, Glow, SNEAKERS } from '../components/Stage';
+import { Showcase } from '../components/Showcase';
 import { Sheet } from '../components/Sheet';
 import { Icon } from '../components/Icon';
 import { C, F, R, S } from '../theme';
@@ -22,8 +22,8 @@ export default function Welcome() {
   const { setGuest } = useAuth();
   const { width, height } = useWindowDimensions();
   const [langOpen, setLangOpen] = useState(false);
-  const W = Math.min(width, 520);
-  const stageH = Math.max(250, Math.min(height * 0.44, W * 0.95));
+  // the showcase takes what is left above the name and the buttons
+  const stage = Math.min(width - S.lg * 2, 480, Math.max(230, height - 430) * 1.18);
 
   return (
     <View style={s.screen}>
@@ -37,29 +37,10 @@ export default function Welcome() {
           </Pressable>
         </Row>
 
-        {/* the stage: two pairs behind, one in front, all floating */}
-        <View style={[s.stage, { height: stageH }]}>
-          <Glow size={W * 1.15} color={C.red} opacity={0.55} style={{ alignSelf: 'center', top: stageH / 2 - W * 0.575 }} />
-          <Animated.View entering={FadeInDown.duration(800).delay(150).easing(ease)} style={[s.abs, { left: W * 0.01, top: stageH * 0.06, width: W * 0.5, height: stageH * 0.38 }]}>
-            <Floating rotate={-16} lift={6} delay={300} duration={2900} style={s.fill}>
-              <Image source={SNEAKERS.nb9060} style={[s.fill, { opacity: 0.9 }]} contentFit="contain" />
-            </Floating>
-          </Animated.View>
-          <Animated.View entering={FadeInDown.duration(800).delay(300).easing(ease)} style={[s.abs, { right: W * 0.01, top: stageH * 0.0, width: W * 0.5, height: stageH * 0.38 }]}>
-            <Floating rotate={14} lift={8} delay={800} duration={3100} style={s.fill}>
-              <Image source={SNEAKERS.nb1080} style={[s.fill, { opacity: 0.9 }]} contentFit="contain" />
-            </Floating>
-          </Animated.View>
-          {/* the floor shadow under the front pair */}
-          <View style={[s.abs, { alignSelf: 'center', bottom: stageH * 0.02, width: W * 0.7, height: 40, transform: [{ scaleY: 0.35 }] }]}>
-            <Glow size={W * 0.7} color="#000" opacity={0.9} style={{ top: -W * 0.35 + 20 }} />
-          </View>
-          <Animated.View entering={FadeInUp.duration(900).delay(450).easing(ease)} style={[s.abs, { alignSelf: 'center', bottom: stageH * 0.06, width: W * 0.88, height: stageH * 0.6 }]}>
-            <Floating rotate={-8} lift={9} duration={2600} style={s.fill}>
-              <Image source={SNEAKERS.jordan1} style={s.fill} contentFit="contain" accessibilityIgnoresInvertColors />
-            </Floating>
-          </Animated.View>
-        </View>
+        {/* the pairs, turning like on the website */}
+        <Animated.View entering={FadeIn.duration(900).delay(100)} style={{ marginTop: S.md }}>
+          <Showcase size={stage} caption="short" />
+        </Animated.View>
 
         <View style={s.bottom}>
           <Animated.View entering={FadeIn.duration(700).delay(650)} style={{ alignItems: 'center' }}>
@@ -99,8 +80,8 @@ const s = StyleSheet.create({
   stage: { marginTop: S.md, overflow: 'visible' },
   abs: { position: 'absolute' },
   fill: { width: '100%', height: '100%' },
-  bottom: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', paddingHorizontal: S.xl, paddingBottom: S.md },
-  word: { fontFamily: F.display, fontSize: 62, lineHeight: 64, letterSpacing: 5, color: '#fff',
+  bottom: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', paddingHorizontal: S.xl, paddingBottom: S.md, width: '100%', maxWidth: 520, alignSelf: 'center' },
+  word: { fontFamily: F.display, fontSize: 50, lineHeight: 52, letterSpacing: 5, color: '#fff',
     textShadowColor: 'rgba(204,17,17,0.55)', textShadowRadius: 28, textShadowOffset: { width: 0, height: 0 } },
   lead: { fontFamily: F.regular, fontSize: 14.5, lineHeight: 21, color: C.muted2, textAlign: 'center', marginTop: 6, maxWidth: 320 },
   guest: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },

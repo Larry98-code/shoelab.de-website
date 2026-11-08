@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, T
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { C, F, GOLD_GRAD, MAX_SCALE, R, S } from '../theme';
+import { C, CONTENT_MAX, F, GOLD_GRAD, MAX_SCALE, R, S } from '../theme';
 import { Icon } from './Icon';
 import { PressableScale } from './motion';
 
@@ -24,11 +24,11 @@ export function Screen({ children, scroll = true, refreshing, onRefresh, edges =
   return (
     <SafeAreaView edges={edges} style={[st.screen, style]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={[pad && st.pad, { paddingBottom: 120 }]} keyboardShouldPersistTaps="handled"
+        <ScrollView contentContainerStyle={[st.column, pad && st.pad, { paddingBottom: 120 }]} keyboardShouldPersistTaps="handled"
           refreshControl={onRefresh ? <RefreshControl tintColor={C.gold} colors={[C.gold]} progressBackgroundColor={C.card2} refreshing={!!refreshing} onRefresh={onRefresh} /> : undefined}>
           {children}
         </ScrollView>
-      ) : <View style={[{ flex: 1 }, pad && st.pad]}>{children}</View>}
+      ) : <View style={[{ flex: 1 }, st.column, pad && st.pad]}>{children}</View>}
     </SafeAreaView>
   );
 }
@@ -119,6 +119,7 @@ export function ListItem({ icon, title, sub, onPress, right, danger }: { icon?: 
 export const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.black },
   pad: { paddingHorizontal: S.lg, paddingTop: S.md },
+  column: { width: '100%', maxWidth: CONTENT_MAX, alignSelf: 'center' },
   h1: { fontFamily: F.display, fontSize: 44, lineHeight: 44, letterSpacing: 1, color: C.text },
   h2: { fontFamily: F.display, fontSize: 30, lineHeight: 32, letterSpacing: 0.8, color: C.text },
   h3: { fontFamily: F.semibold, fontSize: 17, lineHeight: 23, color: C.text },

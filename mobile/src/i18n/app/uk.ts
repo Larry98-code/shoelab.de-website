@@ -12,7 +12,7 @@ export default {
   holdText: 'ShoeLab бере невелику паузу. Поки ми готуємося до повернення, усі наші послуги призупинено — чищення та запис у студію, Vault і Legit Check. Дякуємо за терпіння й довіру. Ми з нетерпінням чекаємо нової зустрічі з тобою та твоїми кросівками.',
   holdSign: '— Команда ShoeLab',
   authWelcome: 'Ласкаво просимо до ShoeLab', authLead: 'Один акаунт для запису в студію, Vault і Legit Check.',
-  authName: 'Повне ім’я', welcomeGuest: 'Спершу роззирнутися', authShowPw: 'Показати пароль', authHidePw: 'Сховати пароль', authHaveAccount: 'Уже маєте акаунт?', authNoAccount: 'Уперше в ShoeLab?',
+  authName: 'Повне ім’я', menu: 'Меню', welcomeGuest: 'Спершу роззирнутися', authShowPw: 'Показати пароль', authHidePw: 'Сховати пароль', authHaveAccount: 'Уже маєте акаунт?', authNoAccount: 'Уперше в ShoeLab?',
   authResetEmail: 'Спершу введіть адресу ел. пошти вище.', authResetSent: 'Якщо акаунт із цією адресою існує, ми надіслали на неї посилання для вибору нового пароля.',
   authSignedOut: 'Ви вийшли з акаунта.', authNeeded: 'Увійдіть, щоб продовжити.',
   meGuestT: 'Ваш ShoeLab', meGuestP: 'Увійдіть, щоб стежити за замовленнями, ставками й пропозиціями ціни, продавати пари та зберігати свої сертифікати.',
