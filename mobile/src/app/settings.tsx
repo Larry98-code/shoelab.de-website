@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
@@ -64,7 +64,7 @@ export default function Settings() {
         <ListItem icon="info" title={t('meTerms')} onPress={() => web('/vault-terms.html')} />
         <ListItem icon="lock" title={t('mePrivacy')} onPress={() => web('/datenschutz.html')} />
         <ListItem icon="home" title={t('meImprint')} onPress={() => web('/impressum.html')} />
-        <ListItem icon="chat" title={t('homeContact')} onPress={() => Linking.openURL('mailto:Shoelab.de@gmail.com')} />
+        <ListItem icon="chat" title={t('wesAsk')} sub={t('helpSub')} onPress={() => router.push('/wesley')} />
       </View>
 
       {me ? <View style={s.group}>

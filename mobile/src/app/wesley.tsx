@@ -3,7 +3,7 @@
 // specialist when something needs a person. The server is the Vault's support
 // chat (/api/market/support/chat with app: true).
 import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -15,13 +15,14 @@ import { useAuth } from '../lib/auth';
 import { useI18n } from '../lib/i18n';
 import { errText } from '../lib/errors';
 import { store } from '../lib/storage';
+import { WHATSAPP } from '../lib/links';
 import { Body, Button, tap } from '../components/ui';
 import { Sheet } from '../components/Sheet';
 import { Icon } from '../components/Icon';
 import { WesleyAvatar } from '../components/Wesley';
 import { C, F, R, S } from '../theme';
 
-type Msg = { id: number; role: 'user' | 'assistant' | 'note'; text: string; photo?: string; warn?: boolean };
+type Msg = { id: number; role: 'user' | 'assistant' | 'note' | 'whatsapp'; text: string; photo?: string; warn?: boolean };
 const KEY = 'wesleyChat';
 let seq = Date.now();
 
@@ -54,14 +55,17 @@ export default function WesleyScreen() {
     if (!words || busy) return;
     tap();
     const mine: Msg = { id: ++seq, role: 'user', text: words, photo: photo?.uri };
-    const history = msgs.filter((m) => m.role !== 'note').concat(mine).slice(-16).map((m) => ({ role: m.role, text: m.text }));
+    const history = msgs.filter((m) => m.role === 'user' || m.role === 'assistant').concat(mine).slice(-16).map((m) => ({ role: m.role, text: m.text }));
     const shot = photo?.data;
     push([mine]); setText(''); setPhoto(null); setBusy(true);
-    const r = await market<{ reply: string; ticket?: { id: number } | null; needContact?: boolean }>('support/chat', { body: { app: true, page: 'app:wesley', messages: history, photo: shot } });
+    const r = await market<{ reply: string; ticket?: { id: number } | null; needContact?: boolean; whatsapp?: boolean; failed?: boolean }>('support/chat', { body: { app: true, page: 'app:wesley', messages: history, photo: shot } });
     setBusy(false);
-    if (!r.ok) { tap('warn'); push([{ id: ++seq, role: 'assistant', text: t((r.data as { code?: string } | null)?.code === 'support_limit' ? 'helpLimit' : 'helpError'), warn: true }]); return; }
+    // Wesley could not help at all: the team on WhatsApp is the way out
+    if (!r.ok) { tap('warn'); push([{ id: ++seq, role: 'assistant', text: t((r.data as { code?: string } | null)?.code === 'support_limit' ? 'helpLimit' : 'helpError'), warn: true }, { id: ++seq, role: 'whatsapp', text: '' }]); return; }
     const add: Msg[] = [{ id: ++seq, role: 'assistant', text: r.data.reply }];
     if (r.data.ticket?.id) add.push({ id: ++seq, role: 'note', text: t('helpTicket', { n: r.data.ticket.id }) });
+    // the toughest cases: Wesley offers the team on WhatsApp
+    if (r.data.whatsapp || r.data.failed) add.push({ id: ++seq, role: 'whatsapp', text: '' });
     push(add);
     if (r.data.needContact) setTimeout(() => setForm(true), 600);
   };
@@ -89,7 +93,7 @@ export default function WesleyScreen() {
     setFBusy(true);
     const r = await market<{ ticket: { id: number } }>('support/ticket', { body: {
       message: fMsg.trim(), email: me ? undefined : fEmail.trim(), page: 'app:wesley',
-      transcript: msgs.filter((m) => m.role !== 'note').slice(-16).map((m) => ({ role: m.role, text: m.text })),
+      transcript: msgs.filter((m) => m.role === 'user' || m.role === 'assistant').slice(-16).map((m) => ({ role: m.role, text: m.text })),
     } });
     setFBusy(false);
     if (!r.ok) { tap('warn'); return setFErr(errText(i18n, r)); }
@@ -133,7 +137,18 @@ export default function WesleyScreen() {
               ))}
             </Animated.View>
           ) : null}
-          {msgs.map((m) => m.role === 'note' ? (
+          {msgs.map((m) => m.role === 'whatsapp' ? (
+            <Animated.View key={m.id} entering={FadeInUp.duration(320)} style={s.waWrap}>
+              <Pressable onPress={() => { tap(); Linking.openURL(WHATSAPP); }} style={({ pressed }) => [s.wa, pressed && { opacity: 0.85 }]} accessibilityRole="link" accessibilityLabel={t('wesWaT')}>
+                <View style={s.waIco}><Icon name="chat" size={18} color="#062b14" /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.waT}>{t('wesWaT')}</Text>
+                  <Text style={s.waP}>{t('wesWaP')}</Text>
+                </View>
+                <Icon name="right" size={16} color="#86efac" />
+              </Pressable>
+            </Animated.View>
+          ) : m.role === 'note' ? (
             <Animated.View key={m.id} entering={FadeIn.duration(300)} style={s.note}>
               <Icon name="check" size={15} color={C.goldHi} /><Text style={s.noteT}>{m.text}</Text>
             </Animated.View>
@@ -215,6 +230,11 @@ const s = StyleSheet.create({
   chipT: { fontFamily: F.medium, fontSize: 13, color: C.text },
   note: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'center', maxWidth: '92%', backgroundColor: C.goldSoft, borderWidth: 1, borderColor: C.goldLine, borderRadius: R.md, paddingHorizontal: 12, paddingVertical: 9 },
   noteT: { flex: 1, fontFamily: F.medium, fontSize: 13, lineHeight: 18, color: C.amberText },
+  waWrap: { paddingLeft: 36 },
+  wa: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 1, borderColor: 'rgba(34,197,94,0.45)', maxWidth: 420 },
+  waIco: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#25D366', alignItems: 'center', justifyContent: 'center' },
+  waT: { fontFamily: F.semibold, fontSize: 14.5, color: '#dcfce7' },
+  waP: { fontFamily: F.regular, fontSize: 12, lineHeight: 16, color: '#a7f3c4', marginTop: 2 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.muted2 },
   human: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', paddingVertical: 8, marginTop: 4 },
   humanT: { fontFamily: F.medium, fontSize: 12.5, color: C.muted2, textDecorationLine: 'underline' },

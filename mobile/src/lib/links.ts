@@ -19,3 +19,6 @@ export function appPath(url: string): string | null {
   if (/^\/(listing|order)\/\d+$/.test(p) || /^\/(vault|sell|legit|me|auth|settings)$/.test(p)) return p;
   return null;
 }
+
+// The studio's WhatsApp: only offered by Wesley, as the last resort.
+export const WHATSAPP = 'https://wa.me/491772258878';

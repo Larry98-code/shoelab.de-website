@@ -1,4 +1,4 @@
-// The menu behind ☰ in the header: talk to the studio, reviews, the certificate
+// The menu behind ☰ in the header: Wesley (the support), email, reviews, the certificate
 // check, language, settings and the legal pages (Impressum and the rest).
 // It unfolds from the button, over a dimmed screen.
 import { useEffect, useState, type ReactNode } from 'react';
@@ -17,7 +17,6 @@ import { Icon } from './Icon';
 import { tap } from './ui';
 import { WesleyAvatar } from './Wesley';
 
-export const WHATSAPP = 'https://wa.me/491772258878';
 export const EMAIL = 'mailto:Shoelab.de@gmail.com';
 
 export function MenuButton() {
@@ -75,17 +74,16 @@ function Menu({ onClose }: { onClose: () => void }) {
             </View>
           </View>
 
+          <Text style={s.group}>{t('homeContact')}</Text>
           <Pressable onPress={() => { tap(); close(() => router.push('/wesley')); }} style={({ pressed }) => [s.wes, pressed && { opacity: 0.85 }]} accessibilityRole="button" accessibilityLabel={t('wesAsk')}>
             <WesleyAvatar size={38} online />
             <View style={{ flex: 1 }}>
               <Text style={s.label}>{t('wesAsk')}</Text>
-              <Text style={s.sub} numberOfLines={2}>{t('wesQPhoto')}</Text>
+              <Text style={s.sub} numberOfLines={2}>{t('helpSub')}</Text>
             </View>
             <Icon name="chevron" size={14} color={C.goldHi} />
           </Pressable>
 
-          <Text style={s.group}>{t('homeContact')}</Text>
-          <MenuItem icon="chat" label={t('homeWhatsApp')} sub="+49 177 2258878" color="#4ade80" onPress={() => close(() => Linking.openURL(WHATSAPP))} />
           <MenuItem icon="mail" label={t('homeEmail')} sub="Shoelab.de@gmail.com" onPress={() => close(() => Linking.openURL(EMAIL))} />
 
           <View style={s.rule} />

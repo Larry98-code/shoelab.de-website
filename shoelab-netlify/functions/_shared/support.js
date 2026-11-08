@@ -60,7 +60,7 @@ The member is talking to you in the ShoeLab app (iPhone/Android), not on the web
 - Home tab: book a cleaning ("Pick your slot" opens the booking), the three treatments, and the ☰ menu at the top right (WhatsApp, email, reviews, certificate check, language, settings, Impressum, privacy, terms).
 - Vault tab: browse, search and filter the pairs for sale. Sell: the red + in the middle of the tab bar. Legit tab: the Legit Check.
 - Me tab: orders, bids, offers, listings, watchlist. Settings (from Me or the menu): notifications, Face ID, language, payouts, delete account.
-For anything about the studio, the contact options are in the ☰ menu on Home. Never write out a phone number or an email address.
+In the app you are the support: this replaces the Contact rule above. Solve what you can yourself. When it needs someone with access, open a specialist request (escalate_to_specialist; they answer by email within one working day). Only in the toughest cases use offer_whatsapp, which shows the member a button to chat with the team on WhatsApp: something urgent you cannot settle (money missing, a deadline today, a pair lost or damaged), the member is still stuck after a specialist request, or they insist on a person right now. Do not mention WhatsApp otherwise, and never write out a phone number or an email address.
 </app>
 
 <studio>
@@ -89,6 +89,19 @@ const ESCALATE = {
       urgent: { type: 'boolean', description: 'True for money missing, a safety issue, or a deadline within 24 hours.' },
     },
     required: ['summary', 'category', 'urgent'],
+    additionalProperties: false,
+  },
+};
+
+// The app only: the last resort, a WhatsApp button under Wesley's answer.
+const WHATSAPP = {
+  name: 'offer_whatsapp',
+  description: 'Show the member a button to chat with the ShoeLab team on WhatsApp. Only for the toughest cases, after you have tried to help: something urgent you cannot settle (money missing, a deadline today, a pair lost or damaged), the member is still stuck after a specialist request, or they insist on talking to a person right now. Never for questions you can answer yourself.',
+  strict: true,
+  input_schema: {
+    type: 'object',
+    properties: { reason: { type: 'string', description: 'For the team, in English: why WhatsApp is needed, in one sentence.' } },
+    required: ['reason'],
     additionalProperties: false,
   },
 };
@@ -197,7 +210,7 @@ export async function supportChat(request, env, me, b) {
   if (!(await spend(env, await visitorKey(request, me), me ? LIMITS.member : LIMITS.guest))) {
     return { status: 429, body: { error: 'Daily limit reached', code: 'support_limit' } };
   }
-  if (!env.ANTHROPIC_API_KEY) return { status: 200, body: { reply: SORRY[lang], offline: true } };
+  if (!env.ANTHROPIC_API_KEY) return { status: 200, body: { reply: SORRY[lang], offline: true, failed: true } };
 
   // the API wants alternating turns that start with the member
   const messages = [];
@@ -219,7 +232,8 @@ export async function supportChat(request, env, me, b) {
     { type: 'text', text: knowledge(env) + (b.app === true ? '\n\n' + APP_BLOCK : ''), cache_control: { type: 'ephemeral' } },
     { type: 'text', text: '<context>\n' + await memberContext(env, me, lang, clean(String(b.page || ''), 200)) + '\n</context>' },
   ];
-  let ticket = null, needContact = false;
+  let ticket = null, needContact = false, whatsapp = false;
+  const tools = b.app === true ? [ESCALATE, WHATSAPP] : [ESCALATE];
   for (let round = 0; round < 3; round++) {
     let data;
     try {
@@ -234,31 +248,35 @@ export async function supportChat(request, env, me, b) {
           model: MODEL, max_tokens: 2000, fallbacks: 'default',
           // quick, short answers: this is a chat window
           output_config: { effort: 'low' },
-          system, tools: [ESCALATE], messages,
+          system, tools, messages,
         }),
       });
       data = await res.json().catch(() => ({}));
       if (!res.ok) {
         console.error('support: ' + res.status + ' ' + JSON.stringify(data).slice(0, 300));
-        return { status: 200, body: { reply: SORRY[lang], ticket } };
+        return { status: 200, body: { reply: SORRY[lang], ticket, failed: true } };
       }
     } catch (e) {
       console.error('support: network ' + String(e).slice(0, 200));
-      return { status: 200, body: { reply: SORRY[lang], ticket } };
+      return { status: 200, body: { reply: SORRY[lang], ticket, failed: true } };
     }
-    if (data.stop_reason === 'refusal') return { status: 200, body: { reply: SORRY[lang], ticket } };
+    if (data.stop_reason === 'refusal') return { status: 200, body: { reply: SORRY[lang], ticket, failed: true } };
     const content = Array.isArray(data.content) ? data.content : [];
     const text = content.filter((c) => c.type === 'text' && c.text).map((c) => c.text).join('\n\n').trim();
     const calls = content.filter((c) => c.type === 'tool_use');
     if (data.stop_reason !== 'tool_use' || !calls.length) {
-      return { status: 200, body: { reply: text || SORRY[lang], ticket, needContact } };
+      return { status: 200, body: { reply: text || SORRY[lang], ticket, needContact, whatsapp } };
     }
     // run the hand-over, then let Wesley tell the member what happens next
     const results = [];
     for (const call of calls) {
       let out;
       const input = call.input || {};
-      if (call.name !== ESCALATE.name) out = 'Unknown tool.';
+      if (call.name === WHATSAPP.name && b.app === true) {
+        whatsapp = true;
+        console.log('support: WhatsApp offered — ' + clean(String(input.reason || ''), 300));
+        out = 'The app now shows a "WhatsApp" button under your answer. Tell the member in one sentence that they can tap it to reach the ShoeLab team directly. Do not write out a phone number.';
+      } else if (call.name !== ESCALATE.name) out = 'Unknown tool.';
       else if (!me) {
         needContact = true;
         out = 'Not created: the visitor is not signed in, so there is no email address to answer. Ask them to fill in the "Talk to a specialist" form below this chat (it asks for their email), or to sign in.';
@@ -277,7 +295,7 @@ export async function supportChat(request, env, me, b) {
     messages.push({ role: 'assistant', content });
     messages.push({ role: 'user', content: results });
   }
-  return { status: 200, body: { reply: SORRY[lang], ticket, needContact } };
+  return { status: 200, body: { reply: SORRY[lang], ticket, needContact, whatsapp, failed: true } };
 }
 
 // POST /api/market/support/ticket  { message, name?, email?, page?, transcript? }
