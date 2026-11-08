@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API, market } from '../../lib/api';
@@ -14,7 +15,9 @@ import { Sheet } from '../../components/Sheet';
 import { ReportSheet } from '../../components/ReportSheet';
 import { Icon } from '../../components/Icon';
 import { Body, Button, Card, Chip, Empty, Eyebrow, H1, H3, Row, tap } from '../../components/ui';
-import { C, F, R, S } from '../../theme';
+import { Appear, Skeleton } from '../../components/motion';
+import { useToast } from '../../components/Toast';
+import { C, F, MAX_SCALE, NUM, R, S } from '../../theme';
 
 export default function ListingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,7 +30,8 @@ export default function ListingScreen() {
   const [gone, setGone] = useState(false);
   const [sheet, setSheet] = useState<'' | 'bid' | 'buy' | 'offer' | 'report'>('');
   const [amount, setAmount] = useState(''), [note, setNote] = useState('');
-  const [busy, setBusy] = useState(false), [msg, setMsg] = useState(''), [flash, setFlash] = useState('');
+  const [busy, setBusy] = useState(false), [msg, setMsg] = useState('');
+  const toast = useToast();
 
   const load = useCallback(async () => {
     const r = await market<{ listing: Listing }>('listing?id=' + encodeURIComponent(String(id)));
@@ -51,7 +55,7 @@ export default function ListingScreen() {
     const on = !L.viewer?.watching;
     tap('select');
     const r = await market('watch', { body: { id: L.id, on } });
-    if (r.ok) { setL({ ...L, watchers: r.data.watchers, viewer: { ...(L.viewer || {}), watching: on } }); setFlash(t(on ? 'watchAdded' : 'watchRemoved')); setTimeout(() => setFlash(''), 2200); }
+    if (r.ok) { setL({ ...L, watchers: r.data.watchers, viewer: { ...(L.viewer || {}), watching: on } }); toast(t(on ? 'watchAdded' : 'watchRemoved'), on ? 'ok' : 'info'); }
   };
   const share = () => { if (L) Share.share({ message: L.title + ' — ' + API + '/vault-item.html?id=' + L.id, url: API + '/vault-item.html?id=' + L.id }); };
 
@@ -62,8 +66,7 @@ export default function ListingScreen() {
     const r = await market('bid', { body: { id: L!.id, max: c / 100 } });
     setBusy(false);
     if (!r.ok) { tap('warn'); return setMsg(errText(i18n, r)); }
-    tap(r.data.leading ? 'success' : 'warn');
-    setSheet(''); setFlash(t(r.data.leading ? 'bidLeading' : 'bidOutbid')); setTimeout(() => setFlash(''), 3500);
+    setSheet(''); toast(t(r.data.leading ? 'bidLeading' : 'bidOutbid'), r.data.leading ? 'ok' : 'warn');
     load();
   };
   const buy = async () => {
@@ -81,7 +84,7 @@ export default function ListingScreen() {
     const r = await market('offer', { body: { id: L!.id, amount: c / 100, message: note.trim() } });
     setBusy(false);
     if (!r.ok) { tap('warn'); return setMsg(errText(i18n, r)); }
-    tap('success'); setSheet(''); setFlash(t('offerSent')); setTimeout(() => setFlash(''), 3500);
+    setSheet(''); toast(t('offerSent'));
     load();
   };
 
@@ -103,13 +106,25 @@ export default function ListingScreen() {
 
   if (gone) return <SafeAreaView style={s.screen}>{top}<View style={{ marginTop: 90 }}><Empty icon="vault" title={t('goneT')} text={t('gone')}>
     <Button title={t('backToVault')} kind="ghost" onPress={() => router.replace('/(tabs)/vault')} /></Empty></View></SafeAreaView>;
-  if (!L) return <View style={[s.screen, { justifyContent: 'center' }]}>{top}<ActivityIndicator color={C.gold} /></View>;
+  if (!L) return (
+    <View style={s.screen}>
+      <View style={{ paddingTop: insets.top }}><Skeleton h={Math.min(width * 0.86, 520)} r={0} /></View>
+      <View style={[s.pad, { gap: 12 }]}>
+        <Skeleton h={12} w="25%" r={6} /><Skeleton h={34} w="80%" r={8} />
+        <Row gap={8}><Skeleton h={24} w={70} r={12} /><Skeleton h={24} w={80} r={12} /><Skeleton h={24} w={110} r={12} /></Row>
+        <Skeleton h={190} r={R.lg} style={{ marginTop: 8 }} />
+      </View>
+      {top}
+    </View>
+  );
 
   const auction = L.format === 'auction', live = L.status === 'live';
   const own = L.viewer?.role === 'seller';
   const paused = config?.paused;
   const r = L.seller.rating || { pos: 0, neu: 0, neg: 0, score: null };
   const nr = r.pos + r.neu + r.neg;
+  // the main action stays pinned to the bottom, like a checkout bar
+  const bar: '' | 'bid' | 'buy' = live && !own && !paused ? (auction ? 'bid' : L.binAvailable && L.buyNow ? 'buy' : '') : '';
 
   return (
     <View style={s.screen}>
@@ -124,13 +139,11 @@ export default function ListingScreen() {
             {L.watchers ? <Chip text={tn('watchers', L.watchers)} icon="heart" /> : null}
           </Row>
 
-          {flash ? <View style={s.flash}><Icon name="check" size={16} color="#6ee7a0" /><Text style={s.flashText}>{flash}</Text></View> : null}
-
           <Card style={{ marginTop: S.lg }} gold={L.tier === 'lab'}>
             <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <View>
                 <Text style={s.k}>{auction ? (L.bids ? t('currentBid') : t('startingBid')) : t('price')}</Text>
-                <Text style={s.price}>{money(L.price)}</Text>
+                <Text style={s.price} maxFontSizeMultiplier={MAX_SCALE.display}>{money(L.price)}</Text>
                 {auction ? <Text style={s.sub}>{tn('bids', L.bids)}</Text> : L.acceptOffers ? <Text style={s.sub}>{t('orBestOffer')}</Text> : null}
               </View>
               {auction && live && L.endsAt ? <View style={{ alignItems: 'flex-end' }}><Text style={s.k}>{t('timeLeft')}</Text><Countdown endsAt={L.endsAt} style={{ marginTop: 6 }} /></View> : null}
@@ -140,11 +153,12 @@ export default function ListingScreen() {
             {own ? <Body muted small style={{ marginTop: S.md }}>{t('ownLive')}</Body> : null}
             {live && !own ? (
               paused ? <Body small muted style={{ marginTop: S.md }}>{t(paused.hold ? 'pausedHold' : 'pausedTrading')}</Body> : (
-                <View style={{ gap: 10, marginTop: S.lg }}>
-                  {auction ? <Button title={t('placeBid')} icon="gavel" onPress={() => open('bid')} /> : null}
-                  {L.binAvailable && L.buyNow ? <Button title={t('buyNowFor', { amount: money(L.buyNow) })} kind={auction ? 'ghost' : 'red'} onPress={() => open('buy')} /> : null}
-                  {!auction && L.acceptOffers ? <Button title={t('makeOffer')} kind="ghost" onPress={() => open('offer')} /> : null}
-                </View>
+                (auction && L.binAvailable && L.buyNow) || (!auction && L.acceptOffers) ? (
+                  <View style={{ gap: 10, marginTop: S.lg }}>
+                    {auction && L.binAvailable && L.buyNow ? <Button title={t('buyNowFor', { amount: money(L.buyNow) })} kind="ghost" onPress={() => open('buy')} /> : null}
+                    {!auction && L.acceptOffers ? <Button title={t('makeOffer')} kind="ghost" icon="chat" onPress={() => open('offer')} /> : null}
+                  </View>
+                ) : null
               )
             ) : null}
             <View style={s.lines}>
@@ -188,6 +202,16 @@ export default function ListingScreen() {
         </View>
       </ScrollView>
       {top}
+      {bar ? (
+        <Appear style={[s.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+          {Platform.OS === 'ios' ? <BlurView intensity={45} tint="dark" style={StyleSheet.absoluteFill} /> : null}
+          <View style={{ flexShrink: 1 }}>
+            <Text style={s.k} maxFontSizeMultiplier={1.3}>{auction ? (L.bids ? t('currentBid') : t('startingBid')) : t('price')}</Text>
+            <Text style={s.barPrice} maxFontSizeMultiplier={1.2}>{money(L.price)}</Text>
+          </View>
+          <Button title={bar === 'bid' ? t('placeBid') : t('buyNow')} icon={bar === 'bid' ? 'gavel' : 'bolt'} onPress={() => open(bar)} style={{ flex: 1, maxWidth: 260 }} />
+        </Appear>
+      ) : null}
 
       <Sheet open={sheet === 'bid'} onClose={() => setSheet('')} title={t('placeBid')}>
         <Body muted small>{t('confirmBidNote')}</Body>
@@ -242,7 +266,11 @@ const s = StyleSheet.create({
   topBar: { position: 'absolute', left: S.lg, right: S.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   round: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.55)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   k: { fontFamily: F.medium, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: C.muted2 },
-  price: { fontFamily: F.display, fontSize: 46, color: C.text, marginTop: 2 },
+  price: { fontFamily: F.display, fontSize: 46, color: C.text, marginTop: 2, ...NUM },
+  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: S.lg,
+    paddingHorizontal: S.lg, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border, overflow: 'hidden',
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(8,8,8,0.72)' : '#0b0b0b' },
+  barPrice: { fontFamily: F.display, fontSize: 30, color: C.text, letterSpacing: 0.5, ...NUM },
   sub: { fontFamily: F.regular, fontSize: 12.5, color: C.muted, marginTop: 3 },
   lines: { marginTop: S.lg, paddingTop: S.md, borderTopWidth: 1, borderTopColor: C.border },
   lineK: { fontFamily: F.regular, fontSize: 13.5, color: C.muted2 }, lineV: { fontFamily: F.medium, fontSize: 13.5, color: C.text },
@@ -252,7 +280,7 @@ const s = StyleSheet.create({
   avatarText: { fontFamily: F.bold, fontSize: 14, color: C.text },
   sellerName: { fontFamily: F.semibold, fontSize: 15.5, color: C.text },
   hist: { justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
-  histWho: { fontFamily: F.medium, fontSize: 13.5, color: C.text, flex: 1 }, histAmt: { fontFamily: F.semibold, fontSize: 13.5, color: C.text, width: 90, textAlign: 'right' },
+  histWho: { fontFamily: F.medium, fontSize: 13.5, color: C.text, flex: 1 }, histAmt: { fontFamily: F.semibold, fontSize: 13.5, color: C.text, width: 90, textAlign: 'right', ...NUM },
   histAt: { fontFamily: F.regular, fontSize: 12, color: C.muted, width: 90, textAlign: 'right' },
   report: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: S.xxl, padding: 8 },
   reportText: { fontFamily: F.medium, fontSize: 12.5, color: C.muted },

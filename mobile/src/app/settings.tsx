@@ -3,6 +3,7 @@ import { Linking, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
+import { Image } from 'expo-image';
 import { API } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { LANGS, LANG_NAMES, useI18n } from '../lib/i18n';
@@ -70,7 +71,11 @@ export default function Settings() {
         <ListItem icon="logout" title={t('signOut')} onPress={async () => { await signOut(); router.replace('/(tabs)'); }} />
         <ListItem icon="trash" title={t('meDelete')} danger onPress={() => { setPw(''); setMsg(''); setDelOpen(true); }} />
       </View> : <Button title={t('signIn')} onPress={() => router.push('/auth')} style={{ marginTop: S.lg }} />}
-      <Text style={s.version}>{t('meVersion', { v: Constants.expoConfig?.version || '1.0.0' })}</Text>
+      <View style={s.foot}>
+        <Image source={require('../../assets/mark.png')} style={s.footMark} accessibilityIgnoresInvertColors />
+        <Text style={s.footWord}>SHOE<Text style={{ color: C.red }}>LAB</Text></Text>
+        <Text style={s.version}>{t('meVersion', { v: Constants.expoConfig?.version || '1.0.0' })} · Bremen</Text>
+      </View>
 
       <Sheet open={langOpen} onClose={() => setLangOpen(false)} title={t('meLanguage')}>
         {LANGS.map((l) => (
@@ -92,10 +97,13 @@ export default function Settings() {
   );
 }
 const s = StyleSheet.create({
+  foot: { alignItems: 'center', gap: 6, marginTop: S.xxl },
+  footMark: { width: 34, height: 34, borderRadius: 8 },
+  footWord: { fontFamily: F.display, fontSize: 20, letterSpacing: 2, color: C.text },
   back: { width: 44, height: 44, justifyContent: 'center', marginLeft: -8, marginBottom: 4 },
   group: { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 1, borderColor: C.border, overflow: 'hidden', marginBottom: S.lg },
   label: { fontFamily: F.medium, fontSize: 11, letterSpacing: 2.2, textTransform: 'uppercase', color: C.muted2, marginTop: S.md, marginBottom: S.sm },
-  version: { fontFamily: F.regular, fontSize: 12, color: C.muted, textAlign: 'center', marginTop: S.lg },
+  version: { fontFamily: F.regular, fontSize: 12, color: C.muted, textAlign: 'center', marginTop: 2 },
   langRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: C.border },
   langText: { fontFamily: F.medium, fontSize: 16, color: C.text },
   input: { backgroundColor: C.black, borderWidth: 1, borderColor: C.borderHi, borderRadius: R.md, padding: 13, fontFamily: F.regular, fontSize: 16, color: C.text },

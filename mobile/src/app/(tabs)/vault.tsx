@@ -8,6 +8,7 @@ import type { ListingCard as Card } from '../../lib/types';
 import { ListingCard } from '../../components/ListingCard';
 import { Icon } from '../../components/Icon';
 import { Body, Empty, Eyebrow, H1, tap } from '../../components/ui';
+import { Appear, SkeletonCard } from '../../components/motion';
 import { C, F, R, S } from '../../theme';
 
 const SORTS = [['featured', 'sortFeatured'], ['new', 'sortNew'], ['ending', 'sortEnding'], ['price_asc', 'sortPriceAsc'], ['price_desc', 'sortPriceDesc'], ['popular', 'sortPopular']] as const;
@@ -97,11 +98,11 @@ export default function Vault() {
       <FlatList data={items || []} keyExtractor={(x) => String(x.id)} numColumns={2}
         columnWrapperStyle={{ gap: 14 }} contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: 130, gap: 22 }}
         ListHeaderComponent={header}
-        renderItem={({ item }) => <ListingCard it={item} width={colW} />}
+        renderItem={({ item, index }) => <Appear i={index % PER}><ListingCard it={item} width={colW} /></Appear>}
         onEndReachedThreshold={0.6}
         onEndReached={() => { if (!busy && items && items.length < total) load(q, page + 1); }}
-        refreshControl={<RefreshControl tintColor={C.gold} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(q, 1); setRefreshing(false); }} />}
-        ListEmptyComponent={items === null || busy ? <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} /> :
+        refreshControl={<RefreshControl tintColor={C.gold} colors={[C.gold]} progressBackgroundColor={C.card2} refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(q, 1); setRefreshing(false); }} />}
+        ListEmptyComponent={items === null || busy ? <View style={s.skel}>{[0, 1, 2, 3].map((k) => <SkeletonCard key={k} width={colW} />)}</View> :
           failed ? <Empty icon="alert" title={t('emptyErrorT')} text={t('e_network')} /> :
           <Empty title={t(filtered ? 'emptyFilteredT' : 'emptyT')} text={t(filtered ? 'emptyFiltered' : 'empty')} />}
         ListFooterComponent={items && items.length && busy ? <ActivityIndicator color={C.gold} style={{ marginTop: 10 }} /> : undefined} />
@@ -132,6 +133,7 @@ const s = StyleSheet.create({
   chipText: { fontFamily: F.medium, fontSize: 13, color: '#ddd' },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: S.md },
   count: { fontFamily: F.medium, fontSize: 12.5, color: C.muted },
+  skel: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, rowGap: 22 },
   sortBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 },
   sortText: { fontFamily: F.semibold, fontSize: 13, color: C.goldHi },
   scrim: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },

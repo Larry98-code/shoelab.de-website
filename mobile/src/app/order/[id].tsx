@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -12,7 +12,38 @@ import { ReportSheet } from '../../components/ReportSheet';
 import { Sheet } from '../../components/Sheet';
 import { Icon } from '../../components/Icon';
 import { Body, Button, Card, Chip, Empty, H2, H3, Row, tap } from '../../components/ui';
+import { Appear, Skeleton } from '../../components/motion';
+import { useToast } from '../../components/Toast';
 import { C, F, R, S } from '../../theme';
+
+// Where the pair is: paid, (through the lab,) shipped, delivered.
+const FLOW = { photo: ['awaiting_payment', 'paid', 'shipped', 'delivered'], lab: ['awaiting_payment', 'paid', 'to_lab', 'in_lab', 'verified', 'shipped', 'delivered'] };
+const STAGES = { photo: ['paid', 'shipped', 'delivered'], lab: ['paid', 'in_lab', 'verified', 'shipped', 'delivered'] };
+function Tracker({ status, tier }: { status: string; tier: 'photo' | 'lab' }) {
+  const { t } = useI18n();
+  const flow = FLOW[tier] || FLOW.photo, stages = STAGES[tier] || STAGES.photo;
+  const at = flow.indexOf(status);
+  if (at < 0) return null;
+  const done = (st: string) => at >= flow.indexOf(st);
+  const active = stages.find((st) => !done(st));
+  return (
+    <View style={s.track} accessibilityRole="progressbar" accessibilityLabel={t('os_' + status)}>
+      {stages.map((st, i) => {
+        const d = done(st), a = st === active;
+        return (
+          <View key={st} style={s.trStep}>
+            <View style={s.trRow}>
+              <View style={[s.trLine, i === 0 && { opacity: 0 }, (d || a) && { backgroundColor: C.gold }]} />
+              <View style={[s.trDot, d && s.trDone, a && s.trActive]}>{d ? <Icon name="check" size={12} color="#111" stroke={2.6} /> : a ? <View style={s.trPulse} /> : null}</View>
+              <View style={[s.trLine, i === stages.length - 1 && { opacity: 0 }, !!stages[i + 1] && (done(stages[i + 1]) || stages[i + 1] === active) && { backgroundColor: C.gold }]} />
+            </View>
+            <Text style={[s.trT, (d || a) && { color: C.text }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75} maxFontSizeMultiplier={1.2}>{t('os_' + st)}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
 
 type Order = Record<string, any> & { id: number; role: 'buyer' | 'seller'; status: string; title: string; total: number; payout?: number; events: { kind: string; note: string | null; at: string }[] };
 const TONE: Record<string, 'ok' | 'warn' | 'bad' | 'gold' | ''> = { awaiting_payment: 'warn', paid: 'gold', to_lab: 'gold', in_lab: 'gold', verified: 'ok', shipped: 'gold', delivered: 'ok', disputed: 'bad', refunded: '', failed: 'bad', cancelled: '' };
@@ -24,7 +55,8 @@ export default function OrderScreen() {
   const i18n = useI18n();
   const { t, money, dateTime } = i18n;
   const [o, setO] = useState<Order | null>(null), [missing, setMissing] = useState(false);
-  const [busy, setBusy] = useState(''), [msg, setMsg] = useState(''), [flash, setFlash] = useState('');
+  const [busy, setBusy] = useState(''), [msg, setMsg] = useState('');
+  const toast = useToast();
   const [sheet, setSheet] = useState<'' | 'pay' | 'problem' | 'report'>('');
   const [addr, setAddr] = useState<Addr>({ name: '', line1: '', line2: '', postal: '', city: '' });
   const [tracking, setTracking] = useState(''), [note, setNote] = useState(''), [comment, setComment] = useState('');
@@ -39,7 +71,7 @@ export default function OrderScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
   useEffect(() => { store.get('addr').then((v) => { if (v) try { setAddr(JSON.parse(v)); } catch { /* old */ } }); }, []);
 
-  const say = (k: string) => { setFlash(t(k)); setTimeout(() => setFlash(''), 3000); };
+  const say = (k: string) => toast(t(k));
   const act = async (key: string, route: string, body: object, ok: string) => {
     setBusy(key); setMsg('');
     const r = await market(route, { body });
@@ -61,7 +93,14 @@ export default function OrderScreen() {
   };
 
   if (missing) return <SafeAreaView style={s.screen}><Back /><Empty icon="box" title={t('orderMissingT')} /></SafeAreaView>;
-  if (!o) return <SafeAreaView style={[s.screen, { justifyContent: 'center' }]}><ActivityIndicator color={C.gold} /></SafeAreaView>;
+  if (!o) return (
+    <SafeAreaView style={s.screen}><Back />
+      <View style={{ paddingHorizontal: S.lg, gap: 12, marginTop: S.sm }}>
+        <Row gap={14}><Skeleton w={88} h={88} r={R.md} /><View style={{ flex: 1, gap: 8 }}><Skeleton h={11} w="40%" r={6} /><Skeleton h={26} w="90%" r={8} /><Skeleton h={22} w="50%" r={11} /></View></Row>
+        <Skeleton h={64} r={R.lg} style={{ marginTop: S.lg }} /><Skeleton h={160} r={R.lg} style={{ marginTop: S.md }} />
+      </View>
+    </SafeAreaView>
+  );
   const buyer = o.role === 'buyer';
 
   const step = () => {
@@ -132,7 +171,7 @@ export default function OrderScreen() {
             <Row gap={6} style={{ marginTop: 6, flexWrap: 'wrap' }}><Chip text={t('os_' + o.status)} tone={TONE[o.status] || ''} /><Chip text={'EU ' + (o.size || '')} /></Row>
           </View>
         </Row>
-        {flash ? <View style={s.flash}><Icon name="check" size={16} color="#6ee7a0" /><Text style={s.flashText}>{flash}</Text></View> : null}
+        <Appear><Tracker status={o.status} tier={o.tier === 'lab' ? 'lab' : 'photo'} /></Appear>
         <View style={{ marginTop: S.xl }}>{step()}</View>
         {msg && !sheet ? <Text style={s.err}>{msg}</Text> : null}
 
@@ -195,6 +234,15 @@ function Line({ k, v, bold }: { k: string; v: string; bold?: boolean }) {
 }
 
 const s = StyleSheet.create({
+  track: { flexDirection: 'row', marginTop: S.xl, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.border, paddingVertical: 16, paddingHorizontal: 0 },
+  trStep: { flex: 1, alignItems: 'center' },
+  trRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch' },
+  trLine: { flex: 1, height: 2, backgroundColor: C.card3 },
+  trDot: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.card3, backgroundColor: C.black, alignItems: 'center', justifyContent: 'center' },
+  trDone: { backgroundColor: C.goldHi, borderColor: C.goldHi },
+  trActive: { borderColor: C.red },
+  trPulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.red },
+  trT: { fontFamily: F.medium, fontSize: 10, lineHeight: 13, color: C.muted, textAlign: 'center', marginTop: 7, letterSpacing: -0.1 },
   screen: { flex: 1, backgroundColor: C.black },
   back: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
   thumb: { width: 84, height: 74, borderRadius: R.md, overflow: 'hidden', backgroundColor: C.card2 },
@@ -202,8 +250,6 @@ const s = StyleSheet.create({
   note: { borderRadius: R.md, borderWidth: 1, padding: 14, alignItems: 'flex-start' },
   noteText: { flex: 1, fontFamily: F.regular, fontSize: 14.5, lineHeight: 21, color: C.text },
   input: { backgroundColor: C.card, borderWidth: 1, borderColor: C.borderHi, borderRadius: R.md, paddingHorizontal: 14, paddingVertical: 13, fontFamily: F.regular, fontSize: 15.5, color: C.text },
-  flash: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.okSoft, borderColor: 'rgba(34,197,94,0.35)', borderWidth: 1, borderRadius: R.md, padding: 12, marginTop: S.lg },
-  flashText: { fontFamily: F.medium, fontSize: 13.5, color: '#bff5d2', flex: 1 },
   err: { fontFamily: F.medium, fontSize: 13.5, color: '#ff9a9a', marginTop: S.md },
   lineK: { fontFamily: F.regular, fontSize: 13.5, color: C.muted2 }, lineV: { fontFamily: F.medium, fontSize: 13.5, color: C.text },
   ev: { alignItems: 'flex-start', paddingVertical: 9 },

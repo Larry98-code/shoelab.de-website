@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
@@ -12,9 +12,10 @@ import type { ListingCard as Card } from '../../lib/types';
 import { ListingCard } from '../../components/ListingCard';
 import { Icon } from '../../components/Icon';
 import { Body, Button, Card as Box, Chip, Empty, Eyebrow, H1, H3, Row, Screen, tap } from '../../components/ui';
-import { Appear } from '../../components/motion';
+import { Appear, Skeleton } from '../../components/motion';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AuthButtons, Steps } from '../../components/Guest';
-import { C, F, R, S } from '../../theme';
+import { C, F, GOLD_GRAD, NUM, R, S } from '../../theme';
 
 type Order = { id: number; title: string; photo: string | null; status: string; total: number; payout?: number; role: string; createdAt: string };
 type Offer = { id: number; listingId: number; title: string; size: string; listPrice: number; amount: number; counter: number | null; message: string | null; status: string; expiresAt: string; buyer?: string };
@@ -40,11 +41,19 @@ export default function Me() {
   const load = useCallback(async () => { if (!me) { setD(null); return; } const r = await market<MeData>('me'); if (r.ok) setD(r.data); }, [me]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const initials = me ? me.name.split(/\s+/).filter(Boolean).map((x) => x[0]).join('').slice(0, 2).toUpperCase() : '';
   const header = (
-    <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <Row style={{ justifyContent: 'space-between', alignItems: me ? 'center' : 'flex-start' }} gap={14}>
+      {me ? (
+        <View style={s.ava}>
+          <LinearGradient colors={GOLD_GRAD} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.avaRing} />
+          <View style={s.avaIn}><Text style={s.avaT} maxFontSizeMultiplier={1.1}>{initials}</Text></View>
+        </View>
+      ) : null}
       <View style={{ flex: 1 }}>
         <Eyebrow color={C.gold}>{t('navMine')}</Eyebrow>
-        <H1 style={{ marginTop: 6 }}>{me ? me.name.split(' ')[0] : t('meGuestT')}</H1>
+        <H1 style={{ marginTop: me ? 2 : 6, fontSize: me ? 38 : 44, lineHeight: me ? 40 : 44 }} >{me ? me.name.split(' ')[0] : t('meGuestT')}</H1>
+        {me ? <Text style={s.email} numberOfLines={1}>{me.email}</Text> : null}
       </View>
       <Pressable onPress={() => router.push('/settings')} style={s.gear} accessibilityRole="button" accessibilityLabel={t('meSettings')}><Icon name="settings" size={20} color={C.text} /></Pressable>
     </Row>
@@ -77,6 +86,8 @@ export default function Me() {
     if (r.ok && r.data.url) { await WebBrowser.openBrowserAsync(r.data.url); load(); } else setMsg(errText(i18n, r));
   };
   const st = d?.standing;
+  const counts = d ? { buying: d.buying.orders.length + d.buying.bids.length + d.buying.offers.length,
+    selling: d.selling.listings.length + d.selling.offers.filter((o) => o.status === 'pending').length, watch: d.watching.length } : null;
   const orderRow = (o: Order) => (
     <Pressable key={'o' + o.id} onPress={() => { tap('select'); router.push('/order/' + o.id); }} style={s.row} accessibilityRole="button">
       <View style={s.thumb}>{o.photo ? <Image source={{ uri: abs(o.photo) }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}</View>
@@ -90,8 +101,7 @@ export default function Me() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }}>
-      {header}
-      <Text style={s.email}>{me.email}</Text>
+      <Appear>{header}</Appear>
       {d && !d.user.verified ? (
         <Box style={{ marginTop: S.lg }}>
           <Row gap={10} style={{ alignItems: 'flex-start' }}><Icon name="mail" size={18} color={C.goldHi} /><Body small style={{ flex: 1 }}>{t(sent ? 'verifySent' : 'verifyBar', { email: me.email })}</Body></Row>
@@ -108,12 +118,13 @@ export default function Me() {
       <View style={s.seg}>
         {([['buying', 'tabBuying'], ['selling', 'tabSelling'], ['watch', 'watchlist']] as const).map(([k, label]) => (
           <Pressable key={k} onPress={() => { tap('select'); setTab(k); }} style={[s.segB, tab === k && s.segOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === k }}>
-            <Text style={[s.segT, tab === k && { color: '#111' }]}>{t(label)}</Text>
+            <Text style={[s.segT, tab === k && { color: '#111' }]} maxFontSizeMultiplier={1.3}>{t(label)}</Text>
+            {counts && counts[k] ? <View style={[s.segN, tab === k && { backgroundColor: '#111' }]}><Text style={[s.segNT, tab === k && { color: C.goldHi }]}>{counts[k]}</Text></View> : null}
           </Pressable>
         ))}
       </View>
       {msg ? <Text style={s.err}>{msg}</Text> : null}
-      {!d ? <ActivityIndicator color={C.gold} style={{ marginTop: 30 }} /> : tab === 'buying' ? (
+      {!d ? <View style={{ gap: 10, marginTop: 6 }}>{[0, 1, 2].map((k) => <Skeleton key={k} h={74} r={R.lg} />)}</View> : tab === 'buying' ? (
         <View>
           {!d.buying.orders.length && !d.buying.bids.length && !d.buying.offers.length ? <Empty icon="box" title={t('emptyBuyingT')} text={t('emptyBuying')}>
             <Button title={t('navBrowse')} kind="ghost" onPress={() => router.push('/(tabs)/vault')} /></Empty> : null}
@@ -185,7 +196,13 @@ const s = StyleSheet.create({
   email: { fontFamily: F.regular, fontSize: 13.5, color: C.muted, marginTop: 4 },
   standing: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginTop: S.lg, padding: 14, borderRadius: R.md, backgroundColor: C.badSoft, borderWidth: 1, borderColor: 'rgba(255,77,77,0.3)' },
   seg: { flexDirection: 'row', backgroundColor: C.card, borderRadius: R.pill, padding: 4, marginTop: S.xl, marginBottom: S.md, borderWidth: 1, borderColor: C.border },
-  segB: { flex: 1, paddingVertical: 10, borderRadius: R.pill, alignItems: 'center' },
+  segB: { flex: 1, paddingVertical: 10, borderRadius: R.pill, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+  segN: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: C.card3, alignItems: 'center', justifyContent: 'center' },
+  segNT: { fontFamily: F.bold, fontSize: 10.5, color: C.text, ...NUM },
+  ava: { width: 62, height: 62, borderRadius: 31, alignItems: 'center', justifyContent: 'center' },
+  avaRing: { ...StyleSheet.absoluteFill, borderRadius: 31 },
+  avaIn: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.black, alignItems: 'center', justifyContent: 'center' },
+  avaT: { fontFamily: F.display, fontSize: 26, color: C.goldHi, letterSpacing: 1, marginTop: 2 },
   segOn: { backgroundColor: C.goldHi },
   segT: { fontFamily: F.semibold, fontSize: 13, color: C.muted2 },
   h: { marginTop: S.lg, marginBottom: S.sm },

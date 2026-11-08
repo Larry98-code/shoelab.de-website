@@ -2,6 +2,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Tabs, type BottomTabBarProps } from 'expo-router/tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '../../components/Icon';
 import { tap } from '../../components/ui';
 import { useI18n } from '../../lib/i18n';
@@ -29,15 +30,19 @@ function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
         if (r.name === 'sell') {
           return (
             <Pressable key={r.key} onPress={go} accessibilityRole="button" accessibilityLabel={t(cfg.label)} style={s.item}>
-              <View style={s.sell}><Icon name="plus" size={26} color="#fff" stroke={2.2} /></View>
-              <Text style={[s.label, on && s.labelOn]}>{t(cfg.label)}</Text>
+              <View style={s.sell}>
+                <LinearGradient colors={['#ef2a2a', '#b30e0e']} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={s.sellFill} />
+                <View><Icon name="plus" size={26} color="#fff" stroke={2.2} /></View>
+              </View>
+              <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={[s.label, on && s.labelOn]}>{t(cfg.label)}</Text>
             </Pressable>
           );
         }
         return (
           <Pressable key={r.key} onPress={go} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t(cfg.label)} style={s.item}>
+            {on ? <View style={[s.ind, r.name === 'vault' && { backgroundColor: C.goldHi }]} /> : null}
             <Icon name={cfg.icon} size={23} color={on ? (r.name === 'vault' ? C.goldHi : '#fff') : C.muted} />
-            <Text style={[s.label, on && s.labelOn, on && r.name === 'vault' && { color: C.goldHi }]}>{t(cfg.label)}</Text>
+            <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={[s.label, on && s.labelOn, on && r.name === 'vault' && { color: C.goldHi }]}>{t(cfg.label)}</Text>
           </Pressable>
         );
       })}
@@ -59,10 +64,12 @@ export default function TabsLayout() {
 
 const s = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingTop: 8, borderTopWidth: 1, borderTopColor: C.border,
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(8,8,8,0.72)' : 'rgba(10,10,10,0.97)', overflow: 'hidden' },
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(8,8,8,0.72)' : '#0a0a0a', overflow: 'visible' },
+  ind: { position: 'absolute', top: -9, width: 18, height: 3, borderRadius: 2, backgroundColor: C.red },
+  sellFill: { ...StyleSheet.absoluteFill, borderRadius: 26 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 3 },
   label: { fontFamily: F.medium, fontSize: 10.5, color: C.muted, letterSpacing: 0.2 },
-  labelOn: { color: '#fff' },
-  sell: { width: 50, height: 50, borderRadius: 25, backgroundColor: C.red, alignItems: 'center', justifyContent: 'center', marginTop: -20,
+  labelOn: { color: '#fff', fontFamily: F.semibold },
+  sell: { width: 52, height: 52, borderRadius: 26, backgroundColor: C.red, alignItems: 'center', justifyContent: 'center', marginTop: -20,
     borderWidth: 4, borderColor: C.black, shadowColor: C.red, shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
 });

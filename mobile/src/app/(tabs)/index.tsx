@@ -189,7 +189,7 @@ function Promo({ img, glow, grad, icon, iconColor, title, text, cta, ctaColor, o
       <LinearGradient colors={grad} start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       <Glow size={W * 0.7} color={glow} opacity={0.32} style={{ right: -W * 0.2, top: -W * 0.22 }} />
       <Image source={img} style={st.promoImg} contentFit="contain" />
-      <View style={{ width: '62%' }}>
+      <View style={{ width: '57%' }}>
         <View style={st.promoIco}><Icon name={icon} size={20} color={iconColor} /></View>
         <H2 style={{ marginTop: 12 }}>{title}</H2>
         <Body muted small style={{ marginTop: 4 }}>{text}</Body>
@@ -221,7 +221,7 @@ const st = StyleSheet.create({
   trustLine: { borderLeftWidth: 1, borderLeftColor: C.border },
   trustText: { fontFamily: F.medium, fontSize: 11.5, lineHeight: 15, color: C.muted2, textAlign: 'center' },
   promo: { borderRadius: R.xl, borderWidth: 1, borderColor: C.border, padding: S.xl, overflow: 'hidden', minHeight: 190 },
-  promoImg: { position: 'absolute', right: -26, top: 22, width: '52%', height: 120, transform: [{ rotate: '-8deg' }] },
+  promoImg: { position: 'absolute', right: -20, top: 12, width: '46%', height: 104, transform: [{ rotate: '-8deg' }] },
   promoIco: { width: 40, height: 40, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
   foot: { alignItems: 'center', marginTop: 48, paddingHorizontal: S.xl, gap: 6 },
   footWord: { fontFamily: F.display, fontSize: 20, color: C.text, letterSpacing: 2, marginTop: 4 },
