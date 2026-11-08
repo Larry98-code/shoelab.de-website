@@ -27,7 +27,8 @@ export default function AuthScreen() {
     setBusy(true);
     const r = mode === 'up' ? await signUp(name.trim(), email.trim(), pw) : await signIn(email.trim(), pw);
     setBusy(false);
-    if (r.ok) { tap('success'); router.back(); return; }
+    // back to where they were; from the welcome screen, into the app
+    if (r.ok) { tap('success'); if (router.canDismiss()) router.dismiss(); else router.replace('/'); return; }
     tap('warn');
     if (r.status === 401) return setMsg(t('e_login'));
     if (r.status === 409) return setMsg(t('e_exists'));

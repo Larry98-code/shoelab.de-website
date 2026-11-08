@@ -1,7 +1,7 @@
 # ShoeLab — store listing
 
 Everything the App Store and Google Play ask for, ready to paste.
-Screenshots: `store/screenshots/ios` (iPhone 6.7", 1290 × 2796) and
+Screenshots (7, the welcome screen first): `store/screenshots/ios` (iPhone 6.7", 1290 × 2796) and
 `store/screenshots/android` (1080 × 2160). Icon: `assets/icon.png` (1024 × 1024).
 
 | | |

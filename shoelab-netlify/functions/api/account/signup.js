@@ -55,7 +55,8 @@ export async function onRequestPost(context) {
   return json(
     Object.assign({ user: { id: uid, name, email, verified: false } }, body.app === true ? { token } : {}),
     200,
-    { 'Set-Cookie': setCookie('shoelab_session', token) }
+    // the app gets no cookie: a phone keeps cookies, and signing out of the app must really sign out
+    body.app === true ? {} : { 'Set-Cookie': setCookie('shoelab_session', token) }
   );
 }
 

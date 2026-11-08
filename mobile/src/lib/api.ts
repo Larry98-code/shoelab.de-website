@@ -17,6 +17,7 @@ export async function api<T = any>(path: string, opts: { body?: unknown; method?
   try {
     const r = await fetch(API + path, {
       method: opts.method || (opts.body !== undefined ? 'POST' : 'GET'), headers,
+      credentials: 'omit',   // the token is the sign-in; never a website cookie
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     });
     let data: any = {};

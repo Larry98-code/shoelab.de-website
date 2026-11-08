@@ -6,7 +6,7 @@ Router). It uses the same server and accounts as the website
 
 | Folder | What it is |
 |---|---|
-| `src/app/` | The screens (every file is a route): the five tabs, a listing, an order, sign-in, settings |
+| `src/app/` | The screens (every file is a route): the welcome screen, the five tabs, a listing, an order, sign-in, settings. `_layout.tsx` plays the 0–100 % opening and keeps the app behind the welcome screen until someone signs in or chooses to look around |
 | `src/components/` | Shared pieces: buttons and cards, the listing card, the photo gallery and full-screen viewer, the guided camera, sheets |
 | `src/lib/` | The API client, sign-in (secure storage, Face ID lock), languages, push notifications, links from emails |
 | `src/i18n/` | Texts: `vault/*.json` are the website's own (run `npm run sync:i18n` after the site's texts change); `app/*.ts` are the app's; `studio.json` the treatments and prices |
@@ -27,7 +27,8 @@ is used for automated screenshots and tests only.
 
 ## What the app does on the server
 
-- `POST /api/account/login|signup` with `app: true` returns a sign-in token.
+- `POST /api/account/login|signup` with `app: true` returns a sign-in token and sets no cookie
+  (a phone keeps cookies; signing out of the app must really sign out). The app never sends cookies.
 - `POST /api/market/push/register|unregister` keeps the phone's push token;
   every Vault email to a member also goes to their phones (`functions/_shared/push.js`).
 - `POST /api/account/delete` lets members delete their account in the app (required by Apple).

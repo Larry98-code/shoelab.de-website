@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -12,6 +12,7 @@ import { I18nProvider } from '../lib/i18n';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { LockScreen } from '../components/LockScreen';
 import { ToastProvider } from '../components/Toast';
+import { Preloader } from '../components/Preloader';
 import { usePushRouting } from '../lib/push';
 import { C } from '../theme';
 
@@ -41,18 +42,32 @@ export default function Root() {
 }
 
 function Gate({ fonts }: { fonts: boolean }) {
-  const { ready, locked } = useAuth();
+  const { ready, locked, inside } = useAuth();
   usePushRouting();
-  useEffect(() => { if (fonts && ready) SplashScreen.hideAsync().catch(() => {}); }, [fonts, ready]);
-  if (!fonts || !ready) return <View style={{ flex: 1, backgroundColor: C.black }} />;
-  if (locked) return <LockScreen />;
+  // the website's 0–100 % opening plays on every launch; the app appears as it fades
+  const [intro, setIntro] = useState(true), [shown, setShown] = useState(false);
+  const full = useCallback(() => setShown(true), []), done = useCallback(() => setIntro(false), []);
+  useEffect(() => { if (fonts) SplashScreen.hideAsync().catch(() => {}); }, [fonts]);
+  if (!fonts) return <View style={{ flex: 1, backgroundColor: C.black }} />;
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.black }, animation: 'slide_from_right' }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="auth" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="listing/[id]" options={{ animation: 'slide_from_right' }} />
-      <Stack.Screen name="order/[id]" />
-      <Stack.Screen name="settings" />
-    </Stack>
+    <View style={{ flex: 1, backgroundColor: C.black }}>
+      {shown && ready ? (locked ? <LockScreen /> : (
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.black }, animation: 'slide_from_right' }}>
+          {/* not signed in: the welcome screen comes first */}
+          <Stack.Protected guard={!inside} redirectTo="/">
+            <Stack.Screen name="welcome" options={{ animation: 'fade' }} />
+          </Stack.Protected>
+          {/* signed in, or looking around: the app */}
+          <Stack.Protected guard={inside} redirectTo="/welcome">
+            <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+            <Stack.Screen name="listing/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="order/[id]" />
+          </Stack.Protected>
+          <Stack.Screen name="auth" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+          <Stack.Screen name="settings" />
+        </Stack>
+      )) : null}
+      {intro ? <Preloader ready={ready} onFull={full} onDone={done} /> : null}
+    </View>
   );
 }

@@ -41,7 +41,8 @@ export async function onRequestPost(context) {
     // the app keeps the sign-in itself (in the phone's secure storage) instead of a cookie
     Object.assign({ user: { id: user.id, name: user.name, email: user.email, verified: !!user.email_verified_at } }, body.app === true ? { token } : {}),
     200,
-    { 'Set-Cookie': setCookie('shoelab_session', token) }
+    // the app gets no cookie: a phone keeps cookies, and signing out of the app must really sign out
+    body.app === true ? {} : { 'Set-Cookie': setCookie('shoelab_session', token) }
   );
 }
 

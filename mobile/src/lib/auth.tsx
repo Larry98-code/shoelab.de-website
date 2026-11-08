@@ -12,6 +12,8 @@ export type Config = Record<string, any> & { me: Me; paused: null | { trading: b
 
 type Ctx = {
   ready: boolean; me: Me; config: Config | null; locked: boolean; bioLock: boolean;
+  // past the welcome screen: signed in, or looking around as a guest for this session
+  inside: boolean; setGuest: (on: boolean) => void;
   reload: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<Res>;
   signUp: (name: string, email: string, password: string) => Promise<Res>;
@@ -28,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<Config | null>(null);
   const [locked, setLocked] = useState(false);
   const [bioLock, setBio] = useState(false);
+  const [hasToken, setHasToken] = useState(false), [guest, setGuest] = useState(false);
   const away = useRef<number | null>(null);
 
   const reload = useCallback(async () => {
@@ -39,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       const tok = await store.get('token');
       const bio = (await store.get('bioLock')) === '1';
-      setToken(tok); setBio(bio);
+      setToken(tok); setHasToken(!!tok); setBio(bio);
       if (tok && bio && Platform.OS !== 'web') setLocked(true);
       await reload();
       setReady(true);
@@ -56,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [bioLock, config, reload]);
 
   const keep = useCallback(async (r: Res) => {
-    if (r.ok && r.data && r.data.token) { await store.set('token', r.data.token); setToken(r.data.token); await reload(); }
+    if (r.ok && r.data && r.data.token) { await store.set('token', r.data.token); setToken(r.data.token); setHasToken(true); await reload(); }
     return r;
   }, [reload]);
   const signIn = useCallback((email: string, password: string) => api('/api/account/login', { body: { email, password, app: true } }).then(keep), [keep]);
@@ -65,13 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const push = await store.get('pushToken');
     if (push) await market('push/unregister', { body: { token: push } });
+    await api('/api/account/logout', { body: {} });   // clears a website cookie left by older versions
     await store.del('token'); await store.del('bioLock'); setBio(false);
-    setToken(null); setLocked(false);
+    setToken(null); setHasToken(false); setGuest(false); setLocked(false);
     await reload();
   }, [reload]);
   const deleteAccount = useCallback(async (password: string) => {
     const r = await api('/api/account/delete', { body: { password } });
-    if (r.ok) { await store.del('token'); await store.del('pushToken'); await store.del('bioLock'); setBio(false); setToken(null); await reload(); }
+    if (r.ok) { await store.del('token'); await store.del('pushToken'); await store.del('bioLock'); setBio(false); setToken(null); setHasToken(false); setGuest(false); await reload(); }
     return r;
   }, [reload]);
   const unlock = useCallback(async () => {
@@ -92,9 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  // offline with a saved sign-in still counts as signed in
+  const inside = !!config?.me || guest || (hasToken && !config);
   const value = useMemo<Ctx>(() => ({
-    ready, me: config?.me ?? null, config, locked, bioLock, reload, signIn, signUp, signOut, deleteAccount, setBioLock, unlock,
-  }), [ready, config, locked, bioLock, reload, signIn, signUp, signOut, deleteAccount, setBioLock, unlock]);
+    ready, me: config?.me ?? null, config, locked, bioLock, inside, setGuest, reload, signIn, signUp, signOut, deleteAccount, setBioLock, unlock,
+  }), [ready, config, locked, bioLock, inside, reload, signIn, signUp, signOut, deleteAccount, setBioLock, unlock]);
   return <Auth.Provider value={value}>{children}</Auth.Provider>;
 }
 export const useAuth = () => useContext(Auth);
