@@ -1585,3 +1585,12 @@ html.v-vw-lock,html.v-vw-lock body{overflow:hidden;}
 /* nothing smaller than 10px */
 .v-slot .req-tag{font-size:0.62rem;}
 @media(max-width:560px){ .v-badge{font-size:0.62rem;} }
+/* the narrowest phones: the header stays inside the screen in every language */
+@media(max-width:400px){
+  .v-nav{gap:0.4rem;padding:0 0.75rem;}
+  .v-brand{gap:0.45rem;}
+  .v-brand img{width:30px;height:30px;}
+  .v-brand-text{font-size:1.04rem;}
+  .v-tools{gap:0.4rem;}
+  .v-pill-btn{padding:0.5rem 0.6rem;font-size:0.74rem;gap:0.3rem;}
+}

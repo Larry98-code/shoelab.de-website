@@ -5,6 +5,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '../../components/Icon';
 import { tap } from '../../components/ui';
+import { Pop } from '../../components/motion';
 import { useI18n } from '../../lib/i18n';
 import { C, F } from '../../theme';
 
@@ -41,7 +42,7 @@ function TabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
         return (
           <Pressable key={r.key} onPress={go} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t(cfg.label)} style={s.item}>
             {on ? <View style={[s.ind, r.name === 'vault' && { backgroundColor: C.goldHi }]} /> : null}
-            <Icon name={cfg.icon} size={23} color={on ? (r.name === 'vault' ? C.goldHi : '#fff') : C.muted} />
+            <Pop on={on}><Icon name={cfg.icon} size={23} color={on ? (r.name === 'vault' ? C.goldHi : '#fff') : C.muted} /></Pop>
             <Text maxFontSizeMultiplier={1.2} numberOfLines={1} style={[s.label, on && s.labelOn, on && r.name === 'vault' && { color: C.goldHi }]}>{t(cfg.label)}</Text>
           </Pressable>
         );

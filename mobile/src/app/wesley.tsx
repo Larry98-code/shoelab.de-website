@@ -116,7 +116,7 @@ export default function WesleyScreen() {
         <WesleyAvatar size={40} online />
         <View style={{ flex: 1 }}>
           <Text style={s.name}>Wesley <Text style={s.badge}> AI </Text></Text>
-          <Text style={s.sub} numberOfLines={1}>{t('helpSub')}</Text>
+          <Text style={s.sub} numberOfLines={2}>{t('helpSub')}</Text>
         </View>
         {!fresh ? <Pressable onPress={reset} hitSlop={10} style={s.round} accessibilityRole="button" accessibilityLabel={t('wesNew')}><Icon name="refresh" size={17} color={C.text} /></Pressable> : null}
       </View>
@@ -216,7 +216,7 @@ const s = StyleSheet.create({
   round: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.card2, alignItems: 'center', justifyContent: 'center' },
   name: { fontFamily: F.semibold, fontSize: 16, color: C.text },
   badge: { fontFamily: F.bold, fontSize: 10, color: '#fff', backgroundColor: C.red, overflow: 'hidden', borderRadius: 6, letterSpacing: 0.6 },
-  sub: { fontFamily: F.regular, fontSize: 12, color: C.muted, marginTop: 1 },
+  sub: { fontFamily: F.regular, fontSize: 11.5, lineHeight: 15, color: C.muted, marginTop: 1 },
   list: { padding: S.lg, gap: 12, paddingBottom: 24, width: '100%', maxWidth: 720, alignSelf: 'center' },
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   mini: { marginBottom: 2 },

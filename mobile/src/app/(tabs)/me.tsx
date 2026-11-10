@@ -92,7 +92,7 @@ export default function Me() {
     <Pressable key={'o' + o.id} onPress={() => { tap('select'); router.push('/order/' + o.id); }} style={s.row} accessibilityRole="button">
       <View style={s.thumb}>{o.photo ? <Image source={{ uri: abs(o.photo) }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}</View>
       <View style={{ flex: 1 }}>
-        <Text style={s.rowT} numberOfLines={1}>{o.title}</Text>
+        <Text style={s.rowT} numberOfLines={2}>{o.title}</Text>
         <Row gap={6} style={{ marginTop: 5 }}><Chip text={t('os_' + o.status)} tone={OS_TONE[o.status] || ''} /><Text style={s.rowS}>{t('orderNo', { n: o.id })}</Text></Row>
       </View>
       <Text style={s.amt}>{money(o.role === 'seller' ? o.payout ?? o.total : o.total, true)}</Text>
@@ -132,7 +132,7 @@ export default function Me() {
           {d.buying.bids.length ? <><H3 style={s.h}>{t('bidsTitle')}</H3>{d.buying.bids.map((b) => (
             <Pressable key={'b' + b.id} onPress={() => router.push('/listing/' + b.id)} style={s.row}>
               <View style={s.thumb}>{b.photo ? <Image source={{ uri: abs(b.photo) }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}</View>
-              <View style={{ flex: 1 }}><Text style={s.rowT} numberOfLines={1}>{b.title}</Text>
+              <View style={{ flex: 1 }}><Text style={s.rowT} numberOfLines={2}>{b.title}</Text>
                 <Row gap={6} style={{ marginTop: 5 }}><Chip text={t(b.status !== 'live' ? (b.leading ? 'bidWon' : 'bidLost') : b.leading ? 'bidWinning' : 'bidOutbidChip')} tone={b.leading ? 'ok' : 'bad'} />
                   <Text style={s.rowS}>{t('yourMaxIs', { amount: money(b.myMax, true) })}</Text></Row></View>
               <Text style={s.amt}>{money(b.price)}</Text>

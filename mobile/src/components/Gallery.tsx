@@ -7,6 +7,7 @@ import { useI18n } from '../lib/i18n';
 import { C, F } from '../theme';
 import { Icon } from './Icon';
 import { tap } from './ui';
+import { ZoomImage } from './ZoomImage';
 
 type Photo = { url: string; kind: string };
 
@@ -41,15 +42,19 @@ function Viewer({ photos, open, start, onClose }: { photos: Photo[]; open: boole
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
-  const [i, setI] = useState(start);
+  const [i, setI] = useState(start), [zoomed, setZoomed] = useState(false);
   const list = useRef<FlatList<Photo>>(null);
   return (
-    <Modal visible={open} animationType="fade" onShow={() => { setI(start); list.current?.scrollToIndex({ index: start, animated: false }); }} onRequestClose={() => onClose(i)}>
+    <Modal visible={open} animationType="fade" onShow={() => { setI(start); setZoomed(false); list.current?.scrollToIndex({ index: start, animated: false }); }} onRequestClose={() => onClose(i)}>
       <View style={{ flex: 1, backgroundColor: '#000' }}>
         <FlatList ref={list} data={photos} horizontal pagingEnabled showsHorizontalScrollIndicator={false} keyExtractor={(p, k) => p.url + k}
           initialScrollIndex={start} getItemLayout={(_, k) => ({ length: width, offset: width * k, index: k })}
           onMomentumScrollEnd={(e) => setI(Math.round(e.nativeEvent.contentOffset.x / width))}
-          renderItem={({ item }) => (
+          scrollEnabled={!zoomed}
+          renderItem={({ item }) => Platform.OS !== 'ios' ? (
+            // Android: pinch, drag and double-tap (while zoomed in, swiping moves the photo, not the page)
+            <ZoomImage uri={abs(item.url) || ''} width={width} height={height} onZoom={setZoomed} />
+          ) : (
             // pinch-zoom: iOS zooms a ScrollView natively
             <ScrollView style={{ width, height }} contentContainerStyle={{ width, height, alignItems: 'center', justifyContent: 'center' }}
               maximumZoomScale={4} minimumZoomScale={1} centerContent showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} bouncesZoom>

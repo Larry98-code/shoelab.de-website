@@ -1,8 +1,8 @@
 // Motion: a soft press, a calm entrance, and shimmering placeholders while
 // things load — the small details that make the app feel solid.
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Pressable, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { C, R } from '../theme';
 
 const APressable = Animated.createAnimatedComponent(Pressable);
@@ -19,6 +19,17 @@ export function PressableScale({ children, style, scaleTo = 0.97, ...rest }: Omi
       {children}
     </APressable>
   );
+}
+
+// A quick pop (grow, then spring back) each time `on` changes — a tab being chosen, a heart being tapped.
+export function Pop({ on, children, to = 1.22, style }: { on: unknown; children: ReactNode; to?: number; style?: StyleProp<ViewStyle> }) {
+  const k = useSharedValue(1), first = useRef(true);
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    k.set(withSequence(withTiming(to, { duration: 110, easing: Easing.out(Easing.quad) }), withSpring(1, { damping: 9, stiffness: 220 })));
+  }, [on, k, to]);
+  const a = useAnimatedStyle(() => ({ transform: [{ scale: k.value }] }));
+  return <Animated.View style={[style, a]}>{children}</Animated.View>;
 }
 
 // Fades and lifts content in; `i` staggers a list.

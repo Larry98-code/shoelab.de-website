@@ -42,15 +42,15 @@ export const Body = ({ children, style, muted, small, numberOfLines }: { childre
   <Text numberOfLines={numberOfLines} maxFontSizeMultiplier={MAX_SCALE.text} style={[st.body, muted && { color: C.muted2 }, small && { fontSize: 13, lineHeight: 19 }, style]}>{children}</Text>;
 
 type BtnKind = 'red' | 'gold' | 'ghost' | 'danger' | 'ok';
-export function Button({ title, onPress, kind = 'red', busy, disabled, icon, small, style }: {
-  title: string; onPress?: () => void; kind?: BtnKind; busy?: boolean; disabled?: boolean; icon?: string; small?: boolean; style?: StyleProp<ViewStyle>;
+export function Button({ title, onPress, kind = 'red', busy, disabled, icon, small, tight, style }: {
+  title: string; onPress?: () => void; kind?: BtnKind; busy?: boolean; disabled?: boolean; icon?: string; small?: boolean; tight?: boolean; style?: StyleProp<ViewStyle>;
 }) {
   const fg = kind === 'gold' ? '#111' : kind === 'danger' ? '#ff9a9a' : '#fff';
   const inner = (
-    <View style={[st.btnIn, small && st.btnSmall]}>
+    <View style={[st.btnIn, small && st.btnSmall, tight && st.btnTight]}>
       {busy ? <ActivityIndicator color={fg} /> : <>
         {icon ? <Icon name={icon} size={small ? 16 : 18} color={fg} /> : null}
-        <Text maxFontSizeMultiplier={MAX_SCALE.display} numberOfLines={1} adjustsFontSizeToFit style={[st.btnText, small && { fontSize: 15 }, { color: fg }]}>{title}</Text>
+        <Text maxFontSizeMultiplier={MAX_SCALE.display} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={[st.btnText, small && { fontSize: 15 }, tight && { letterSpacing: 1.2, flexShrink: 1 }, { color: fg }]}>{title}</Text>
       </>}
     </View>
   );
@@ -129,6 +129,7 @@ export const st = StyleSheet.create({
   fill: { ...StyleSheet.absoluteFill, borderRadius: R.md },
   btnIn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: S.xl, paddingVertical: 14 },
   btnSmall: { paddingHorizontal: S.lg, paddingVertical: 9 },
+  btnTight: { paddingHorizontal: 12, gap: 6 },
   btnText: { fontFamily: F.display, fontSize: 19, letterSpacing: 2.2 },
   btnRed: { backgroundColor: C.red, shadowColor: C.red, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
   btnGhost: { borderWidth: 1, borderColor: C.borderHi, backgroundColor: 'rgba(255,255,255,0.03)' },

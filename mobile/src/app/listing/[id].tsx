@@ -15,7 +15,7 @@ import { Sheet } from '../../components/Sheet';
 import { ReportSheet } from '../../components/ReportSheet';
 import { Icon } from '../../components/Icon';
 import { Body, Button, Card, Chip, Empty, Eyebrow, H1, H3, Row, tap } from '../../components/ui';
-import { Appear, Skeleton } from '../../components/motion';
+import { Appear, Pop, Skeleton } from '../../components/motion';
 import { useToast } from '../../components/Toast';
 import { C, F, MAX_SCALE, NUM, R, S } from '../../theme';
 
@@ -97,7 +97,7 @@ export default function ListingScreen() {
         <Row gap={10}>
           <Pressable onPress={share} style={s.round} accessibilityRole="button" accessibilityLabel={t('congShare')}><Icon name="upload" size={18} color="#fff" /></Pressable>
           <Pressable onPress={watch} style={s.round} accessibilityRole="button" accessibilityLabel={t(L.viewer?.watching ? 'watching' : 'watch')}>
-            <Icon name="heart" size={19} color={L.viewer?.watching ? C.red : '#fff'} stroke={L.viewer?.watching ? 2.4 : 1.8} />
+            <Pop on={!!L.viewer?.watching} to={1.4}><Icon name="heart" size={19} color={L.viewer?.watching ? C.redHi : '#fff'} stroke={L.viewer?.watching ? 2.6 : 1.8} /></Pop>
           </Pressable>
         </Row>
       ) : null}
@@ -205,11 +205,11 @@ export default function ListingScreen() {
       {bar ? (
         <Appear style={[s.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
           {Platform.OS === 'ios' ? <BlurView intensity={45} tint="dark" style={StyleSheet.absoluteFill} /> : null}
-          <View style={{ flexShrink: 1 }}>
+          <View style={{ flexShrink: 0 }}>
             <Text style={s.k} maxFontSizeMultiplier={1.3}>{auction ? (L.bids ? t('currentBid') : t('startingBid')) : t('price')}</Text>
             <Text style={s.barPrice} maxFontSizeMultiplier={1.2}>{money(L.price)}</Text>
           </View>
-          <Button title={bar === 'bid' ? t('placeBid') : t('buyNow')} icon={bar === 'bid' ? 'gavel' : 'bolt'} onPress={() => open(bar)} style={{ flex: 1, maxWidth: 260 }} />
+          <Button title={bar === 'bid' ? t('placeBid') : t('buyNow')} icon={bar === 'bid' ? 'gavel' : 'bolt'} onPress={() => open(bar)} tight style={{ flex: 1, maxWidth: 280, minWidth: 0 }} />
         </Appear>
       ) : null}
 
@@ -217,6 +217,15 @@ export default function ListingScreen() {
         <Body muted small>{t('confirmBidNote')}</Body>
         <Text style={[s.k, { marginTop: S.lg }]}>{t('yourMaxBid')}</Text>
         <AmountInput value={amount} onChange={setAmount} />
+        {L.minNext ? (
+          <Row gap={8} style={{ marginBottom: 8 }}>
+            {[0, 1, 3].map((k) => { const v = L.minNext! + k * (L.increment || 100); const on = parseEuro(amount) === v; return (
+              <Pressable key={k} onPress={() => { tap('select'); setAmount(String(v / 100)); }} style={[s.quick, on && s.quickOn]} accessibilityRole="button" accessibilityLabel={money(v, true)}>
+                <Text style={[s.quickT, on && { color: '#111' }]} maxFontSizeMultiplier={1.2}>{money(v)}</Text>
+              </Pressable>
+            ); })}
+          </Row>
+        ) : null}
         {L.minNext ? <Body small muted>{t('e_bid_low', { amount: money(L.minNext, true) })}</Body> : null}
         {msg ? <Text style={s.err}>{msg}</Text> : null}
         <Button title={t('confirmBid')} busy={busy} onPress={bid} style={{ marginTop: S.lg, marginBottom: S.md }} />
@@ -285,6 +294,9 @@ const s = StyleSheet.create({
   report: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: S.xxl, padding: 8 },
   reportText: { fontFamily: F.medium, fontSize: 12.5, color: C.muted },
   err: { fontFamily: F.medium, fontSize: 13.5, color: '#ff9a9a', marginTop: S.md },
+  quick: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: R.pill, borderWidth: 1, borderColor: C.goldLine, backgroundColor: C.goldSoft },
+  quickOn: { backgroundColor: C.goldHi, borderColor: C.goldHi },
+  quickT: { fontFamily: F.semibold, fontSize: 14, color: C.goldHi, ...NUM },
   amount: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.black, borderWidth: 1, borderColor: C.goldLine, borderRadius: R.md, paddingHorizontal: 16, marginTop: 8, marginBottom: 8 },
   euro: { fontFamily: F.display, fontSize: 32, color: C.goldHi, marginRight: 8 },
   amountIn: { flex: 1, fontFamily: F.display, fontSize: 38, color: C.text, paddingVertical: 10 },
