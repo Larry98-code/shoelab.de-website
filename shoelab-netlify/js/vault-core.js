@@ -529,6 +529,19 @@
   }
 
   // the listing tile used by browse, the dashboard and "more like this"
+  // A pair tapped in a grid travels into its place on the listing page (css/sl-polish.css,
+  // vault-item.html): name its photo for the page transition and remember which one it was.
+  d.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('.v-card a.cover');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+    var img = a.parentNode.querySelector('.v-card-img img');
+    if (!img || !img.currentSrc) return;
+    try {
+      img.style.viewTransitionName = 'sl-pair';
+      w.sessionStorage.setItem('sl-pair', JSON.stringify({ href: a.getAttribute('href'), src: img.currentSrc, at: Date.now() }));
+    } catch (err) { /* private mode: a plain page change */ }
+  }, true);
+
   function card(it, o) {
     o = o || {};
     var auction = it.format === 'auction', live = it.status === 'live', sold = it.status === 'sold' || o.sold;

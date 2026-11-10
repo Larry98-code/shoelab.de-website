@@ -1,0 +1,29 @@
+/* ShoeLab — shared finishing layer, loaded on every page.
+   Page-to-page transitions (where the browser supports them), a calm text
+   selection, slim dark scrollbars. No layout here. */
+
+/* Moving between pages: the old page fades, the new one rises in. A Vault pair
+   tapped in the grid travels into its place on the listing page (sl-pair). */
+@media (prefers-reduced-motion: no-preference){
+  @view-transition{ navigation:auto; }
+  ::view-transition-old(root){ animation:sl-vt-out .2s ease both; }
+  ::view-transition-new(root){ animation:sl-vt-in .34s cubic-bezier(.2,.8,.2,1) both; }
+  ::view-transition-group(sl-pair){ animation-duration:.42s; animation-timing-function:cubic-bezier(.2,.8,.2,1); }
+  ::view-transition-old(sl-pair),::view-transition-new(sl-pair){ height:100%; object-fit:contain; }
+}
+@keyframes sl-vt-out{ to{ opacity:0; } }
+@keyframes sl-vt-in{ from{ opacity:0; transform:translateY(10px); } }
+
+::selection{ background:rgba(204,17,17,.55); color:#fff; }
+
+/* slim, dark scrollbars on desktop */
+@media (hover:hover) and (pointer:fine){
+  html{ scrollbar-color:#3a3a3a #0b0b0b; scrollbar-width:thin; }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:#0b0b0b; }
+  ::-webkit-scrollbar-thumb{ background:#333; border-radius:8px; border:2px solid #0b0b0b; }
+  ::-webkit-scrollbar-thumb:hover{ background:#CC1111; }
+}
+
+/* no grey flash when a link or button is tapped */
+a,button,[role=button],label,summary{ -webkit-tap-highlight-color:transparent; }

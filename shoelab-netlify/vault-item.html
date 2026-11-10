@@ -23,8 +23,9 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
-<link rel="stylesheet" href="/css/vault.css?v=11"/>
+<link rel="stylesheet" href="/css/vault.css?v=12"/>
 <script>document.documentElement.classList.add('v-wait');setTimeout(function(){document.documentElement.classList.remove('v-wait');},2500);</script>
+<link rel="stylesheet" href="/css/sl-polish.css?v=2"/>
 </head>
 <body>
 
@@ -38,7 +39,17 @@
   <div id="vPreview"></div>
   <div id="vItem">
     <div class="v-item" aria-busy="true">
-      <div><div class="v-skel" style="aspect-ratio:1/0.82;border-radius:22px;"></div></div>
+      <div><div class="v-skel" id="vPairSlot" style="aspect-ratio:1/0.82;border-radius:22px;"></div></div>
+      <script>
+      /* arriving from a card in the grid (vault-core.js remembers which): show that photo straight away */
+      (function(){ try{
+        var p=JSON.parse(sessionStorage.getItem('sl-pair')||'null'); sessionStorage.removeItem('sl-pair');
+        if(!p || !p.src || Date.now()-p.at>8000 || p.href.split('#')[0]!==location.pathname+location.search) return;
+        var box=document.getElementById('vPairSlot'), im=new Image();
+        im.alt=''; im.src=p.src; im.style.cssText='width:100%;height:100%;object-fit:contain;display:block;view-transition-name:sl-pair;';
+        box.style.animation='none'; box.style.background='#141414'; box.style.overflow='hidden'; box.appendChild(im);
+      }catch(e){} })();
+      </script>
       <div class="v-buy">
         <div class="v-skel" style="height:14px;width:30%;"></div>
         <div class="v-skel" style="height:40px;width:85%;"></div>
@@ -60,9 +71,9 @@
 
 <script src="/js/sl-geo.js?v=2" defer></script>
 <script src="/js/vault-i18n/en.js?v=10" defer></script>
-<script src="/js/vault-core.js?v=14" defer></script>
+<script src="/js/vault-core.js?v=15" defer></script>
 <script src="/js/vault-viewer.js?v=3" defer></script>
-<script src="/js/vault-item.js?v=6" defer></script>
+<script src="/js/vault-item.js?v=7" defer></script>
 <script src="/js/vault-help.js?v=2" defer></script>
 </body>
 </html>

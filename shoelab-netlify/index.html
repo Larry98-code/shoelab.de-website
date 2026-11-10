@@ -13,7 +13,7 @@
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
 <!-- is the product shop selling yet? one switch, in js/shop-status.js -->
 <script src="/js/shop-status.js?v=1"></script>
-<link rel="stylesheet" href="/css/deconstruct.css?v=4"/>
+<link rel="stylesheet" href="/css/deconstruct.css?v=5"/>
 <link rel="stylesheet" href="/css/hero-showcase.css?v=4"/>
 <link rel="stylesheet" href="/css/vault-teaser.css?v=2"/>
 <link rel="canonical" href="https://shoelabonline.de/"/>
@@ -526,7 +526,7 @@ nav.scrolled{background:rgba(8,8,8,0.97);border-bottom:1px solid rgba(204,17,17,
 /* MOBILE MENU — a full-screen sheet: it fades in, the links rise one after another */
 .mob-menu{
   position:fixed;inset:0;z-index:600;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(1rem,3.4vh,2.1rem);padding:5rem 1.5rem 2.5rem;overflow-y:auto;
+  gap:clamp(.6rem,2.2vh,1.5rem);padding:4.6rem 1.5rem 2rem;overflow-y:auto;
   background:radial-gradient(120% 70% at 50% 0%, rgba(204,17,17,0.2), transparent 62%), rgba(8,8,8,0.98);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
   opacity:0;visibility:hidden;pointer-events:none;
@@ -534,7 +534,7 @@ nav.scrolled{background:rgba(8,8,8,0.97);border-bottom:1px solid rgba(204,17,17,
 }
 .mob-menu.open{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .32s ease, visibility 0s;}
 .mob-menu a{
-  font-family:'Bebas Neue','Arial Black','Impact',sans-serif;font-size:clamp(2.1rem,7.2vh,3rem);letter-spacing:0.1em;line-height:1;
+  font-family:'Bebas Neue','Arial Black','Impact',sans-serif;font-size:clamp(1.7rem,5.2vh,2.6rem);letter-spacing:0.1em;line-height:1;
   color:var(--white);text-decoration:none;
   opacity:0;transform:translateY(18px);
   transition:color .25s, opacity .45s ease, transform .55s cubic-bezier(.2,.8,.2,1);
@@ -562,6 +562,32 @@ nav.scrolled{background:rgba(8,8,8,0.97);border-bottom:1px solid rgba(204,17,17,
 }
 .mob-close:hover{background:rgba(204,17,17,0.35);transform:rotate(90deg);}
 body.mob-open{overflow:hidden;}
+.mob-menu{justify-content:safe center;}
+/* hours, socials and legal links live in the menu on phones and tablets (the footer there is slim) */
+.mob-info{width:min(100%,340px);margin-top:.9rem;padding-top:1.3rem;border-top:1px solid rgba(255,255,255,0.1);
+  opacity:0;transform:translateY(14px);transition:opacity .45s ease .4s, transform .55s cubic-bezier(.2,.8,.2,1) .4s;}
+.mob-menu.open .mob-info{opacity:1;transform:none;}
+.mob-info-t{font-size:.68rem;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:#ff5c5c;text-align:center;margin-bottom:.7rem;}
+.mob-hours{list-style:none;margin:0;padding:0;}
+.mob-hours li{display:flex;justify-content:space-between;gap:1rem;padding:.42rem 0;font-size:.9rem;color:#b4b4b4;border-bottom:1px solid rgba(255,255,255,0.06);}
+.mob-hours li span:last-child{color:#fff;font-variant-numeric:tabular-nums;}
+.mob-social{display:flex;justify-content:center;gap:.8rem;margin-top:1.1rem;}
+.mob-menu .mob-info a{font-family:'Inter',sans-serif;letter-spacing:0;opacity:1;transform:none;transition:color .2s, background .2s, border-color .2s;}
+.mob-menu .mob-social a{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);font-size:1rem;}
+.mob-menu .mob-social a:hover{background:rgba(204,17,17,0.3);border-color:rgba(255,92,92,0.6);color:#fff;}
+.mob-legal{display:flex;flex-wrap:wrap;justify-content:center;gap:.35rem 1.1rem;margin-top:1.1rem;}
+.mob-menu .mob-legal a{font-size:.8rem;color:#9a9a9a;padding:.35rem 0;}
+.mob-menu .mob-legal a:hover{color:#fff;}
+@media (prefers-reduced-motion: reduce){ .mob-info{transition:none;transform:none;} }
+/* …so the footer keeps only the brand, the copyright line and the legal links there */
+@media(max-width:1100px){
+  footer .footer-top > div:not(.ft-brand){display:none;}
+  footer .footer-top{display:block;}
+  footer .ft-socials{display:none !important;}
+}
+/* the last line of the page stays clear of the chat button */
+@media(max-width:780px){ footer .footer-bottom{padding-bottom:5.6rem;} }
 @media (prefers-reduced-motion: reduce){ .mob-menu,.mob-menu a,.mob-close{transition:none;} .mob-menu a{transform:none;} }
 
 /* ── HERO ── */
@@ -2482,11 +2508,12 @@ section[id], [id]{ scroll-margin-top: 90px; }
 }
 
 </style>
-<script src="https://js.stripe.com/v3/"></script>
+<script src="https://js.stripe.com/v3/" defer></script>
 <script src="/js/sl-geo.js?v=2"></script>
 <script src="/js/deconstruct.js?v=5" defer></script>
 <script src="/js/hero-showcase.js?v=5" defer></script>
-<link rel="stylesheet" href="/css/home-polish.css?v=1"/>
+<link rel="stylesheet" href="/css/home-polish.css?v=2"/>
+<link rel="stylesheet" href="/css/sl-polish.css?v=2"/>
 </head>
 <body>
 
@@ -2543,6 +2570,30 @@ section[id], [id]{ scroll-margin-top: 90px; }
   <a href="#reviews" onclick="closeMob()" data-i18n="nav.reviews">Reviews</a>
   <a href="#contact" onclick="closeMob()" data-i18n="nav.contact">Contact</a>
   <a href="/booking.html" class="mob-cta" data-i18n="nav.bookNow">Book Now</a>
+  <!-- what used to sit at the very end of the page on phones: hours, socials, legal -->
+  <div class="mob-info">
+    <p class="mob-info-t" data-i18n="ft.hours">Opening Hours</p>
+    <ul class="mob-hours">
+      <li><span data-i18n="ft.monfri">Mon – Fri</span><span>10:00 – 19:00</span></li>
+      <li><span data-i18n="ft.sat">Saturday</span><span>10:00 – 16:00</span></li>
+      <li><span data-i18n="ft.sun">Sunday</span><span data-i18n="ft.closed">Closed</span></li>
+    </ul>
+    <div class="mob-social">
+      <a href="https://www.instagram.com/shoelab.brmn?igsh=ano3bHluZThpYnVx&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+      </a>
+      <a href="https://www.tiktok.com/@shoelab.brmn?_r=1&_t=ZG-96h0k6vo9DN" target="_blank" rel="noopener" aria-label="TikTok">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
+      </a>
+    </div>
+    <div class="mob-legal">
+      <a href="/impressum.html">Impressum</a>
+      <a href="/datenschutz.html">Datenschutz</a>
+      <a href="/agb.html">AGB</a>
+      <a href="/widerruf.html">Widerruf</a>
+      <a href="#cookie-settings" data-consent-open onclick="closeMob()">Cookie settings</a>
+    </div>
+  </div>
 </div>
 
 <!-- HERO -->
