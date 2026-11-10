@@ -35,8 +35,8 @@
   }
 
   /* ── helpers ──────────────────────────────────────────────────────── */
-  function thumb(src, href) {
-    return '<a class="thumb" href="' + href + '">' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy"/>' : '<span class="noimg" style="display:grid;place-items:center;height:100%;color:#444;">' + S.ico('image') + '</span>') + '</a>';
+  function thumb(src, href, label) {
+    return '<a class="thumb" href="' + href + '"' + (label ? ' aria-label="' + esc(label) + '"' : ' tabindex="-1" aria-hidden="true"') + '>' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy"/>' : '<span class="noimg" style="display:grid;place-items:center;height:100%;color:#444;">' + S.ico('image') + '</span>') + '</a>';
   }
   function chip(kind, text) { return '<span class="v-chip ' + (kind || '') + '">' + esc(text) + '</span>'; }
   function group(id, title, sub, body) {
@@ -197,7 +197,7 @@
       return '<li><time>' + esc(S.fmtShort(e.at)) + '</time><span>' + esc(t('ev_' + e.kind)) + (e.note && e.kind !== 'paid' && e.kind !== 'sold' && e.kind !== 'feedback' ? ' — ' + esc(e.note) : '') + '</span></li>';
     }).join('');
     return '<article class="v-order" id="order-' + o.id + '">' +
-      '<div class="v-order-top">' + thumb(o.photo, '/vault-item.html?id=' + o.listingId) +
+      '<div class="v-order-top">' + thumb(o.photo, '/vault-item.html?id=' + o.listingId, o.title) +
         '<div style="min-width:0;"><b>' + esc(o.title) + '</b>' +
           '<small>EU ' + esc(o.size || '') + ' · ' + esc(t('orderNo', { n: o.id })) + ' · ' + esc(S.fmtDate(o.createdAt)) + '</small>' +
           '<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.45rem;">' + chip(ORDER_TONE[o.status], t('os_' + o.status)) + S.tierBadge(o.tier) +
@@ -253,7 +253,7 @@
     if (live) ch = l.leading ? chip('ok', t('bidWinning')) : chip('bad', t('bidOutbidChip'));
     else if (l.status === 'sold') ch = l.leading ? chip('gold', t('bidWon')) : chip('', t('bidLost'));
     else ch = chip('', t('st_' + l.status));
-    return '<div class="v-rowcard">' + thumb(l.photo, S.itemHref(l)) +
+    return '<div class="v-rowcard">' + thumb(l.photo, S.itemHref(l), l.title) +
       '<div class="main"><b><a href="' + S.itemHref(l) + '">' + esc(l.title) + '</a></b><small>EU ' + esc(l.size) + ' · ' + esc(t('yourMaxIs', { amount: money(l.myMax, true) })) + '</small>' +
         '<div class="chips">' + ch + (live && l.endsAt ? S.countdownHtml(l.endsAt) : '') + '</div></div>' +
       '<div class="side"><span class="amt"><small>' + esc(t(live ? 'currentBid' : 'finalPrice')) + '</small>' + money(l.price) + '</span>' +
@@ -508,7 +508,7 @@
     if (l.format === 'auction') stats.push(S.tn('bids', l.bids || 0));
     stats.push(S.tn('watchers', l.watchers || 0));
     if (l.openOffers) stats.push(S.tn('openOffers', l.openOffers));
-    return '<div class="v-rowcard">' + thumb(l.photo, S.itemHref(l)) +
+    return '<div class="v-rowcard">' + thumb(l.photo, S.itemHref(l), l.title) +
       '<div class="main"><b><a href="' + S.itemHref(l) + '">' + esc(l.title) + '</a></b><small>EU ' + esc(l.size) + ' · ' + esc(stats.join(' · ')) + '</small>' +
         '<div class="chips">' + chip(LIST_TONE[l.status], t('st_' + l.status)) + S.tierBadge(l.tier) +
           (l.featured ? chip('gold', t('featuredUntil', { date: S.fmtDate(l.featuredUntil) })) : '') +
@@ -589,8 +589,8 @@
     var td = todos(), c = counts();
     var h = congratsHtml();
     if (td.length) {
-      h += '<div class="v-todo" role="list" aria-label="' + esc(t('todoTitle')) + '">' + td.map(function (x) {
-        return '<button type="button" class="v-todo-item" role="listitem" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '" data-todo-payouts="' + (x.payouts || '') + '" data-todo-need="' + (x.need || '') + '" data-todo-legit="' + (x.legit || '') + '">' +
+      h += '<div class="v-todo" role="group" aria-label="' + esc(t('todoTitle')) + '">' + td.map(function (x) {
+        return '<button type="button" class="v-todo-item" data-todo-order="' + (x.order || '') + '" data-todo-pay="' + (x.pay || '') + '" data-todo-offers="' + (x.offers || '') + '" data-todo-payouts="' + (x.payouts || '') + '" data-todo-need="' + (x.need || '') + '" data-todo-legit="' + (x.legit || '') + '">' +
           S.ico(x.icon) + '<span>' + esc(x.text) + '</span><span class="go">' + esc(x.go) + ' →</span></button>';
       }).join('') + '</div>';
     }

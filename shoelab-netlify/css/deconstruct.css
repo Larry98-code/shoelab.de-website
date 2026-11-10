@@ -178,7 +178,7 @@
   .dc-rail{display:none;}
   /* keep the text clear of the cart and Wesley buttons, which float over
      the bottom corners on every page */
-  .dc-copy{bottom:1rem; width:min(96vw,560px); padding:.85rem 4rem;}
+  .dc-copy{bottom:1rem; width:min(96vw,560px); padding:.85rem 5.6rem .85rem 1.3rem; text-align:left;}
   .dc-line{font-size:.76rem;}
   .dc-kicker{font-size:.54rem;}
 }

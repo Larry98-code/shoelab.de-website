@@ -362,7 +362,7 @@
     }
     return '<article class="v-order" id="lo-' + o.id + '">' +
       '<div class="v-order-top">' +
-        '<a class="thumb" href="/vault-item.html?id=' + o.listingId + '">' + (o.photo ? '<img src="' + esc(o.photo) + '" alt="" loading="lazy"/>' : '') + '</a>' +
+        '<a class="thumb" href="/vault-item.html?id=' + o.listingId + '" aria-label="' + esc(o.title) + '">' + (o.photo ? '<img src="' + esc(o.photo) + '" alt="" loading="lazy"/>' : '') + '</a>' +
         '<div style="min-width:0;"><b>' + esc(o.title) + '</b><small>EU ' + esc(o.size || '') + ' · ' + esc(t('orderNo', { n: o.id })) + ' · ' + esc(S.fmtDate(o.createdAt)) + '</small>' +
           '<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.45rem;"><span class="v-chip ' + (TONE[o.status] || '') + '">' + esc(t('os_' + o.status)) + '</span>' + S.tierBadge(o.tier) + '</div></div>' +
         '<div class="side"><span class="amt">' + money(o.total, true) + '</span><span class="v-note">' + esc(t('payoutShort', { amount: money(o.payout, true) })) + '</span></div>' +

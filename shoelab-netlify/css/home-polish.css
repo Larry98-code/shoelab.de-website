@@ -1,0 +1,81 @@
+/* ShoeLab — homepage refinement layer (loaded last in <head>).
+   Readability first: the page was set in 11–13px thin grey. This lifts it to a
+   clear three-level scale — reading text, supporting text, labels — and gives
+   small red text a red that is readable on black. Layout is untouched. */
+
+:root{
+  --red-text:#ff5c5c;            /* small red text on black: 6:1 (the brand red stays for surfaces and display type) */
+  --ink-1:#f2f2f2; --ink-2:#b4b4b4; --ink-3:#9a9a9a;
+}
+
+/* ── 1 · reading text ─────────────────────────────────────────── */
+.hero-desc{font-size:1.02rem;line-height:1.75;font-weight:400;color:var(--ink-2);}
+.sec-sub,.booking-left p,.banner-sub,.vt-sub,.brush-sub{font-size:.96rem;line-height:1.75;font-weight:400;color:var(--ink-2);}
+.svc-desc,.rv-text,.hs-desc,.shop-soon-note{font-size:.92rem;line-height:1.7;font-weight:400;}
+.svc-desc,.rv-text{color:var(--ink-2);}
+.dc-line{font-size:.9rem;font-weight:400;}
+.vt-list span{font-size:.9rem;line-height:1.6;}
+
+/* ── 2 · supporting text ──────────────────────────────────────── */
+.svc-list li{font-size:.86rem;font-weight:400;color:#c8c8c8;}
+.prod-desc,.brush-desc{font-size:.82rem;line-height:1.6;font-weight:400;color:var(--ink-3);}
+.booking-left .bk-why-h{font-size:.69rem;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:var(--red-text);margin-bottom:1rem;}
+.bk-why-t{font-size:.92rem;font-weight:500;color:#fff;}
+.bk-why-s{font-size:.84rem;line-height:1.55;color:var(--ink-3);margin-top:.1rem;}
+.ft-tagline,.ft-links a,.ft-hours span{font-size:.86rem;font-weight:400;color:var(--ink-3);}
+.ft-links a:hover{color:#fff;}
+.c-val{font-size:.95rem;font-weight:400;}
+.rv-summary-count,.bk-form-sub,.pay-header-sub{font-size:.8rem;font-weight:400;color:var(--ink-3);}
+.rv-name{font-size:.9rem;}
+.rv-more{font-size:.78rem;color:var(--red-text);}
+.acc-guest-note,.ft-social-brand span{font-size:.78rem;color:var(--ink-3);}
+
+/* ── 3 · labels (small caps) ──────────────────────────────────── */
+.sec-label,.hero-eyebrow,.dc-kicker,.ft-col-title,.pay-header-eyebrow,.c-lbl{font-size:.69rem;font-weight:500;color:var(--red-text);}
+.sec-label,.hero-eyebrow{letter-spacing:.3em;}
+.ft-col-title{letter-spacing:.28em;}
+.svc-tag{font-size:.68rem;font-weight:500;color:#e25757;letter-spacing:.14em;}
+.prod-brand{font-size:.66rem;font-weight:500;color:var(--red-text);}
+.fg label,.pay-field-group label,.bk-form p{font-size:.68rem;color:var(--red-text);}
+.acc-field label{font-size:.68rem;color:var(--ink-3);}
+.stat-label{font-size:.68rem;color:var(--ink-3);letter-spacing:.22em;}
+@media(max-width:600px){ .stat-label{letter-spacing:.12em;-webkit-hyphens:auto;hyphens:auto;overflow-wrap:normal;word-break:normal;} }
+.rv-loc{font-size:.74rem;color:var(--ink-3);}
+.rv-date{font-size:.72rem;color:rgba(255,255,255,.5);}
+.rv-platform{font-size:.62rem;color:rgba(255,255,255,.6);}
+.ba-hint{font-size:.7rem;color:rgba(255,255,255,.58);}
+.ba-label{font-size:.62rem;}
+.g-tag,.vt-stamp,.brush-hint{font-size:.66rem;}
+.svc-pay-opt span{font-size:.68rem;color:var(--ink-3);}
+.ft-legal a,.ft-copy{font-size:.74rem;color:var(--ink-3);}
+.ft-legal a:hover{color:#fff;}
+.stripe-trust-item,.pay-order-label,.payment-icons span{font-size:.68rem;color:var(--ink-3);}
+.wes-role{font-size:.68rem;}
+.wes-input-hint{font-size:.66rem;color:rgba(255,255,255,.42);}
+.wes-powered{font-size:.66rem;color:rgba(255,255,255,.42);}
+.stripe-powered{color:rgba(255,255,255,.45);}
+.wes-powered span,.wesley-label span{color:var(--red-text) !important;}
+.pay-step span{font-size:.68rem;}
+.hs-brand{font-size:.68rem;}
+.hs-tags li{font-size:.64rem;}
+.dc-hint,.scroll-cue-txt{font-size:.62rem;color:#8d8d8d;}
+.ba-fallback span{font-size:.64rem;color:rgba(255,255,255,.55);}
+
+/* ── navigation and buttons ───────────────────────────────────── */
+.nav-links a{font-size:.72rem;color:#a0a0a0;}
+.btn-red,.btn-outline,.btn-gold{font-size:.74rem;}
+.nav-cta{font-size:.7rem;}
+.nav-account span{font-size:.68rem;}
+
+/* the running band behind the stats: outlined words, a touch brighter */
+.fx-marquee-track span{color:#7c7c7c;}
+
+/* ── touch: buttons big enough for a thumb ────────────────────── */
+@media (hover:none), (max-width:900px){
+  .lang-btn,.nav-account{min-height:40px;padding-left:.75rem;padding-right:.75rem;}
+  .hamburger{min-width:44px;min-height:44px;align-items:center;justify-content:center;}
+}
+
+/* ── keyboard: a visible focus ring everywhere ────────────────── */
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:3px;}
+:where(.btn-red,.nav-cta,.bk-submit):focus-visible{outline-color:#fff;box-shadow:0 0 0 5px rgba(204,17,17,.45);}

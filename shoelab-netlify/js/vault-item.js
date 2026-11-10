@@ -576,7 +576,7 @@
     var bar = $('vSticky'), box = d.querySelector('.v-pricebox');
     if (!bar || !box) return;
     var live = L.status === 'live' && !isOwner();
-    if (!live) { bar.innerHTML = ''; bar.classList.remove('on'); d.body.classList.remove('v-sticky-on'); return; }
+    if (!live) { bar.innerHTML = ''; bar.classList.remove('on'); bar.setAttribute('inert', ''); d.body.classList.remove('v-sticky-on'); return; }
     var auction = L.format === 'auction';
     bar.innerHTML = '<div class="p"><small>' + esc(t(auction ? (L.bids ? 'currentBid' : 'startingBid') : 'price')) + '</small><b>' + money(L.price) + '</b>' +
       (auction && L.endsAt ? ' <span class="v-note" data-ends="' + esc(L.endsAt) + '"><span class="cd-t"></span></span>' : '') + '</div>' +
@@ -593,6 +593,7 @@
         bar.classList.toggle('on', hidden);
         d.body.classList.toggle('v-sticky-on', hidden);   // the help button moves up out of its way
         bar.setAttribute('aria-hidden', hidden ? 'false' : 'true');
+        if (hidden) bar.removeAttribute('inert'); else bar.setAttribute('inert', '');
       });
       stickyObs.observe(box);
     }

@@ -3,7 +3,7 @@
    Tokens mirror index.html so the flow feels like one site. */
 
 :root{
-  --red:#CC1111; --red-bright:#FF2020; --black:#080808; --dark:#0f0f0f;
+  --red:#CC1111; --red-bright:#FF2020; --red-text:#ff5c5c; /* red for small text: readable on black */ --black:#080808; --dark:#0f0f0f;
   --dark2:#181818; --dark3:#1f1f1f; --muted:#888; --muted2:#999;
   --border:rgba(255,255,255,0.08); --border-hi:rgba(255,255,255,0.16);
   --ok:#16a34a;
@@ -54,7 +54,7 @@ img{max-width:100%;display:block;}
 /* ── shell ───────────────────────────────────────────── */
 .fl-main{flex:1;width:100%;max-width:1060px;margin:0 auto;padding:2.2rem 1.5rem 4rem;}
 .fl-head{text-align:center;margin-bottom:2rem;}
-.fl-eyebrow{font-size:0.6rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--red);margin-bottom:0.55rem;}
+.fl-eyebrow{font-size:0.68rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--red-text);margin-bottom:0.55rem;}
 .fl-title{
   font-family:'Bebas Neue','Arial Black',Impact,sans-serif;font-weight:400;
   font-size:clamp(2.1rem,5.5vw,3.2rem);letter-spacing:0.05em;line-height:1;
@@ -97,9 +97,9 @@ img{max-width:100%;display:block;}
 }
 .svc-opt:hover{border-color:rgba(204,17,17,0.5);transform:translateY(-3px);}
 .svc-opt.sel{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset;}
-.svc-opt input{position:absolute;opacity:0;pointer-events:none;}
+.svc-opt:focus-visible{outline:2px solid #fff;outline-offset:3px;}
 .svc-name{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.05em;}
-.svc-tag{color:var(--red);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;}
+.svc-tag{color:var(--red-text);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;}
 .svc-desc{color:var(--muted);font-size:0.76rem;line-height:1.55;flex:1;}
 .svc-price{display:flex;align-items:baseline;gap:0.4rem;margin-top:0.4rem;}
 .svc-price b{font-size:1.5rem;font-weight:600;}
@@ -229,7 +229,7 @@ img{max-width:100%;display:block;}
 }
 .done-next{text-align:left;background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:1.2rem 1.3rem;margin-top:1.6rem;}
 .done-next li{list-style:none;display:flex;gap:0.7rem;padding:0.45rem 0;color:#ccc;font-size:0.84rem;line-height:1.5;}
-.done-next li b{color:var(--red);flex-shrink:0;}
+.done-next li b{color:var(--red-text);flex-shrink:0;}
 
 /* ── footer ──────────────────────────────────────────── */
 .fl-foot{

@@ -252,20 +252,27 @@
     el('svcGrid').innerHTML = F.SERVICES.map(function(s){
       var price = plan === 'subscription' ? s.month : s.once;
       var per = plan === 'subscription' ? F.t('monthLbl') : F.t('onceLbl');
-      return '<label class="svc-opt' + (s.id === svcId ? ' sel' : '') + '" data-id="' + s.id + '" role="radio" tabindex="0" aria-checked="' + (s.id === svcId) + '">'
-        + '<input type="radio" name="svc" value="' + s.id + '"' + (s.id === svcId ? ' checked' : '') + '/>'
-        + '<span class="svc-check">✓</span>'
+      // a radio group: Tab reaches the chosen one (or the first), the arrow keys move between them
+      var tab = s.id === svcId || (!svcId && s === F.SERVICES[0]) ? '0' : '-1';
+      return '<div class="svc-opt' + (s.id === svcId ? ' sel' : '') + '" data-id="' + s.id + '" role="radio" tabindex="' + tab + '" aria-checked="' + (s.id === svcId) + '">'
+        + '<span class="svc-check" aria-hidden="true">✓</span>'
         + '<span class="svc-tag">' + F.t(s.tag) + '</span>'
         + '<span class="svc-name">' + s.name + '</span>'
         + '<span class="svc-desc">' + F.t(s.desc) + '</span>'
         + '<span class="svc-price"><b>' + F.money(price) + '</b><small>' + per + '</small></span>'
-        + '</label>';
+        + '</div>';
     }).join('');
-    el('svcGrid').querySelectorAll('.svc-opt').forEach(function(opt){
-      var pick = function(){ svcId = opt.getAttribute('data-id'); renderServices(); renderSummary(); };
-      opt.addEventListener('click', pick);
+    var opts = [].slice.call(el('svcGrid').querySelectorAll('.svc-opt'));
+    opts.forEach(function(opt, i){
+      var pick = function(focus){
+        svcId = opt.getAttribute('data-id'); renderServices(); renderSummary();
+        if (focus) { var now = el('svcGrid').querySelector('.svc-opt.sel'); if (now) now.focus(); }
+      };
+      opt.addEventListener('click', function(){ pick(false); });
       opt.addEventListener('keydown', function(e){
-        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(); }
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(true); return; }
+        var step = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : (e.key === 'ArrowLeft' || e.key === 'ArrowUp') ? -1 : 0;
+        if (step) { e.preventDefault(); opts[(i + step + opts.length) % opts.length].click(); var now = el('svcGrid').querySelector('.svc-opt.sel'); if (now) now.focus(); }
       });
     });
   }

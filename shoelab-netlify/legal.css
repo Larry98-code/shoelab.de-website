@@ -10,8 +10,11 @@ body{
   font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:300;
   line-height:1.7;overflow-x:hidden;
 }
-a{color:var(--red);text-decoration:none;}
-a:hover{text-decoration:underline;}
+/* links: a red that is readable on black (the brand red is kept for the logo and headings) */
+a{color:#ff5c5c;text-decoration:underline;text-decoration-color:rgba(255,92,92,0.4);text-underline-offset:3px;}
+a:hover{text-decoration-color:currentColor;}
+.legal-nav a,.legal-foot a{text-decoration:none;}
+.legal-foot a:hover{text-decoration:underline;}
 .legal-nav{
   position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
   padding:1rem 1.5rem;background:rgba(8,8,8,0.92);backdrop-filter:blur(10px);
