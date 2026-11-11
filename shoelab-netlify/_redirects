@@ -1,6 +1,9 @@
 # Cloudflare Pages redirects
-# Clean URLs for the booking flow so /book and /checkout work as shareable links.
-/book            /booking.html     301
-/checkout        /checkout.html    301
-/brushes         /brushes.html     301
-/thanks          /thank-you.html   301
+# Short links for the booking flow.
+#
+# Cloudflare Pages already serves every page without its ".html" and sends
+# "/page.html" to "/page". So NEVER add a rule from "/page" to "/page.html":
+# the two redirects chase each other and the page never opens (this broke
+# /brushes and /checkout). "/checkout" and "/brushes" work without a rule.
+/book            /booking      301
+/thanks          /thank-you    301
